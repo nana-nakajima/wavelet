@@ -28,6 +28,14 @@ pub const PARAM_SATURATION_DRIVE: i32 = 54;
 pub const PARAM_SATURATION_MIX: i32 = 55;
 pub const PARAM_OVERSAMPLE: i32 = 56;
 
+/// AI Melody Generation parameter IDs.
+///
+/// These constants define the parameter IDs used for controlling
+/// the AI melody generation features.
+pub const PARAM_MELODY_STYLE: i32 = 60;
+pub const PARAM_MELODY_GENERATE: i32 = 61;
+pub const PARAM_MELODY_LENGTH: i32 = 62;
+
 /// Voice structure representing one playing note.
 #[derive(Debug, Clone)]
 struct Voice {

@@ -34,6 +34,7 @@ pub mod envelope;
 pub mod filter;
 pub mod gdextension;
 pub mod lfo;
+pub mod melody_generator;
 pub mod oscillator;
 pub mod synth;
 
@@ -41,6 +42,7 @@ pub use effects::{Effect, EffectType, Saturation};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
 pub use lfo::{Lfo, LfoRate};
+pub use melody_generator::{Chord, ChordType, Key, Melody, MelodyGenerator, MelodyNote, MelodyStyle, Scale};
 pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
 pub use synth::Synth;
 
