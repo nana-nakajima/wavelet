@@ -10,15 +10,13 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 rand = "0.8"
-gdext = { git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
-godot = { package = "gdext", git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
 
 [features]
-default = ["gdext"]
-gdext = ["dep:gdext", "dep:godot"]
+default = []
+gdext = []
 
 [[bench]]
 name = "oscillator_bench"
