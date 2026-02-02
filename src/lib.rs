@@ -37,19 +37,20 @@ pub mod lfo;
 pub mod melody_generator;
 pub mod oscillator;
 pub mod synth;
+pub mod chord_generator;
 
 pub use effects::{Effect, EffectType, Saturation};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
 pub use lfo::{Lfo, LfoRate};
-pub use melody_generator::{Chord, ChordType, Key, Melody, MelodyGenerator, MelodyNote, MelodyStyle, Scale};
+pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};
 pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
 pub use synth::Synth;
+pub use chord_generator::{ChordGenerator, ChordStyle, Key, Scale, Chord, ChordType, ProgressionPattern};
 
 // Re-export commonly used types for convenience
 pub use crate::envelope::AdsrEnvelope;
 pub use crate::filter::BiquadFilter;
-pub use crate::oscillator::Oscillator;
 
 // Virtual Analog parameter IDs (for automation and UI)
 pub use synth::{
