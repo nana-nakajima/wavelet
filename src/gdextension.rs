@@ -1,3 +1,5 @@
+#![cfg(feature = "gdext")]
+
 //! GDExtension Bindings Module
 //!
 //! This module provides the Godot 4 GDExtension bindings for WAVELET.

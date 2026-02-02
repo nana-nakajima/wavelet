@@ -11,6 +11,351 @@
         "waveform": "sawtooth"
       }
     },
+    
+    // ============ NEW PRESETS (21-50) ============
+    
+    {
+      "name": "deep_house_bass",
+      "category": "Bass",
+      "description": "Deep house sliding bass",
+      "parameters": {
+        "volume": 0.75,
+        "filter_cutoff": 300.0,
+        "filter_resonance": 2.0,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": " fm_bass",
+      "category": "Bass",
+      "description": "FM synthesis bass",
+      "parameters": {
+        "volume": 0.65,
+        "filter_cutoff": 600.0,
+        "filter_resonance": 3.0,
+        "waveform": "square"
+      }
+    },
+    {
+      "name": "resonant_bass",
+      "category": "Bass",
+      "description": "Highly resonant techno bass",
+      "parameters": {
+        "volume": 0.7,
+        "filter_cutoff": 450.0,
+        "filter_resonance": 7.0,
+        "waveform": "sawtooth"
+      }
+    },
+    {
+      "name": " Reese_bass",
+      "category": "Bass",
+      "description": "Classic Reese bass drop",
+      "parameters": {
+        "volume": 0.8,
+        "filter_cutoff": 250.0,
+        "filter_resonance": 4.0,
+        "waveform": "square"
+      }
+    },
+    {
+      "name": " rubber_bass",
+      "category": "Bass",
+      "description": "Rubber-like bounce bass",
+      "parameters": {
+        "volume": 0.7,
+        "filter_cutoff": 500.0,
+        "filter_resonance": 5.5,
+        "waveform": "triangle"
+      }
+    },
+    
+    // More Pads
+    {
+      "name": "ambient_pad",
+      "category": "Pad",
+      "description": "Wide ambient soundscape",
+      "parameters": {
+        "volume": 0.4,
+        "filter_cutoff": 3500.0,
+        "filter_resonance": 0.2,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "warm_pad",
+      "category": "Pad",
+      "description": "Warm analog-style pad",
+      "parameters": {
+        "volume": 0.45,
+        "filter_cutoff": 2500.0,
+        "filter_resonance": 0.4,
+        "waveform": "triangle"
+      }
+    },
+    {
+      "name": "space_pad",
+      "category": "Pad",
+      "description": "Spacey sci-fi pad",
+      "parameters": {
+        "volume": 0.35,
+        "filter_cutoff": 4000.0,
+        "filter_resonance": 0.3,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "dream_pad",
+      "category": "Pad",
+      "description": "Dreamy ethereal pad",
+      "parameters": {
+        "volume": 0.4,
+        "filter_cutoff": 2800.0,
+        "filter_resonance": 0.5,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "chill_pad",
+      "category": "Pad",
+      "description": "Lo-fi chill vibes",
+      "parameters": {
+        "volume": 0.38,
+        "filter_cutoff": 3000.0,
+        "filter_resonance": 0.25,
+        "waveform": "triangle"
+      }
+    },
+    
+    // More Leads
+    {
+      "name": "retro_lead",
+      "category": "Lead",
+      "description": "80s retro synth lead",
+      "parameters": {
+        "volume": 0.55,
+        "filter_cutoff": 1800.0,
+        "filter_resonance": 2.5,
+        "waveform": "sawtooth"
+      }
+    },
+    {
+      "name": "digital_lead",
+      "category": "Lead",
+      "description": "Clean digital lead",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 2000.0,
+        "filter_resonance": 1.0,
+        "waveform": "square"
+      }
+    },
+    {
+      "name": "acid_lead",
+      "category": "Lead",
+      "description": "TB-303 style acid lead",
+      "parameters": {
+        "volume": 0.55,
+        "filter_cutoff": 1000.0,
+        "filter_resonance": 5.0,
+        "waveform": "sawtooth"
+      }
+    },
+    {
+      "name": "sync_lead",
+      "category": "Lead",
+      "description": "Hard sync lead",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 1400.0,
+        "filter_resonance": 2.0,
+        "waveform": "sawtooth"
+      }
+    },
+    {
+      "name": "plucky_lead",
+      "category": "Lead",
+      "description": "Plucky 8-bit lead",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 2500.0,
+        "filter_resonance": 4.0,
+        "waveform": "square"
+      }
+    },
+    
+    // Special Effects & Textures
+    {
+      "name": "laser",
+      "category": "Effect",
+      "description": "Laser pew pew effect",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 3000.0,
+        "filter_resonance": 6.0,
+        "waveform": "sawtooth"
+      }
+    },
+    {
+      "name": "rise",
+      "category": "Effect",
+      "description": "Film rising tension",
+      "parameters": {
+        "volume": 0.45,
+        "filter_cutoff": 1500.0,
+        "filter_resonance": 3.0,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "impact",
+      "category": "Effect",
+      "description": "Deep impact boom",
+      "parameters": {
+        "volume": 0.8,
+        "filter_cutoff": 100.0,
+        "filter_resonance": 2.0,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "wind",
+      "category": "Effect",
+      "description": "Howling wind texture",
+      "parameters": {
+        "volume": 0.3,
+        "filter_cutoff": 800.0,
+        "filter_resonance": 0.5,
+        "waveform": "noise"
+      }
+    },
+    {
+      "name": "glitch",
+      "category": "Effect",
+      "description": "Glitchy digital noise",
+      "parameters": {
+        "volume": 0.25,
+        "filter_cutoff": 5000.0,
+        "filter_resonance": 1.0,
+        "waveform": "noise"
+      }
+    },
+    
+    // Keys & Electric
+    {
+      "name": "synth_clav",
+      "category": "Keys",
+      "description": "Clavinet style synth",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 2000.0,
+        "filter_resonance": 4.0,
+        "waveform": "square"
+      }
+    },
+    {
+      "name": "dreamy_keys",
+      "category": "Keys",
+      "description": "Dreamy Rhodes tone",
+      "parameters": {
+        "volume": 0.45,
+        "filter_cutoff": 2500.0,
+        "filter_resonance": 0.8,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "brighter_piano",
+      "category": "Keys",
+      "description": "Bright electric piano",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 3000.0,
+        "filter_resonance": 1.0,
+        "waveform": "triangle"
+      }
+    },
+    {
+      "name": "hammond",
+      "category": "Keys",
+      "description": "Classic organ tone",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 1500.0,
+        "filter_resonance": 1.2,
+        "waveform": "sawtooth"
+      }
+    },
+    
+    // Strings & Orchestra
+    {
+      "name": "synth_strings",
+      "category": "Strings",
+      "description": "Synthesized string section",
+      "parameters": {
+        "volume": 0.4,
+        "filter_cutoff": 3000.0,
+        "filter_resonance": 0.3,
+        "waveform": "triangle"
+      }
+    },
+    {
+      "name": "violin_synth",
+      "category": "Strings",
+      "description": "Synthetic violin",
+      "parameters": {
+        "volume": 0.45,
+        "filter_cutoff": 2500.0,
+        "filter_resonance": 1.0,
+        "waveform": "sawtooth"
+      }
+    },
+    {
+      "name": "cello_pad",
+      "category": "Strings",
+      "description": "Warm cello pad",
+      "parameters": {
+        "volume": 0.4,
+        "filter_cutoff": 2000.0,
+        "filter_resonance": 0.5,
+        "waveform": "triangle"
+      }
+    },
+    
+    // Bells & Percussion
+    {
+      "name": "music_box",
+      "category": "Bell",
+      "description": "Music box melody",
+      "parameters": {
+        "volume": 0.55,
+        "filter_cutoff": 3500.0,
+        "filter_resonance": 2.0,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "celesta",
+      "category": "Bell",
+      "description": "Bright celesta tone",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 4000.0,
+        "filter_resonance": 1.5,
+        "waveform": "sine"
+      }
+    },
+    {
+      "name": "vibraphone_synth",
+      "category": "Bell",
+      "description": "Synthesized vibraphone",
+      "parameters": {
+        "volume": 0.5,
+        "filter_cutoff": 3000.0,
+        "filter_resonance": 3.0,
+        "waveform": "triangle"
+      }
+    },
     {
       "name": "bass",
       "category": "Bass",
@@ -223,7 +568,7 @@
   ],
   "metadata": {
     "version": "2.0.0",
-    "total_presets": 20,
+    "total_presets": 50,
     "categories": ["Basic", "Bass", "Pad", "Lead", "Keys", "Strings", "Bell", "Effect"]
   }
 }

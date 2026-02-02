@@ -9,16 +9,14 @@ authors = ["WAVELET Team"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-gdext = { git = "https://github.com/godot-rust/gdext", branch = "master" }
-godot = { package = "gdext", git = "https://github.com/godot-rust/gdext", branch = "master" }
 rand = "0.8"
 
 [dev-dependencies]
 criterion = "0.5"
 
 [features]
-default = ["gd-extension"]
-gd-extension = []
+default = ["gdext"]
+gdext = ["dep:gdext", "dep:godot"]
 
 [[bench]]
 name = "oscillator_bench"
@@ -29,7 +27,7 @@ name = "filter_bench"
 harness = false
 
 [[bench]]
-name = "synth_bench"
+name = "synch_bench"
 harness = false
 
 [profile.release]
