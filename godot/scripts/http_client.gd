@@ -96,6 +96,42 @@ func rate_preset(preset_id: String, rating: int, comment: String = "") -> void:
 		body["comment"] = comment
 	_post("/api/presets/" + preset_id + "/rate", body)
 
+# ============ Share ============
+
+func generate_share_link(preset_id: String) -> String:
+	# Generate a shareable link for a preset
+	return "https://wavelet.app/share/" + preset_id
+
+func share_to_social(preset_id: String, platform: String) -> void:
+	# Open share dialog for specific platform
+	var share_url = generate_share_link(preset_id)
+	match platform:
+		"twitter":
+			OS.shell_open("https://twitter.com/intent/tweet?text=Check+out+this+WAVELET+preset&url=" + share_url)
+		"facebook":
+			OS.shell_open("https://www.facebook.com/sharer/sharer.php?u=" + share_url)
+		"reddit":
+			OS.shell_open("https://reddit.com/submit?url=" + share_url)
+		"copy":
+			OS.set_clipboard(share_url)
+
+# ============ Follow System ============
+
+func follow_user(user_id: String) -> void:
+	_post("/api/users/" + user_id + "/follow", {})
+
+func unfollow_user(user_id: String) -> void:
+	_delete("/api/users/" + user_id + "/follow")
+
+func check_follow_status(user_id: String) -> void:
+	_get("/api/users/" + user_id + "/follow/check")
+
+func get_followers(user_id: String, page: int = 1, limit: int = 20) -> void:
+	_get("/api/users/" + user_id + "/followers?page=" + str(page) + "&limit=" + str(limit))
+
+func get_following(user_id: String, page: int = 1, limit: int = 20) -> void:
+	_get("/api/users/" + user_id + "/following?page=" + str(page) + "&limit=" + str(limit))
+
 # ============ Community Feed ============
 
 func get_feed(feed_type: String = "latest", page: int = 1, limit: int = 20, 

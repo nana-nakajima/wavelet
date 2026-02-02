@@ -20,6 +20,7 @@ var current_page: int = 1
 var current_feed_type: String = "latest"
 var current_category: String = ""
 var presets_data: Array = []
+var follow_states: Dictionary = {}  # user_id: is_following
 
 func _ready():
 	# Connect signals
@@ -83,12 +84,35 @@ func _on_request_completed(response: Dictionary):
 	preset_list.visible = true
 	
 	if response.get("code") != 200:
+		# Check if this is a follow status check
+		if response.get("endpoint", "").ends_with("/follow/check"):
+			# Ignore follow check errors (user might not exist)
+			return
+		
 		_show_error(http.get_error_message(response))
 		return
 	
 	var data = response.get("data", {})
 	if typeof(data) != TYPE_DICTIONARY:
+		# Check if this is a follow status check response (might be boolean)
+		if typeof(data) == TYPE_BOOL:
+			return
 		_show_error("Invalid response format")
+		return
+	
+	# Check for follow status response
+	var endpoint = response.get("endpoint", "")
+	if endpoint.ends_with("/follow/check"):
+		var is_following = data.get("following", false)
+		var user_id = ""
+		# Extract user_id from endpoint
+		var parts = endpoint.split("/")
+		if parts.size() >= 3:
+			user_id = parts[2]
+		if user_id:
+			follow_states[user_id] = is_following
+			# Refresh UI to update follow buttons
+			_update_preset_list()
 		return
 	
 	presets_data = data.get("items", [])
@@ -123,8 +147,10 @@ func _create_preset_item(preset: Dictionary, index: int) -> Control:
 	name_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 	hbox.add_child(name_label)
 	
+	var author_id = preset.get("author_id", "")
+	var author_name = preset.get("author_name", preset.get("author_username", "Unknown"))
 	var author_label = Label.new()
-	author_label.text = "by " + preset.get("author_name", preset.get("author_username", "Unknown"))
+	author_label.text = "by " + author_name
 	author_label.add_theme_font_size_override("font_size", 12)
 	author_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	hbox.add_child(author_label)
@@ -137,12 +163,41 @@ func _create_preset_item(preset: Dictionary, index: int) -> Control:
 	category_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 	hbox.add_child(category_label)
 	
+	# Buttons container
+	var button_container = VBoxContainer.new()
+	button_container.size_flags_horizontal = Control.SIZE_SHRINK_END
+	button_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	
 	# Download button
 	var download_btn = Button.new()
 	download_btn.text = "Download"
-	download_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+	download_btn.custom_minimum_size = Vector2(80, 30)
 	download_btn.pressed.connect(_on_download_preset.bind(index))
-	hbox.add_child(download_btn)
+	button_container.add_child(download_btn)
+	
+	# Share button (popup menu)
+	var share_btn = Button.new()
+	share_btn.text = "Share"
+	share_btn.custom_minimum_size = Vector2(80, 24)
+	share_btn.pressed.connect(_on_share_preset.bind(index, share_btn))
+	button_container.add_child(share_btn)
+	
+	# Follow button (only if author_id exists and not self)
+	if author_id and http.is_logged_in() and author_id != http.user_id:
+		var follow_btn = Button.new()
+		follow_btn.custom_minimum_size = Vector2(80, 24)
+		follow_btn.pressed.connect(_on_follow_author.bind(author_id, follow_btn))
+		button_container.add_child(follow_btn)
+		
+		# Check follow status
+		if follow_states.has(author_id):
+			follow_btn.text = "Following" if follow_states[author_id] else "Follow"
+		else:
+			follow_btn.text = "Follow"
+			# Fetch follow status
+			http.check_follow_status(author_id)
+	
+	hbox.add_child(button_container)
 	
 	return container
 
@@ -160,6 +215,63 @@ func _on_download_preset(index: int):
 		http.download_preset(preset_id)
 	else:
 		_show_error("Please login to download presets")
+
+func _on_follow_author(author_id: String, button: Button):
+	if not http.is_logged_in():
+		_show_error("Please login to follow creators")
+		return
+	
+	# Toggle follow state
+	var is_following = follow_states.get(author_id, false)
+	
+	if is_following:
+		http.unfollow_user(author_id)
+		button.text = "Follow"
+	else:
+		http.follow_user(author_id)
+		button.text = "Following"
+	
+	# Toggle state (will be confirmed by server response)
+	follow_states[author_id] = not is_following
+
+func _on_share_preset(index: int, button: Button):
+	if index >= presets_data.size():
+		return
+	
+	var preset = presets_data[index]
+	var preset_id = preset.get("id")
+	
+	# Create share popup
+	var popup = PopupMenu.new()
+	popup.add_item("Copy Link", "copy")
+	popup.add_item("Share on Twitter", "twitter")
+	popup.add_item("Share on Facebook", "facebook")
+	popup.add_item("Share on Reddit", "reddit")
+	popup.add_separator()
+	popup.add_item("Close", "close")
+	
+	popup.position = button.get_global_position() + Vector2(0, button.size.y)
+	popup.id_pressed.connect(_on_share_option_selected.bind(preset_id))
+	add_child(popup)
+	popup.popup()
+	
+	# Store popup reference to clean up later
+	popup.about_to_popup.connect(func(): await get_tree().create_timer(2.0).timeout; popup.queue_free())
+
+func _on_share_option_selected(id: Variant, preset_id: String):
+	if typeof(id) == TYPE_STRING:
+		id = int(id)
+	
+	match id:
+		0:  # Copy
+			http.share_to_social(preset_id, "copy")
+			_show_message("Link copied to clipboard!")
+		1:  # Twitter
+			http.share_to_social(preset_id, "twitter")
+		2:  # Facebook
+			http.share_to_social(preset_id, "facebook")
+		3:  # Reddit
+			http.share_to_social(preset_id, "reddit")
 
 func _get_item_stylebox() -> StyleBoxFlat:
 	var style = StyleBoxFlat.new()
