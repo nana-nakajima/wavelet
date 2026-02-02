@@ -1,12 +1,19 @@
 mod db;
 mod middleware;
 mod services;
+mod models;
+mod handlers;
+mod storage;
 
 use actix_web::{web, App, HttpServer, Responder};
 use middleware::jwt::JwtService;
 use services::user_service::{AppState, register, login, get_profile};
+use services::preset_service::PresetService;
+use handlers::preset_handler::configure_routes;
 use db::users::UserRepository;
 use std::sync::Arc;
+use storage::{StorageBackend, LocalStorage};
+use std::path::PathBuf;
 
 /// Health check endpoint
 async fn health() -> impl Responder {
@@ -35,6 +42,9 @@ fn config_routes(cfg: &mut web::ServiceConfig) {
     
     // User routes (protected)
     cfg.route("/api/users/{id}", web::get().to(get_profile));
+    
+    // Preset routes
+    configure_routes(cfg);
 }
 
 #[actix_web::main]
@@ -62,6 +72,14 @@ async fn main() -> std::io::Result<()> {
     // JWT service
     let jwt = JwtService::new(None);
     
+    // Storage backend for presets
+    let data_dir = std::env::var("DATA_DIR")
+        .unwrap_or_else(|_| "./data".to_string());
+    let storage = Arc::new(LocalStorage::new(PathBuf::from(data_dir))) as Arc<dyn StorageBackend>;
+    
+    // Preset service
+    let preset_service = Arc::new(PresetService::new(&pool, storage.clone()));
+    
     // App state
     let app_state = Arc::new(AppState {
         db: pool.clone(),
@@ -73,6 +91,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(app_state.clone()))
             .app_data(web::Data::new(jwt.clone()))
+            .app_data(web::Data::new(preset_service.clone()))
             .configure(config_routes)
     })
     .bind("127.0.0.1:8080")?
