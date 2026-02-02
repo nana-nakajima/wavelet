@@ -121,7 +121,7 @@ impl<'a> UserService<'a> {
             followers_count: 0,
             following_count: 0,
         })
- Handler functions    }
+    }
 }
 
 ///

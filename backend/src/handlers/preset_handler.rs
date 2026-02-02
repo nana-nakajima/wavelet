@@ -267,3 +267,15 @@ async fn get_user_presets(
         }
     }
 }
+
+/// Configure preset routes
+pub fn configure_routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(create_preset)
+       .service(get_preset)
+       .service(search_presets)
+       .service(download_preset)
+       .service(rate_preset)
+       .service(update_preset)
+       .service(delete_preset)
+       .service(get_user_presets);
+}

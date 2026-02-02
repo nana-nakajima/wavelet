@@ -53,9 +53,9 @@ impl<'a> PresetRepository<'a> {
             storage_path
         )
         .fetch_one(self.pool)
-        .await?;
-        
-        Ok(preset)
+        .await
+        .map_err(PresetRepositoryError::from)
+        .ok();
     }
     
     /// Find preset by ID
@@ -78,9 +78,9 @@ impl<'a> PresetRepository<'a> {
             id
         )
         .fetch_optional(self.pool)
-        .await?;
-        
-        Ok(preset)
+        .await
+        .map_err(PresetRepositoryError::from)
+        .ok();
     }
     
     /// Find all presets by user ID
@@ -269,7 +269,7 @@ impl<'a> PresetRepository<'a> {
                     cat
                 )
                 .fetch_one(self.pool)
-                await?
+                .await.map_err(PresetRepositoryError::from)
             }
             (Some(q), None) => {
                 sqlx::query!(

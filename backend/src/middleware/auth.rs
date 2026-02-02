@@ -1,5 +1,5 @@
-use actix_web::{dev::Payload, Error, FromRequest, HttpRequest};
-use futures::future::Ready;
+use actix_web::{dev::Payload, Error, FromRequest, HttpRequest, web};
+use std::future::Ready;
 use crate::middleware::jwt::JwtService;
 
 /// Extractor for authenticated user
@@ -28,7 +28,7 @@ impl FromRequest for AuthUser {
                     
                     if let Ok(claims) = jwt.validate_token(token) {
                         if let Ok(user_id) = uuid::Uuid::parse_str(&claims.sub) {
-                            return futures::future::ready(Ok(AuthUser {
+                            return std::future::ready(Ok(AuthUser {
                                 user_id,
                                 email: claims.email,
                             }));
@@ -39,7 +39,7 @@ impl FromRequest for AuthUser {
         }
         
         // Return unauthorized error
-        futures::future::ready(Err(actix_web::error::ErrorUnauthorized(
+        std::future::ready(Err(actix_web::error::ErrorUnauthorized(
             "Invalid or missing authentication token"
         )))
     }
@@ -67,7 +67,7 @@ impl FromRequest for OptionalAuth {
                     
                     if let Ok(claims) = jwt.validate_token(token) {
                         if let Ok(user_id) = uuid::Uuid::parse_str(&claims.sub) {
-                            return futures::future::ready(Ok(OptionalAuth(Some(AuthUser {
+                            return std::future::ready(Ok(OptionalAuth(Some(AuthUser {
                                 user_id,
                                 email: claims.email,
                             }))));
@@ -77,6 +77,6 @@ impl FromRequest for OptionalAuth {
             }
         }
         
-        futures::future::ready(Ok(OptionalAuth(None)))
+        std::future::ready(Ok(OptionalAuth(None)))
     }
 }
