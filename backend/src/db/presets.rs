@@ -38,8 +38,8 @@ impl<'a> PresetRepository<'a> {
             Preset,
             r#"
             INSERT INTO presets (
-                user_id, name, category, description, parameters, 
-                is_public, storage_path, download_count, rating, rating_count
+                user_id, name, category, description, preset_data, 
+                is_public, storage_path, downloads_count, rating, rating_count
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 0.00, 0)
             RETURNING *
@@ -48,7 +48,7 @@ impl<'a> PresetRepository<'a> {
             data.name,
             data.category,
             data.description,
-            data.parameters,
+            data.preset_data,
             data.is_public,
             storage_path
         )
@@ -69,8 +69,8 @@ impl<'a> PresetRepository<'a> {
         let preset = sqlx::query_as!(
             Preset,
             r#"
-            SELECT id, user_id, name, category, description, parameters,
-                   is_public, download_count, rating, rating_count,
+            SELECT id, user_id, name, category, description, preset_data,
+                   is_public, downloads_count, rating, rating_count,
                    created_at, updated_at
             FROM presets
             WHERE id = $1
@@ -100,8 +100,8 @@ impl<'a> PresetRepository<'a> {
             sqlx::query_as!(
                 Preset,
                 r#"
-                SELECT id, user_id, name, category, description, parameters,
-                       is_public, download_count, rating, rating_count,
+                SELECT id, user_id, name, category, description, preset_data,
+                       is_public, downloads_count, rating, rating_count,
                        created_at, updated_at
                 FROM presets
                 WHERE user_id = $1
@@ -115,8 +115,8 @@ impl<'a> PresetRepository<'a> {
             sqlx::query_as!(
                 Preset,
                 r#"
-                SELECT id, user_id, name, category, description, parameters,
-                       is_public, download_count, rating, rating_count,
+                SELECT id, user_id, name, category, description, preset_data,
+                       is_public, downloads_count, rating, rating_count,
                        created_at, updated_at
                 FROM presets
                 WHERE user_id = $1 AND is_public = true
@@ -152,99 +152,52 @@ impl<'a> PresetRepository<'a> {
     ) -> Result<Vec<Preset>, sqlx::Error> {
         // Build dynamic query based on filters
         let sort_clause = match sort_by {
-            Some("popular") | Some("downloads") => "ORDER BY download_count DESC",
+            Some("popular") | Some("downloads") => "ORDER BY downloads_count DESC",
             Some("rating") => "ORDER BY rating DESC",
             Some("newest") | None => "ORDER BY created_at DESC",
             _ => "ORDER BY created_at DESC",
         };
         
-        // Execute query based on available filters
-        let presets = match (query, category) {
-            (Some(q), Some(cat)) => {
-                sqlx::query_as!(
-                    Preset,
-                    r#"
-                    SELECT id, user_id, name, category, description, parameters,
-                           is_public, download_count, rating, rating_count,
-                           created_at, updated_at
-                    FROM presets
-                    WHERE is_public = true
-                    AND (name ILIKE $1 OR description ILIKE $1)
-                    AND category = $2
-                    {}
-                    LIMIT $3 OFFSET $4
-                    "#,
-                    format!("%{}%", q),
-                    cat,
-                    sort_clause,
-                    limit,
-                    offset
-                )
-                .fetch_all(self.pool)
-                .await?
-            }
-            (Some(q), None) => {
-                sqlx::query_as!(
-                    Preset,
-                    r#"
-                    SELECT id, user_id, name, category, description, parameters,
-                           is_public, download_count, rating, rating_count,
-                           created_at, updated_at
-                    FROM presets
-                    WHERE is_public = true
-                    AND (name ILIKE $1 OR description ILIKE $1)
-                    {}
-                    LIMIT $2 OFFSET $3
-                    "#,
-                    sort_clause,
-                    format!("%{}%", q),
-                    limit,
-                    offset
-                )
-                .fetch_all(self.pool)
-                .await?
-            }
-            (None, Some(cat)) => {
-                sqlx::query_as!(
-                    Preset,
-                    r#"
-                    SELECT id, user_id, name, category, description, parameters,
-                           is_public, download_count, rating, rating_count,
-                           created_at, updated_at
-                    FROM presets
-                    WHERE is_public = true
-                    AND category = $1
-                    {}
-                    LIMIT $2 OFFSET $3
-                    "#,
-                    sort_clause,
-                    cat,
-                    limit,
-                    offset
-                )
-                .fetch_all(self.pool)
-                .await?
-            }
-            (None, None) => {
-                sqlx::query_as!(
-                    Preset,
-                    r#"
-                    SELECT id, user_id, name, category, description, parameters,
-                           is_public, download_count, rating, rating_count,
-                           created_at, updated_at
-                    FROM presets
-                    WHERE is_public = true
-                    {}
-                    LIMIT $1 OFFSET $2
-                    "#,
-                    sort_clause,
-                    limit,
-                    offset
-                )
-                .fetch_all(self.pool)
-                .await?
-            }
-        };
+        let search_pattern = query.map(|q| format!("%{}%", q));
+        
+        // Build WHERE clause
+        let mut conditions = vec!["is_public = true"];
+        let mut params: Vec<&(dyn sqlx::Encode<'_, sqlx::postgres::Postgres> + Send + Sync)> = Vec::new();
+        
+        if let Some(ref q) = search_pattern {
+            conditions.push("(name ILIKE $1 OR description ILIKE $1)".to_string());
+            params.push(q);
+        }
+        
+        if let Some(ref cat) = category {
+            let param_num = params.len() + 1;
+            conditions.push(format!("category = ${}", param_num));
+            params.push(cat);
+        }
+        
+        let where_clause = conditions.join(" AND ");
+        
+        // Build final query
+        let sql = format!(
+            r#"
+            SELECT id, user_id, name, category, description, preset_data,
+                   is_public, downloads_count, rating, rating_count,
+                   created_at, updated_at
+            FROM presets
+            WHERE {}
+            {}
+            LIMIT {} OFFSET {}
+            "#,
+            where_clause,
+            sort_clause,
+            limit,
+            offset
+        );
+        
+        // Execute with proper parameter binding
+        let presets = sqlx::query_as_with::<_, Preset, _>(&sql, &params)
+            .fetch_all(self.pool)
+            .await?;
         
         Ok(presets)
     }
@@ -324,7 +277,7 @@ impl<'a> PresetRepository<'a> {
         sqlx::query!(
             r#"
             UPDATE presets
-            SET download_count = download_count + 1
+            SET downloads_count = downloads_count + 1
             WHERE id = $1
             "#,
             id
@@ -405,10 +358,10 @@ impl<'a> PresetRepository<'a> {
             params.push(Box::new(description) as Box<dyn sqlx::Encode<'_, _>>);
         }
         
-        if let Some(parameters) = &data.parameters {
+        if let Some(preset_data) = &data.preset_data {
             param_count += 1;
-            set_clauses.push(format!("parameters = ${}", param_count));
-            params.push(Box::new(parameters) as Box<dyn sqlx::Encode<'_, _>>);
+            set_clauses.push(format!("preset_data = ${}", param_count));
+            params.push(Box::new(preset_data) as Box<dyn sqlx::Encode<'_, _>>);
         }
         
         if let Some(is_public) = &data.is_public {
@@ -479,8 +432,8 @@ impl<'a> PresetRepository<'a> {
         let presets = sqlx::query_as!(
             Preset,
             r#"
-            SELECT id, user_id, name, category, description, parameters,
-                   is_public, download_count, rating, rating_count,
+            SELECT id, user_id, name, category, description, preset_data,
+                   is_public, downloads_count, rating, rating_count,
                    created_at, updated_at
             FROM presets
             WHERE id = ANY($1)
@@ -498,12 +451,12 @@ impl<'a> PresetRepository<'a> {
         let presets = sqlx::query_as!(
             Preset,
             r#"
-            SELECT id, user_id, name, category, description, parameters,
-                   is_public, download_count, rating, rating_count,
+            SELECT id, user_id, name, category, description, preset_data,
+                   is_public, downloads_count, rating, rating_count,
                    created_at, updated_at
             FROM presets
             WHERE is_public = true AND is_featured = true
-            ORDER BY rating DESC, download_count DESC
+            ORDER BY rating DESC, downloads_count DESC
             LIMIT $1
             "#,
             limit

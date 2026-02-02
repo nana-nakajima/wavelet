@@ -14,7 +14,7 @@ use std::sync::Arc;
 type PresetServiceState = web::Data<Arc<PresetService>>;
 
 /// Create a new preset - POST /api/presets
-#[post("/presets")]
+#[actix_web::post("/presets")]
 async fn create_preset(
     state: PresetServiceState,
     user: AuthUser,
@@ -40,7 +40,7 @@ async fn create_preset(
 }
 
 /// Get a preset by ID - GET /api/presets/{id}
-#[get("/presets/{id}")]
+#[actix_web::get("/presets/{id}")]
 async fn get_preset(
     state: PresetServiceState,
     user: Option<AuthUser>,
@@ -74,7 +74,7 @@ async fn get_preset(
 }
 
 /// Search presets - GET /api/presets
-#[get("/presets")]
+#[actix_web::get("/presets")]
 async fn search_presets(
     state: PresetServiceState,
     query: web::Query<SearchQuery>,
@@ -93,7 +93,7 @@ async fn search_presets(
 }
 
 /// Download preset file - GET /api/presets/{id}/download
-#[get("/presets/{id}/download")]
+#[actix_web::get("/presets/{id}/download")]
 async fn download_preset(
     state: PresetServiceState,
     user: Option<AuthUser>,
@@ -131,7 +131,7 @@ async fn download_preset(
 }
 
 /// Rate a preset - POST /api/presets/{id}/rate
-#[post("/presets/{id}/rate")]
+#[actix_web::post("/presets/{id}/rate")]
 async fn rate_preset(
     state: PresetServiceState,
     user: AuthUser,
@@ -172,7 +172,7 @@ async fn rate_preset(
 }
 
 /// Update a preset - PUT /api/presets/{id}
-#[put("/presets/{id}")]
+#[actix_web::put("/presets/{id}")]
 async fn update_preset(
     state: PresetServiceState,
     user: AuthUser,
@@ -212,7 +212,7 @@ async fn update_preset(
 }
 
 /// Delete a preset - DELETE /api/presets/{id}
-#[delete("/presets/{id}")]
+#[actix_web::delete("/presets/{id}")]
 async fn delete_preset(
     state: PresetServiceState,
     user: AuthUser,
@@ -247,7 +247,7 @@ async fn delete_preset(
 }
 
 /// Get presets by user - GET /api/users/{user_id}/presets
-#[get("/users/{user_id}/presets")]
+#[actix_web::get("/users/{user_id}/presets")]
 async fn get_user_presets(
     state: PresetServiceState,
     path: web::Path<Uuid>,

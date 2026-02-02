@@ -1,6 +1,9 @@
 use sqlx::postgres::PgPool;
 use chrono::NaiveDateTime;
 use uuid::Uuid;
+use serde::{Deserialize, Serialize};
+use actix_web::error::InternalError;
+use std::fmt;
 
 /// User roles
 #[derive(Debug, Clone, PartialEq, sqlx::Type)]
@@ -165,14 +168,17 @@ impl<'a> UserRepository<'a> {
                 u.created_at::text,
                 COALESCE(p.count, 0)::int8 as presets_count,
                 COALESCE(f.followers, 0)::int8 as followers_count,
-                COALESCE(f.following, 0)::int8 as following_count
+                COALESCE(f2.following, 0)::int8 as following_count
             FROM users u
             LEFT JOIN (
                 SELECT user_id, COUNT(*) as count FROM presets WHERE is_public = true GROUP BY user_id
             ) p ON u.id = p.user_id
             LEFT JOIN (
-                SELECT follower_id, COUNT(*) as followers FROM follows GROUP BY follower_id
-            ) f ON u.id = f.follower_id
+                SELECT following_id, COUNT(*) as followers FROM follows GROUP BY following_id
+            ) f ON u.id = f.following_id
+            LEFT JOIN (
+                SELECT follower_id, COUNT(*) as following FROM follows GROUP BY follower_id
+            ) f2 ON u.id = f2.follower_id
             WHERE u.id = $1 AND u.is_active = true
             "#,
             id

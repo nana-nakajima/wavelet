@@ -2,9 +2,7 @@
 
 <div align="center">
 
-![WAVELET Logo](docs/wavelet-logo.png)
-
-**A small wave, like a musical note.**
+**A small wave, like a musical note.** 🌊
 
 *WAVELET is a modular synthesizer built with Rust and Godot 4.*
 

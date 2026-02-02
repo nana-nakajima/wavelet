@@ -18,6 +18,9 @@ ALTER TABLE presets ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) DEFAULT 0.00;
 -- Number of ratings received
 ALTER TABLE presets ADD COLUMN IF NOT EXISTS rating_count INTEGER DEFAULT 0;
 
+-- Storage path for preset files
+ALTER TABLE presets ADD COLUMN IF NOT EXISTS storage_path VARCHAR(500);
+
 -- ============================================
 -- Indexes for Performance
 -- ============================================
@@ -33,8 +36,8 @@ WHERE is_public = true;
 CREATE INDEX IF NOT EXISTS idx_presets_rating ON presets(rating DESC) 
 WHERE rating > 0;
 
--- Index on download_count for sorting by popularity
-CREATE INDEX IF NOT EXISTS idx_presets_downloads ON presets(download_count DESC);
+-- Index on downloads_count for sorting by popularity
+CREATE INDEX IF NOT EXISTS idx_presets_downloads ON presets(downloads_count DESC);
 
 -- ============================================
 -- Preset Ratings Table

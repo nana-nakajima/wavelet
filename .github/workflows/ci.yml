@@ -42,9 +42,9 @@ jobs:
           default: true
 
       - name: Build
-        run: cargo build --no-default-features || echo "Build requires Godot SDK - skipping"
+        run: cargo build --no-default-features --workspace --exclude wavelet-backend || echo "Build requires Godot SDK - skipping"
 
       - name: Run unit tests (core modules only)
         run: |
-          # Test core modules that don't require gdext
-          cargo test --lib --no-default-features -- oscillator envelope filter || echo "Some tests require Godot SDK"
+          # Test core modules that don't require gdext or database
+          cargo test --lib --no-default-features --workspace --exclude wavelet-backend -- oscillator envelope filter || echo "Some tests require Godot SDK"

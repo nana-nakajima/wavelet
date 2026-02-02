@@ -35,7 +35,7 @@ pub struct Preset {
     pub name: String,
     pub category: String,
     pub description: Option<String>,
-    pub parameters: serde_json::Value,  // JSONB parameters
+    pub preset_data: serde_json::Value,  // JSONB parameters
     pub is_public: bool,
     pub download_count: i32,
     pub rating: f32,
@@ -65,7 +65,7 @@ pub struct CreatePresetRequest {
     
     /// JSON object containing all preset parameters
     #[validate]
-    pub parameters: serde_json::Value,
+    pub preset_data: serde_json::Value,
     
     /// Whether preset is public or private
     pub is_public: bool,
@@ -83,7 +83,7 @@ pub struct UpdatePresetRequest {
     pub description: Option<String>,
     
     #[validate]
-    pub parameters: Option<serde_json::Value>,
+    pub preset_data: Option<serde_json::Value>,
     
     pub is_public: Option<bool>,
 }
@@ -112,7 +112,7 @@ pub struct PresetDetailResponse {
     pub name: String,
     pub category: String,
     pub description: Option<String>,
-    pub parameters: serde_json::Value,
+    pub preset_data: serde_json::Value,
     pub author_id: Uuid,
     pub author_name: String,
     pub author_username: String,
@@ -212,7 +212,7 @@ impl PresetDetailResponse {
             name: preset.name.clone(),
             category: preset.category.clone(),
             description: preset.description.clone(),
-            parameters: preset.parameters.clone(),
+            parameters: preset.preset_data.clone(),
             author_id: preset.user_id,
             author_name: author_name.to_string(),
             author_username: author_username.to_string(),
