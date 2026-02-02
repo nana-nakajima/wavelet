@@ -10,6 +10,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 rand = "0.8"
+gdext = { git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
+godot = { package = "gdext", git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -27,7 +29,7 @@ name = "filter_bench"
 harness = false
 
 [[bench]]
-name = "synch_bench"
+name = "synth_bench"
 harness = false
 
 [profile.release]
