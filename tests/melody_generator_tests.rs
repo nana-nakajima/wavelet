@@ -70,18 +70,11 @@ fn test_all_scales_generate_notes() {
     ];
 
     for scale in scales {
-        let key = Key {
-            root: 60,
-            scale,
-        };
+        let key = Key { root: 60, scale };
         let generator = MelodyGenerator::new(key, 120.0, 4);
         let notes = generator.scale_notes();
 
-        assert!(
-            !notes.is_empty(),
-            "Scale {:?} should generate notes",
-            scale
-        );
+        assert!(!notes.is_empty(), "Scale {:?} should generate notes", scale);
 
         // All notes should be valid MIDI notes
         for &note in &notes {
@@ -116,8 +109,16 @@ fn test_pentatonic_scale_structure() {
         .copied()
         .collect();
 
-    assert_eq!(major_octave.len(), 5, "Major pentatonic should have 5 notes");
-    assert_eq!(minor_octave.len(), 5, "Minor pentatonic should have 5 notes");
+    assert_eq!(
+        major_octave.len(),
+        5,
+        "Major pentatonic should have 5 notes"
+    );
+    assert_eq!(
+        minor_octave.len(),
+        5,
+        "Minor pentatonic should have 5 notes"
+    );
 }
 
 /// Tests blues scale has the characteristic "blue notes".
@@ -294,7 +295,10 @@ fn test_classical_style_preset() {
     let mut generator = create_c_major_generator();
     let melody = generator.generate_preset(MelodyStyle::Classical);
 
-    assert!(!melody.notes.is_empty(), "Classical melody should have notes");
+    assert!(
+        !melody.notes.is_empty(),
+        "Classical melody should have notes"
+    );
     assert_eq!(melody.style, MelodyStyle::Classical);
 }
 
@@ -560,7 +564,10 @@ fn test_slow_tempo() {
     let mut generator = MelodyGenerator::new(key, 40.0, 4);
     let melody = generator.generate();
 
-    assert!(!melody.notes.is_empty(), "Slow tempo should still generate notes");
+    assert!(
+        !melody.notes.is_empty(),
+        "Slow tempo should still generate notes"
+    );
 }
 
 /// Tests very fast tempo.
@@ -573,7 +580,10 @@ fn test_fast_tempo() {
     let mut generator = MelodyGenerator::new(key, 200.0, 4);
     let melody = generator.generate();
 
-    assert!(!melody.notes.is_empty(), "Fast tempo should still generate notes");
+    assert!(
+        !melody.notes.is_empty(),
+        "Fast tempo should still generate notes"
+    );
 }
 
 /// Tests different root notes.
@@ -641,13 +651,7 @@ fn test_custom_parameters() {
     };
 
     // Test various parameter combinations
-    let params = [
-        (0.0, 0.0),
-        (0.5, 0.5),
-        (1.0, 1.0),
-        (0.1, 0.9),
-        (0.9, 0.1),
-    ];
+    let params = [(0.0, 0.0), (0.5, 0.5), (1.0, 1.0), (0.1, 0.9), (0.9, 0.1)];
 
     for (complexity, randomness) in params {
         let generator = MelodyGenerator::with_params(key, 120.0, 4, complexity, randomness);
@@ -876,8 +880,7 @@ fn test_phrase_endings_softer() {
     let all_velocities: Vec<f32> = melody.notes.iter().map(|n| n.velocity).collect();
 
     // Phrase endings should generally be softer or equal
-    let avg_phrase_end = phrase_endings.iter().sum::<f32>()
-        / phrase_endings.len().max(1) as f32;
+    let avg_phrase_end = phrase_endings.iter().sum::<f32>() / phrase_endings.len().max(1) as f32;
     let avg_all = all_velocities.iter().sum::<f32>() / all_velocities.len() as f32;
 
     // This is a soft check - phrase endings may not always be softer
@@ -895,7 +898,10 @@ fn test_midi_export_no_feature() {
     let result = generator.export_midi("/tmp/test.mid");
 
     // Result should be an error (since mido feature is not enabled by default)
-    assert!(result.is_err(), "MIDI export should fail without mido feature");
+    assert!(
+        result.is_err(),
+        "MIDI export should fail without mido feature"
+    );
 }
 
 // ===== Key and Scale Enum Tests =====
@@ -924,10 +930,7 @@ fn test_scale_variants() {
 
     let mut seen = HashSet::new();
     for &scale in &scales {
-        assert!(
-            !seen.contains(&scale),
-            "Duplicate scale found"
-        );
+        assert!(!seen.contains(&scale), "Duplicate scale found");
         seen.insert(scale);
     }
 }

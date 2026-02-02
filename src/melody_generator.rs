@@ -263,7 +263,13 @@ impl MelodyGenerator {
     /// * `length` - Number of measures
     /// * `complexity` - How complex the melody is (0.0-1.0)
     /// * `randomness` - How random the melody is (0.0-1.0)
-    pub fn with_params(key: Key, tempo: f64, length: usize, complexity: f32, randomness: f32) -> Self {
+    pub fn with_params(
+        key: Key,
+        tempo: f64,
+        length: usize,
+        complexity: f32,
+        randomness: f32,
+    ) -> Self {
         Self {
             sample_rate: 44100.0,
             key,
@@ -721,7 +727,9 @@ impl MelodyGenerator {
                 if rng.gen::<f32>() > leap_chance {
                     // Step up or down
                     let step = if rng.gen_bool(0.5) { 1 } else { -1 };
-                    let new_idx = (last_idx as i32 + step).clamp(0i32, (scale_notes.len() as i32) - 1) as usize;
+                    let new_idx = (last_idx as i32 + step)
+                        .clamp(0i32, (scale_notes.len() as i32) - 1)
+                        as usize;
                     return scale_notes[new_idx];
                 }
             }
@@ -761,7 +769,8 @@ impl MelodyGenerator {
 
         // Beat emphasis (beats 1 and 3 have more emphasis)
         let beat_in_measure = current_beat % 4.0;
-        let emphasis = if (beat_in_measure - 0.0).abs() < 0.1 || (beat_in_measure - 2.0).abs() < 0.1 {
+        let emphasis = if (beat_in_measure - 0.0).abs() < 0.1 || (beat_in_measure - 2.0).abs() < 0.1
+        {
             1.2
         } else {
             1.0
@@ -932,7 +941,8 @@ mod tests {
 
         let pop_melody = MelodyGenerator::new(key, 120.0, 8).generate_preset(MelodyStyle::Pop);
         let jazz_melody = MelodyGenerator::new(key, 120.0, 8).generate_preset(MelodyStyle::Jazz);
-        let ambient_melody = MelodyGenerator::new(key, 120.0, 8).generate_preset(MelodyStyle::Ambient);
+        let ambient_melody =
+            MelodyGenerator::new(key, 120.0, 8).generate_preset(MelodyStyle::Ambient);
 
         // All should produce valid melodies
         assert!(!pop_melody.notes.is_empty());
@@ -1059,10 +1069,7 @@ mod tests {
         ];
 
         for scale in scales {
-            let key = Key {
-                root: 60,
-                scale,
-            };
+            let key = Key { root: 60, scale };
             let generator = MelodyGenerator::new(key, 120.0, 4);
             let notes = generator.scale_notes();
 
@@ -1071,7 +1078,12 @@ mod tests {
 
             // All notes should be within valid MIDI range
             for &note in &notes {
-                assert!(note >= 24 && note <= 108, "Note {} out of range for {:?}", note, scale);
+                assert!(
+                    note >= 24 && note <= 108,
+                    "Note {} out of range for {:?}",
+                    note,
+                    scale
+                );
             }
         }
     }

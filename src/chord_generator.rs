@@ -380,7 +380,11 @@ impl ChordGenerator {
         duration: f32,
     ) -> Vec<Chord> {
         let is_minor = matches!(self.key.scale, Scale::Minor | Scale::HarmonicMinor);
-        let root_type = if is_minor { ChordType::Minor } else { ChordType::Major };
+        let root_type = if is_minor {
+            ChordType::Minor
+        } else {
+            ChordType::Major
+        };
 
         pattern
             .iter()
@@ -400,7 +404,11 @@ impl ChordGenerator {
     /// Build a jazz-style progression with extended chords.
     fn build_progression_jazz(&mut self, pattern: &[i32]) -> Vec<Chord> {
         let is_minor = matches!(self.key.scale, Scale::Minor | Scale::HarmonicMinor);
-        let root_type = if is_minor { ChordType::Minor } else { ChordType::Major };
+        let root_type = if is_minor {
+            ChordType::Minor
+        } else {
+            ChordType::Major
+        };
 
         pattern
             .iter()
@@ -421,7 +429,11 @@ impl ChordGenerator {
     /// Build an ambient-style progression with rich extensions.
     fn build_progression_ambient(&mut self, pattern: &[i32]) -> Vec<Chord> {
         let is_minor = matches!(self.key.scale, Scale::Minor | Scale::HarmonicMinor);
-        let root_type = if is_minor { ChordType::Minor } else { ChordType::Major };
+        let root_type = if is_minor {
+            ChordType::Minor
+        } else {
+            ChordType::Major
+        };
 
         pattern
             .iter()
@@ -443,7 +455,11 @@ impl ChordGenerator {
     /// Build a classical-style progression.
     fn build_progression_classical(&mut self, pattern: &[i32]) -> Vec<Chord> {
         let is_minor = matches!(self.key.scale, Scale::Minor | Scale::HarmonicMinor);
-        let root_type = if is_minor { ChordType::Minor } else { ChordType::Major };
+        let root_type = if is_minor {
+            ChordType::Minor
+        } else {
+            ChordType::Major
+        };
 
         pattern
             .iter()
@@ -463,7 +479,11 @@ impl ChordGenerator {
     /// Build an R&B-style progression with 7th chords.
     fn build_progression_rnb(&mut self, pattern: &[i32]) -> Vec<Chord> {
         let is_minor = matches!(self.key.scale, Scale::Minor | Scale::HarmonicMinor);
-        let root_type = if is_minor { ChordType::Minor } else { ChordType::Major };
+        let root_type = if is_minor {
+            ChordType::Minor
+        } else {
+            ChordType::Major
+        };
 
         pattern
             .iter()
@@ -606,7 +626,11 @@ impl ChordGenerator {
     ) -> Vec<Chord> {
         let mut progression = Vec::new();
         let is_minor = matches!(self.key.scale, Scale::Minor | Scale::HarmonicMinor);
-        let base_type = if is_minor { ChordType::Minor } else { ChordType::Major };
+        let base_type = if is_minor {
+            ChordType::Minor
+        } else {
+            ChordType::Major
+        };
 
         for i in 0..num_chords {
             let degree = self.rng.gen_range(1..=6);
@@ -647,16 +671,34 @@ impl ChordGenerator {
     /// The chord progression
     pub fn generate_from_pattern(&mut self, pattern: ProgressionPattern) -> Vec<Chord> {
         match pattern {
-            ProgressionPattern::PopPillar => self.build_progression(&[1, 5, 6, 4], ChordType::Major, 4.0),
-            ProgressionPattern::StandardPop => self.build_progression(&[1, 6, 4, 5], ChordType::Major, 4.0),
+            ProgressionPattern::PopPillar => {
+                self.build_progression(&[1, 5, 6, 4], ChordType::Major, 4.0)
+            }
+            ProgressionPattern::StandardPop => {
+                self.build_progression(&[1, 6, 4, 5], ChordType::Major, 4.0)
+            }
             ProgressionPattern::TwoFiveOne => self.build_progression_jazz(&[2, 5, 1]),
-            ProgressionPattern::Circle => self.build_progression(&[1, 6, 2, 5, 3, 7, 4, 1], ChordType::Major, 2.0),
-            ProgressionPattern::RnBFlow => self.build_progression(&[1, 4, 2, 5], ChordType::Major, 4.0),
-            ProgressionPattern::NeoSoul => self.build_progression(&[1, 6, 3, 7], ChordType::Minor, 4.0),
-            ProgressionPattern::MinorDescent => self.build_progression(&[1, 7, 6, 5], ChordType::Minor, 4.0),
-            ProgressionPattern::RockDriver => self.build_progression(&[1, 4, 1, 5], ChordType::Major, 4.0),
-            ProgressionPattern::PopMinor => self.build_progression(&[6, 4, 1, 5], ChordType::Major, 4.0),
-            ProgressionPattern::JazzMinor => self.build_progression(&[1, 3, 4, 5], ChordType::Minor, 4.0),
+            ProgressionPattern::Circle => {
+                self.build_progression(&[1, 6, 2, 5, 3, 7, 4, 1], ChordType::Major, 2.0)
+            }
+            ProgressionPattern::RnBFlow => {
+                self.build_progression(&[1, 4, 2, 5], ChordType::Major, 4.0)
+            }
+            ProgressionPattern::NeoSoul => {
+                self.build_progression(&[1, 6, 3, 7], ChordType::Minor, 4.0)
+            }
+            ProgressionPattern::MinorDescent => {
+                self.build_progression(&[1, 7, 6, 5], ChordType::Minor, 4.0)
+            }
+            ProgressionPattern::RockDriver => {
+                self.build_progression(&[1, 4, 1, 5], ChordType::Major, 4.0)
+            }
+            ProgressionPattern::PopMinor => {
+                self.build_progression(&[6, 4, 1, 5], ChordType::Major, 4.0)
+            }
+            ProgressionPattern::JazzMinor => {
+                self.build_progression(&[1, 3, 4, 5], ChordType::Minor, 4.0)
+            }
         }
     }
 }
@@ -682,7 +724,9 @@ impl std::fmt::Display for ChordType {
 /// Convert chord to string representation.
 impl std::fmt::Display for Chord {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        let note_names = [
+            "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+        ];
         // MIDI note 60 (middle C) should be C4, so octave = (root / 12) - 1
         let octave = (self.root / 12).saturating_sub(1);
         let note = note_names[(self.root % 12) as usize];

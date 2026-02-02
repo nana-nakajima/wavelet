@@ -2,6 +2,7 @@ use sqlx::postgres::PgPool;
 use chrono::NaiveDateTime;
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 use actix_web::error::InternalError;
 use std::fmt;
 

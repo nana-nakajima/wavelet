@@ -567,7 +567,7 @@ impl<'a> PresetRepository<'a> {
     ) -> Result<bool, sqlx::Error> {
         let result = sqlx::query!(
             r#"
-            SELECT 1 FROM preset_ratings
+            SELECT 1 as exists FROM preset_ratings
             WHERE preset_id = $1 AND user_id = $2
             "#,
             preset_id,

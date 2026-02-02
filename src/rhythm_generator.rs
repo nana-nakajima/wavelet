@@ -284,7 +284,8 @@ impl RhythmGenerator {
             notes.extend(basic_notes);
 
             // Generate fills for last measure or based on density
-            if is_last_measure || (self.fill_density > 0.0 && rng.gen::<f32>() < self.fill_density) {
+            if is_last_measure || (self.fill_density > 0.0 && rng.gen::<f32>() < self.fill_density)
+            {
                 let fill_start = measure_start + (beats_per_measure * 0.75);
                 let fill_notes = self.generate_fill(fill_start, &mut rng);
                 notes.extend(fill_notes);
@@ -841,14 +842,16 @@ impl RhythmGenerator {
     ///
     /// Vector of DrumNotes with swing applied.
     fn apply_swing(&self, notes: Vec<DrumNote>, rng: &mut impl Rng) -> Vec<DrumNote> {
-        notes.into_iter()
+        notes
+            .into_iter()
             .map(|note| {
                 // Only apply swing to 8th and 16th note off-beats
                 let beat_fraction = note.start_beat % 1.0;
 
                 if beat_fraction > 0.1 && beat_fraction < 0.9 {
                     // Apply swing offset
-                    let swing_amount = self.swing as f64 * (0.5 - (beat_fraction - 0.5).abs()) * 2.0;
+                    let swing_amount =
+                        self.swing as f64 * (0.5 - (beat_fraction - 0.5).abs()) * 2.0;
                     DrumNote {
                         start_beat: note.start_beat + swing_amount * rng.gen_range(0.8..1.2),
                         ..note
@@ -1131,7 +1134,11 @@ mod tests {
 
         for style in styles {
             let pattern = RhythmGenerator::new(120.0, 2).generate_preset(style);
-            assert!(!pattern.notes.is_empty(), "Style {:?} should generate notes", style);
+            assert!(
+                !pattern.notes.is_empty(),
+                "Style {:?} should generate notes",
+                style
+            );
         }
     }
 

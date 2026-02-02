@@ -2,6 +2,7 @@
 // WAVELET Backend - Preset management API
 
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use sqlx::postgres::PgRow;

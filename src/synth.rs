@@ -565,8 +565,12 @@ impl Synth {
         let key = crate::melody_generator::Key {
             root: root_note,
             scale: match style {
-                crate::melody_generator::MelodyStyle::Jazz => crate::melody_generator::Scale::Mixolydian,
-                crate::melody_generator::MelodyStyle::Ambient => crate::melody_generator::Scale::Lydian,
+                crate::melody_generator::MelodyStyle::Jazz => {
+                    crate::melody_generator::Scale::Mixolydian
+                }
+                crate::melody_generator::MelodyStyle::Ambient => {
+                    crate::melody_generator::Scale::Lydian
+                }
                 _ => crate::melody_generator::Scale::Major,
             },
         };

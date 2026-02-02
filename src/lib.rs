@@ -29,6 +29,7 @@
 //! synth.note_on(60, 127); // MIDI note 60 (C4) with velocity 127
 //! ```
 
+pub mod chord_generator;
 pub mod effects;
 pub mod envelope;
 pub mod filter;
@@ -36,19 +37,22 @@ pub mod gdextension;
 pub mod lfo;
 pub mod melody_generator;
 pub mod oscillator;
-pub mod synth;
-pub mod chord_generator;
 pub mod rhythm_generator;
+pub mod synth;
 
+pub use chord_generator::{
+    Chord, ChordGenerator, ChordStyle, ChordType, Key, ProgressionPattern, Scale,
+};
 pub use effects::{Effect, EffectType, Saturation};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
 pub use lfo::{Lfo, LfoRate};
 pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};
 pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
+pub use rhythm_generator::{
+    Complexity, DrumNote, DrumPattern, DrumSound, RhythmGenerator, RhythmStyle,
+};
 pub use synth::Synth;
-pub use chord_generator::{ChordGenerator, ChordStyle, Key, Scale, Chord, ChordType, ProgressionPattern};
-pub use rhythm_generator::{RhythmGenerator, DrumPattern, DrumNote, RhythmStyle, DrumSound, Complexity};
 
 // Re-export commonly used types for convenience
 pub use crate::envelope::AdsrEnvelope;
