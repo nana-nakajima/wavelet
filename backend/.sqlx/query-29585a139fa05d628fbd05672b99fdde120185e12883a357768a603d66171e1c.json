@@ -1,0 +1,124 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO presets (\n                user_id, name, category, description, preset_data, \n                is_public, storage_path, downloads_count, rating, rating_count\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 0.00::float, 0)\n            RETURNING id, user_id, name, description, category, tags, preset_data,\n                      thumbnail_url, is_public, is_featured, downloads_count, likes_count,\n                      rating::float as rating, rating_count, storage_path, created_at, updated_at\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "category",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "tags",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 6,
+        "name": "preset_data",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "thumbnail_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "is_public",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 9,
+        "name": "is_featured",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 10,
+        "name": "downloads_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "likes_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 12,
+        "name": "rating",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 13,
+        "name": "rating_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 14,
+        "name": "storage_path",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 15,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 16,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Jsonb",
+        "Bool",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      null,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "29585a139fa05d628fbd05672b99fdde120185e12883a357768a603d66171e1c"
+}

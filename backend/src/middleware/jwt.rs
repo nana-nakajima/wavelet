@@ -1,4 +1,5 @@
 use jsonwebtoken::{encode, decode, Header, Algorithm, Validation, EncodingKey, DecodingKey};
+use jsonwebtoken::errors::Error as JwtError;
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -15,6 +16,7 @@ pub struct Claims {
 }
 
 /// JWT configuration
+#[derive(Clone)]
 pub struct JwtConfig {
     pub secret: String,
     pub expiration_hours: i64,
@@ -74,7 +76,7 @@ impl JwtService {
     }
     
     /// Validate and decode a JWT token
-    pub fn validate_token(&self, token: &str) -> Result<Claims, jsonwebtoken::Error> {
+    pub fn validate_token(&self, token: &str) -> Result<Claims, JwtError> {
         let secret = self.config.secret.as_bytes();
         
         let validation = Validation::new(self.config.algorithm);
@@ -87,9 +89,9 @@ impl JwtService {
     }
     
     /// Extract user ID from token
-    pub fn get_user_id(&self, token: &str) -> Result<Uuid, jsonwebtoken::Error> {
-        let claims = self.validate_token(token)?;
-        Uuid::parse_str(&claims.sub).map_err(|_| jsonwebtoken::Error::InvalidToken)
+    pub fn get_user_id(&self, token: &str) -> Result<Uuid, String> {
+        let claims = self.validate_token(token).map_err(|e| e.to_string())?;
+        Uuid::parse_str(&claims.sub).map_err(|_| "Invalid user ID in token".to_string())
     }
 }
 
@@ -100,23 +102,3 @@ pub struct TokenResponse {
     pub token_type: String,
     pub expires_in: i64,
 }
-
-/// JWT Error types
-#[derive(Debug)]
-pub enum JwtError {
-    InvalidToken,
-    ExpiredToken,
-    InvalidClaims,
-}
-
-impl std::fmt::Display for JwtError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            JwtError::InvalidToken => write!(f, "Invalid token"),
-            JwtError::ExpiredToken => write!(f, "Token has expired"),
-            JwtError::InvalidClaims => write!(f, "Invalid token claims"),
-        }
-    }
-}
-
-impl std::error::Error for JwtError {}

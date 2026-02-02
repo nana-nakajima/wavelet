@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE presets p\n            SET \n                rating = (\n                    SELECT AVG(r.rating)::decimal(3,2)\n                    FROM preset_ratings r\n                    WHERE r.preset_id = p.id\n                ),\n                rating_count = (\n                    SELECT COUNT(*)\n                    FROM preset_ratings r\n                    WHERE r.preset_id = p.id\n                )\n            WHERE p.id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "76bb8c37a4b70800f490361f540758055cb413da4377041c66560108a1718fc6"
+}

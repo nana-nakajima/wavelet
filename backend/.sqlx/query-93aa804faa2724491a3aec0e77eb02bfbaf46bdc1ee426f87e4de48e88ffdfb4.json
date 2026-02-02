@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE presets\n            SET downloads_count = downloads_count + 1\n            WHERE id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "93aa804faa2724491a3aec0e77eb02bfbaf46bdc1ee426f87e4de48e88ffdfb4"
+}

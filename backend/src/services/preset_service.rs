@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::db::presets::PresetRepository;
 use crate::models::preset::{
     Preset, PresetResponse, PresetDetailResponse, PresetListResponse,
-    CreatePresetRequest, UpdatePresetRequest, SearchQuery, RateRequest,
+    CreatePresetRequest, UpdatePresetRequest, SearchQuery, RateRequest, FeedQuery,
 };
 use crate::storage::{StorageBackend, StorageError};
 
@@ -74,14 +74,14 @@ impl PresetService {
         self.validate_category(&data.category)?;
         
         // Serialize parameters to bytes for storage
-        let parameters_json = serde_json::to_string(&data.parameters)
+        let preset_data_json = serde_json::to_string(&data.preset_data)
             .map_err(|e| PresetServiceError::ValidationError(e.to_string()))?;
         
         // Create preset in database first
         let preset = self.repo.create(&user_id, &data, None).await?;
         
         // Upload parameters to storage
-        let storage_path = self.storage.upload_preset(preset.id, parameters_json.as_bytes()).await?;
+        let storage_path = self.storage.upload_preset(preset.id, preset_data_json.as_bytes()).await?;
         
         // Update preset with storage path
         // Note: In a real implementation, you'd update the DB with the storage path
@@ -297,10 +297,10 @@ impl PresetService {
             .ok_or(PresetServiceError::NotFound)?;
         
         // If parameters updated, update storage
-        if let Some(parameters) = &data.parameters {
-            let parameters_json = serde_json::to_string(parameters)
+        if let Some(parameters) = &data.preset_data {
+            let preset_data_json = serde_json::to_string(parameters)
                 .map_err(|e| PresetServiceError::ValidationError(e.to_string()))?;
-            let _ = self.storage.upload_preset(preset_id, parameters_json.as_bytes()).await;
+            let _ = self.storage.upload_preset(preset_id, preset_data_json.as_bytes()).await;
         }
         
         // Get author info
@@ -379,6 +379,69 @@ impl PresetService {
         }
         
         Ok(responses)
+    }
+    
+    /// Get feed presets
+    /// 
+    /// # Arguments
+    /// * `query` - Feed query parameters
+    /// * `user_id` - Optional user ID for personalized feeds
+    /// 
+    /// # Returns
+    /// Paginated list of feed presets
+    pub async fn get_feed(
+        &self,
+        query: FeedQuery,
+        user_id: Option<Uuid>,
+    ) -> PresetServiceResult<PresetListResponse> {
+        // Validate and normalize pagination
+        let page = if query.page < 1 { 1 } else { query.page };
+        let limit = if query.limit < 1 { 20 } else { query.limit.min(100) };
+        let offset = (page - 1) * limit;
+        
+        // Validate feed type
+        let feed_type = match query.feed_type.as_str() {
+            "popular" | "featured" | "following" | "latest" => query.feed_type.as_str(),
+            _ => "latest",
+        };
+        
+        // Get presets from repository
+        let presets = self.repo.get_feed(
+            feed_type,
+            query.category.as_deref(),
+            user_id,
+            limit,
+            offset,
+        ).await?;
+        
+        // Get total count
+        let total = self.repo.count_feed(
+            feed_type,
+            query.category.as_deref(),
+            user_id,
+        ).await?;
+        
+        // Convert to response with author info
+        let mut preset_responses = Vec::new();
+        for preset in presets {
+            let author_name = self.repo.get_author_name(&preset.user_id).await?
+                .unwrap_or_else(|| "Unknown".to_string());
+            
+            preset_responses.push(PresetResponse::from_preset_with_author(
+                &preset,
+                &author_name,
+            ));
+        }
+        
+        let total_pages = (total as f64 / limit as f64).ceil() as i64;
+        
+        Ok(PresetListResponse {
+            presets: preset_responses,
+            total,
+            page,
+            limit,
+            total_pages,
+        })
     }
     
     /// Validate preset category

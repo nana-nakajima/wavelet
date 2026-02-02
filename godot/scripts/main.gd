@@ -3,7 +3,9 @@ extends Control
 # WAVELET - Abstract Sound Synthesizer
 # Main script for the synthesizer UI and audio processing
 
-# References to UI elements
+# Community features
+@onready var http_client: Node = $HTTPClient
+@onready var community_panel: Control = $CommunityPanel
 @onready var volume_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/VolumeSlider
 @onready var filter_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/FilterSlider
 @onready var resonance_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/ResonanceSlider
@@ -59,6 +61,9 @@ func _ready() -> void:
 	# Initialize audio system
 	setup_audio()
 	
+	# Initialize community features
+	_init_community()
+	
 	# Connect UI signals
 	volume_slider.value_changed.connect(_on_volume_changed)
 	filter_slider.value_changed.connect(_on_filter_changed)
@@ -99,6 +104,18 @@ func setup_audio() -> void:
 	
 	# Get playback interface
 	playback = audio_player.get_stream_playback()
+
+func _init_community() -> void:
+	# Initialize HTTP client
+	if http_client:
+		print("🌐 Community features initialized")
+		# Check if user is logged in
+		if http_client.is_logged_in():
+			print("✓ User is logged in")
+	
+	# Connect community panel signals if available
+	if community_panel and community_panel.has_method("load_feed"):
+		print("✓ Community panel ready")
 
 func _process(delta: float) -> void:
 	# Process audio buffer

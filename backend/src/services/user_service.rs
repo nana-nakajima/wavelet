@@ -159,6 +159,7 @@ pub async fn get_profile(
 }
 
 // AppState struct for dependency injection
+#[derive(Clone)]
 pub struct AppState {
     pub db: sqlx::PgPool,
     pub jwt: JwtService,

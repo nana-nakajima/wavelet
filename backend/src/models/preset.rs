@@ -6,6 +6,7 @@ use validator::Validate;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use sqlx::postgres::PgRow;
+use sqlx::types::BigDecimal;
 use sqlx::Row;
 
 /// Preset category types
@@ -29,20 +30,49 @@ impl Default for PresetCategory {
 }
 
 /// Main Preset model - represents a synth preset in the database
-#[derive(Debug, Clone, sqlx::FromRow)]
+#[derive(Debug, Clone)]
 pub struct Preset {
     pub id: Uuid,
     pub user_id: Uuid,
     pub name: String,
-    pub category: String,
     pub description: Option<String>,
-    pub preset_data: serde_json::Value,  // JSONB parameters
+    pub category: String,
+    pub tags: Option<Vec<String>>,
+    pub preset_data: serde_json::Value,
+    pub thumbnail_url: Option<String>,
     pub is_public: bool,
-    pub download_count: i32,
-    pub rating: f32,
+    pub is_featured: bool,
+    pub downloads_count: i32,
+    pub likes_count: i32,
+    pub rating: f64,  // Calculated from BigDecimal when needed
     pub rating_count: i32,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub storage_path: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl sqlx::FromRow<'_, PgRow> for Preset {
+    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Preset {
+            id: row.try_get("id")?,
+            user_id: row.try_get("user_id")?,
+            name: row.try_get("name")?,
+            description: row.try_get("description")?,
+            category: row.try_get("category")?,
+            tags: row.try_get("tags")?,
+            preset_data: row.try_get("preset_data")?,
+            thumbnail_url: row.try_get("thumbnail_url")?,
+            is_public: row.try_get("is_public")?,
+            is_featured: row.try_get("is_featured")?,
+            downloads_count: row.try_get("downloads_count")?,
+            likes_count: row.try_get("likes_count")?,
+            rating: row.try_get::<BigDecimal, _>("rating")?.to_string().parse().unwrap_or(0.0),
+            rating_count: row.try_get("rating_count")?,
+            storage_path: row.try_get("storage_path")?,
+            created_at: row.try_get("created_at")?,
+            updated_at: row.try_get("updated_at")?,
+        })
+    }
 }
 
 /// Preset with author information (for API responses)
@@ -65,7 +95,6 @@ pub struct CreatePresetRequest {
     pub description: Option<String>,
     
     /// JSON object containing all preset parameters
-    #[validate]
     pub preset_data: serde_json::Value,
     
     /// Whether preset is public or private
@@ -83,9 +112,10 @@ pub struct UpdatePresetRequest {
     
     pub description: Option<String>,
     
-    #[validate]
+    /// JSON object containing all preset parameters
     pub preset_data: Option<serde_json::Value>,
     
+    /// Whether preset is public or private
     pub is_public: Option<bool>,
 }
 
@@ -98,7 +128,7 @@ pub struct PresetResponse {
     pub description: Option<String>,
     pub author_id: Uuid,
     pub author_name: String,
-    pub download_count: i32,
+    pub downloads_count: i32,
     pub rating: f32,
     pub rating_count: i32,
     pub is_public: bool,
@@ -117,7 +147,7 @@ pub struct PresetDetailResponse {
     pub author_id: Uuid,
     pub author_name: String,
     pub author_username: String,
-    pub download_count: i32,
+    pub downloads_count: i32,
     pub rating: f32,
     pub rating_count: i32,
     pub is_public: bool,
@@ -152,6 +182,29 @@ fn default_page() -> i64 {
 
 fn default_limit() -> i64 {
     20
+}
+
+/// Feed query parameters
+#[derive(Debug, Deserialize, Default)]
+pub struct FeedQuery {
+    /// Feed type: "latest", "popular", "featured", "following"
+    #[serde(default = "default_feed_type")]
+    pub feed_type: String,
+    
+    /// Filter by category
+    pub category: Option<String>,
+    
+    /// Page number (1-indexed)
+    #[serde(default = "default_page")]
+    pub page: i64,
+    
+    /// Items per page
+    #[serde(default = "default_limit")]
+    pub limit: i64,
+}
+
+fn default_feed_type() -> String {
+    "latest".to_string()
 }
 
 /// Paginated list response
@@ -195,8 +248,8 @@ impl PresetResponse {
             description: preset.description.clone(),
             author_id: preset.user_id,
             author_name: author_name.to_string(),
-            download_count: preset.download_count,
-            rating: preset.rating,
+            downloads_count: preset.downloads_count,
+            rating: preset.rating as f32,
             rating_count: preset.rating_count,
             is_public: preset.is_public,
             created_at: preset.created_at,
@@ -213,12 +266,12 @@ impl PresetDetailResponse {
             name: preset.name.clone(),
             category: preset.category.clone(),
             description: preset.description.clone(),
-            parameters: preset.preset_data.clone(),
+            preset_data: preset.preset_data.clone(),
             author_id: preset.user_id,
             author_name: author_name.to_string(),
             author_username: author_username.to_string(),
-            download_count: preset.download_count,
-            rating: preset.rating,
+            downloads_count: preset.downloads_count,
+            rating: preset.rating as f32,
             rating_count: preset.rating_count,
             is_public: preset.is_public,
             created_at: preset.created_at,

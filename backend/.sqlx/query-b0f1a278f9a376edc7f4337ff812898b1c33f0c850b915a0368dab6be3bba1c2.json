@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO preset_ratings (preset_id, user_id, rating, comment)\n            VALUES ($1, $2, $3, $4)\n            ON CONFLICT (preset_id, user_id)\n            DO UPDATE SET rating = EXCLUDED.rating, comment = COALESCE(EXCLUDED.comment, preset_ratings.comment)\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "preset_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "rating",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "comment",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "b0f1a278f9a376edc7f4337ff812898b1c33f0c850b915a0368dab6be3bba1c2"
+}

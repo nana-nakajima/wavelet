@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT COUNT(*) as count\n                    FROM presets\n                    WHERE is_public = true\n                    AND category = $1\n                    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "cd1d1c9ebc8416e5012d27fdb38070d97af9b5b329fa7baac1ef3a49d2a818f6"
+}

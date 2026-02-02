@@ -1,0 +1,224 @@
+[gd_scene load_steps=2 format=3 uid="uid://wavelet_community"]
+
+[ext_resource type="Script" path="res://scripts/community_panel.gd" id="1_community"]
+
+[node name="CommunityPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_community")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 10.0
+offset_bottom = 50.0
+grow_horizontal = 2
+text = "🌐 Community Presets"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FeedControls" type="HBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 60.0
+offset_right = -20.0
+offset_bottom = 100.0
+grow_horizontal = 2
+theme_override_constants/separation = 10
+
+[node name="FeedType" type="OptionButton" parent="Panel/FeedControls"]
+custom_minimum_size = Vector2(150, 30)
+layout_mode = 2
+
+[node name="SearchInput" type="LineEdit" parent="Panel/FeedControls"]
+custom_minimum_size = Vector2(300, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Search presets..."
+
+[node name="SearchButton" type="Button" parent="Panel/FeedControls"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "Search"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 110.0
+offset_right = -20.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PresetList" type="VBoxContainer" parent="Panel/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+
+[node name="LoadingLabel" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -20.0
+offset_right = 100.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Loading..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Pagination" type="HBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -50.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+
+[node name="PrevButton" type="Button" parent="Panel/Pagination"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "← Previous"
+
+[node name="PageLabel" type="Label" parent="Panel/Pagination"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Page 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextButton" type="Button" parent="Panel/Pagination"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "Next →"
+
+[node name="LoginPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -100.0
+offset_right = 150.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="LoginPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_top = 10.0
+offset_right = -100.0
+offset_bottom = 50.0
+offset_left = 100.0
+grow_horizontal = 2
+text = "Login Required"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Form" type="VBoxContainer" parent="LoginPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -160.0
+offset_right = 120.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 10
+
+[node name="Username" type="LineEdit" parent="LoginPanel/Form"]
+custom_minimum_size = Vector2(240, 30)
+layout_mode = 2
+placeholder_text = "Username"
+
+[node name="Email" type="LineEdit" parent="LoginPanel/Form"]
+custom_minimum_size = Vector2(240, 30)
+layout_mode = 2
+placeholder_text = "Email"
+
+[node name="Password" type="LineEdit" parent="LoginPanel/Form"]
+custom_minimum_size = Vector2(240, 30)
+layout_mode = 2
+placeholder_text = "Password"
+secret = true
+
+[node name="LoginButton" type="Button" parent="LoginPanel/Form"]
+custom_minimum_size = Vector2(240, 35)
+layout_mode = 2
+text = "Login"
+
+[node name="RegisterButton" type="Button" parent="LoginPanel/Form"]
+custom_minimum_size = Vector2(240, 35)
+layout_mode = 2
+text = "Register"
+
+[node name="UserInfo" type="Label" parent="LoginPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 60.0
+offset_right = 120.0
+offset_bottom = 90.0
+grow_horizontal = 2
+text = "Logged in"
+horizontal_alignment = 1
+
+[node name="LogoutButton" type="Button" parent="LoginPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -60.0
+offset_top = -40.0
+offset_right = 60.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Logout"

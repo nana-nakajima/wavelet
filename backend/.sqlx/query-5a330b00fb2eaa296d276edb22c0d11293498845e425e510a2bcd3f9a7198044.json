@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                u.id::text,\n                u.username,\n                u.email,\n                u.display_name,\n                u.bio,\n                u.avatar_url,\n                u.role::text as role,\n                u.created_at::text,\n                COALESCE(p.count, 0)::int8 as presets_count,\n                COALESCE(f.followers, 0)::int8 as followers_count,\n                COALESCE(f2.following, 0)::int8 as following_count\n            FROM users u\n            LEFT JOIN (\n                SELECT user_id, COUNT(*) as count FROM presets WHERE is_public = true GROUP BY user_id\n            ) p ON u.id = p.user_id\n            LEFT JOIN (\n                SELECT following_id, COUNT(*) as followers FROM follows GROUP BY following_id\n            ) f ON u.id = f.following_id\n            LEFT JOIN (\n                SELECT follower_id, COUNT(*) as following FROM follows GROUP BY follower_id\n            ) f2 ON u.id = f2.follower_id\n            WHERE u.id = $1 AND u.is_active = true\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "username",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "display_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "bio",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "avatar_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "role",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "presets_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 9,
+        "name": "followers_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
+        "name": "following_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      false,
+      true,
+      true,
+      true,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "5a330b00fb2eaa296d276edb22c0d11293498845e425e510a2bcd3f9a7198044"
+}

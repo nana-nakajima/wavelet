@@ -1,9 +1,7 @@
 use sqlx::postgres::PgPool;
-use chrono::NaiveDateTime;
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
-use actix_web::error::InternalError;
 use std::fmt;
 
 /// User roles
@@ -21,6 +19,36 @@ impl Default for UserRole {
     }
 }
 
+impl std::str::FromStr for UserRole {
+    type Err = ();
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "user" => Ok(UserRole::User),
+            "creator" => Ok(UserRole::Creator),
+            "admin" => Ok(UserRole::Admin),
+            _ => Err(()),
+        }
+    }
+}
+
+impl From<String> for UserRole {
+    fn from(s: String) -> Self {
+        s.as_str().into()
+    }
+}
+
+impl From<&str> for UserRole {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "user" => UserRole::User,
+            "creator" => UserRole::Creator,
+            "admin" => UserRole::Admin,
+            _ => UserRole::User,
+        }
+    }
+}
+
 /// User model
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct User {
@@ -31,11 +59,22 @@ pub struct User {
     pub display_name: Option<String>,
     pub bio: Option<String>,
     pub avatar_url: Option<String>,
-    pub role: UserRole,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-    pub last_login_at: Option<NaiveDateTime>,
+    pub role: String,  // Changed from UserRole to String for sqlx compatibility
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub last_login_at: Option<chrono::DateTime<chrono::Utc>>,
     pub is_active: bool,
+}
+
+/// Convert UserRole to/from String
+impl User {
+    pub fn get_role(&self) -> UserRole {
+        match self.role.as_str() {
+            "Creator" => UserRole::Creator,
+            "Admin" => UserRole::Admin,
+            _ => UserRole::User,
+        }
+    }
 }
 
 /// User registration request
@@ -95,19 +134,20 @@ impl<'a> UserRepository<'a> {
     
     /// Create a new user
     pub async fn create(&self, req: &RegisterRequest, password_hash: &str) -> Result<User, sqlx::Error> {
-        let user = sqlx::query_as!(
+        let user = sqlx::query_as_unchecked!(
             User,
             r#"
             INSERT INTO users (id, username, email, password_hash, display_name, role, is_active)
             VALUES ($1, $2, $3, $4, $5, $6, true)
-            RETURNING *
+            RETURNING id, username, email, password_hash, display_name, bio, avatar_url, 
+                      role::text as role, created_at, updated_at, last_login_at, is_active
             "#,
             Uuid::new_v4(),
             req.username,
             req.email,
             password_hash,
             req.username,  // display_name defaults to username
-            UserRole::User as UserRole
+            "User"
         )
         .fetch_one(self.pool)
         .await?;
@@ -117,9 +157,11 @@ impl<'a> UserRepository<'a> {
     
     /// Find user by email
     pub async fn find_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
-        let user = sqlx::query_as!(
+        let user = sqlx::query_as_unchecked!(
             User,
-            r#"SELECT * FROM users WHERE email = $1 AND is_active = true"#,
+            r#"SELECT id, username, email, password_hash, display_name, bio, avatar_url, 
+                      role::text as role, created_at, updated_at, last_login_at, is_active 
+               FROM users WHERE email = $1 AND is_active = true"#,
             email
         )
         .fetch_optional(self.pool)
@@ -130,9 +172,11 @@ impl<'a> UserRepository<'a> {
     
     /// Find user by ID
     pub async fn find_by_id(&self, id: &Uuid) -> Result<Option<User>, sqlx::Error> {
-        let user = sqlx::query_as!(
+        let user = sqlx::query_as_unchecked!(
             User,
-            r#"SELECT * FROM users WHERE id = $1 AND is_active = true"#,
+            r#"SELECT id, username, email, password_hash, display_name, bio, avatar_url,
+                      role::text as role, created_at, updated_at, last_login_at, is_active 
+               FROM users WHERE id = $1 AND is_active = true"#,
             id
         )
         .fetch_optional(self.pool)
@@ -155,7 +199,7 @@ impl<'a> UserRepository<'a> {
     
     /// Get user profile with stats
     pub async fn get_profile(&self, id: &Uuid) -> Result<Option<UserResponse>, sqlx::Error> {
-        let profile = sqlx::query_as!(
+        let profile = sqlx::query_as_unchecked!(
             UserResponse,
             r#"
             SELECT 
@@ -192,7 +236,7 @@ impl<'a> UserRepository<'a> {
     
     /// Search users by username
     pub async fn search(&self, query: &str, limit: i64, offset: i64) -> Result<Vec<UserResponse>, sqlx::Error> {
-        let users = sqlx::query_as!(
+        let users = sqlx::query_as_unchecked!(
             UserResponse,
             r#"
             SELECT 

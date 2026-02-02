@@ -1,0 +1,84 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                u.id::text,\n                u.username,\n                u.email,\n                u.display_name,\n                u.bio,\n                u.avatar_url,\n                u.role::text as role,\n                u.created_at::text,\n                COALESCE(p.count, 0)::int8 as presets_count,\n                0 as followers_count,\n                0 as following_count\n            FROM users u\n            LEFT JOIN (\n                SELECT user_id, COUNT(*) as count FROM presets WHERE is_public = true GROUP BY user_id\n            ) p ON u.id = p.user_id\n            WHERE u.username ILIKE $1 OR u.display_name ILIKE $1\n            ORDER BY u.created_at DESC\n            LIMIT $2 OFFSET $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "username",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "display_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "bio",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "avatar_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "role",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "presets_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 9,
+        "name": "followers_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "following_count",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      false,
+      true,
+      true,
+      true,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "720b26fc12da26048183e94179ab7bc6fd5674792c7c9228ee7691eb458c0372"
+}

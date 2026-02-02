@@ -5,7 +5,7 @@ use actix_web::{web, HttpResponse, Result};
 use uuid::Uuid;
 use crate::services::preset_service::{PresetService, PresetServiceError};
 use crate::models::preset::{
-    CreatePresetRequest, UpdatePresetRequest, SearchQuery, RateRequest,
+    CreatePresetRequest, UpdatePresetRequest, SearchQuery, RateRequest, FeedQuery,
 };
 use crate::middleware::auth::AuthUser;
 use std::sync::Arc;
@@ -268,6 +268,34 @@ async fn get_user_presets(
     }
 }
 
+/// Get community feed - GET /api/feed
+/// 
+/// Query parameters:
+/// - feed_type: "latest" (default), "popular", "featured", "following"
+/// - category: Filter by category (optional)
+/// - page: Page number (default: 1)
+/// - limit: Items per page (default: 20, max: 100)
+#[actix_web::get("/feed")]
+async fn get_feed(
+    state: PresetServiceState,
+    user: Option<AuthUser>,
+    query: web::Query<FeedQuery>,
+) -> Result<HttpResponse> {
+    let user_id = user.map(|u| u.user_id);
+    
+    let response = state.get_feed(query.into_inner(), user_id).await;
+    
+    match response {
+        Ok(feed) => Ok(HttpResponse::Ok().json(feed)),
+        Err(e) => {
+            log::error!("Error getting feed: {:?}", e);
+            Ok(HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Internal server error"
+            })))
+        }
+    }
+}
+
 /// Configure preset routes
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create_preset)
@@ -277,5 +305,6 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
        .service(rate_preset)
        .service(update_preset)
        .service(delete_preset)
-       .service(get_user_presets);
+       .service(get_user_presets)
+       .service(get_feed);
 }
