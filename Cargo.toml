@@ -13,9 +13,24 @@ gdext = { git = "https://github.com/godot-rust/gdext", branch = "master" }
 godot = { package = "gdext", git = "https://github.com/godot-rust/gdext", branch = "master" }
 rand = "0.8"
 
+[dev-dependencies]
+criterion = "0.5"
+
 [features]
 default = ["gd-extension"]
 gd-extension = []
+
+[[bench]]
+name = "oscillator_bench"
+harness = false
+
+[[bench]]
+name = "filter_bench"
+harness = false
+
+[[bench]]
+name = "synth_bench"
+harness = false
 
 [profile.release]
 opt-level = 3
