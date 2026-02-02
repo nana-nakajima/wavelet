@@ -29,33 +29,28 @@
 //! synth.note_on(60, 127); // MIDI note 60 (C4) with velocity 127
 //! ```
 
-pub mod oscillator;
-pub mod filter;
-pub mod envelope;
-pub mod lfo;
 pub mod effects;
-pub mod synth;
+pub mod envelope;
+pub mod filter;
 pub mod gdextension;
+pub mod lfo;
+pub mod oscillator;
+pub mod synth;
 
-pub use oscillator::{Oscillator, OscillatorType, Waveform, OversampleFactor};
-pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
-pub use envelope::{Envelope, EnvelopeStage};
-pub use lfo::{Lfo, LfoRate};
 pub use effects::{Effect, EffectType, Saturation};
+pub use envelope::{Envelope, EnvelopeStage};
+pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
+pub use lfo::{Lfo, LfoRate};
+pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
 pub use synth::Synth;
 
 // Re-export commonly used types for convenience
-pub use crate::oscillator::Oscillator;
-pub use crate::filter::BiquadFilter;
 pub use crate::envelope::AdsrEnvelope;
+pub use crate::filter::BiquadFilter;
+pub use crate::oscillator::Oscillator;
 
 // Virtual Analog parameter IDs (for automation and UI)
 pub use synth::{
-    PARAM_ZDF_ENABLED,
-    PARAM_ZDF_CUTOFF,
-    PARAM_ZDF_RES,
-    PARAM_ZDF_DRIVE,
-    PARAM_SATURATION_DRIVE,
-    PARAM_SATURATION_MIX,
-    PARAM_OVERSAMPLE,
+    PARAM_OVERSAMPLE, PARAM_SATURATION_DRIVE, PARAM_SATURATION_MIX, PARAM_ZDF_CUTOFF,
+    PARAM_ZDF_DRIVE, PARAM_ZDF_ENABLED, PARAM_ZDF_RES,
 };

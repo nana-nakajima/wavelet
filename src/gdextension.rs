@@ -14,8 +14,8 @@
 //! 3. Add the GDExtension registration code
 //! 4. Use the WAVELET node in Godot scenes
 
-use godot::prelude::*;
 use crate::synth::Synth;
+use godot::prelude::*;
 
 /// WAVELET synthesizer node for Godot 4.
 ///
@@ -37,10 +37,10 @@ use crate::synth::Synth;
 pub struct WaveletSynth {
     /// Internal synthesizer instance
     synth: Synth,
-    
+
     /// Base class reference
     base: Base<Node>,
-    
+
     /// Currently held notes
     held_notes: Vec<u8>,
 }
@@ -55,7 +55,7 @@ impl INode for WaveletSynth {
             held_notes: Vec::new(),
         }
     }
-    
+
     /// Called when the node enters the scene tree.
     fn ready(&mut self) {
         godot_print!("WAVELET Synthesizer initialized!");
@@ -77,7 +77,7 @@ impl WaveletSynth {
             self.held_notes.push(note as u8);
         }
     }
-    
+
     /// Releases a note.
     ///
     /// # Arguments
@@ -88,14 +88,14 @@ impl WaveletSynth {
         self.synth.note_off_specific(note as u8);
         self.held_notes.retain(|&n| n != note as u8);
     }
-    
+
     /// Releases all held notes.
     #[func]
     pub fn all_notes_off(&mut self) {
         self.synth.note_off();
         self.held_notes.clear();
     }
-    
+
     /// Sets the master volume.
     ///
     /// # Arguments
@@ -105,7 +105,7 @@ impl WaveletSynth {
     pub fn set_volume(&mut self, volume: f32) {
         self.synth.set_master_volume(volume);
     }
-    
+
     /// Sets the filter cutoff frequency.
     ///
     /// # Arguments
@@ -115,7 +115,7 @@ impl WaveletSynth {
     pub fn set_filter_cutoff(&mut self, cutoff: f32) {
         self.synth.set_filter_cutoff(cutoff);
     }
-    
+
     /// Sets the filter resonance.
     ///
     /// # Arguments
@@ -125,7 +125,7 @@ impl WaveletSynth {
     pub fn set_filter_resonance(&mut self, resonance: f32) {
         self.synth.set_filter_resonance(resonance);
     }
-    
+
     /// Loads a preset by name.
     ///
     /// # Arguments
@@ -134,7 +134,7 @@ impl WaveletSynth {
     #[func]
     pub fn load_preset(&mut self, preset_name: GodotString) {
         let name = preset_name.to_string();
-        
+
         match name.as_str() {
             "init" => self.load_init_preset(),
             "bass" => self.load_bass_preset(),
@@ -143,28 +143,28 @@ impl WaveletSynth {
             _ => godot_print!("Unknown preset: {}", name),
         }
     }
-    
+
     /// Loads the init/default preset.
     fn load_init_preset(&mut self) {
         self.synth.set_master_volume(0.7);
         self.synth.set_filter_cutoff(2000.0);
         self.synth.set_filter_resonance(1.0);
     }
-    
+
     /// Loads a bass preset.
     fn load_bass_preset(&mut self) {
         self.synth.set_master_volume(0.8);
         self.synth.set_filter_cutoff(500.0);
         self.synth.set_filter_resonance(3.0);
     }
-    
+
     /// Loads a pad preset.
     fn load_pad_preset(&mut self) {
         self.synth.set_master_volume(0.5);
         self.synth.set_filter_cutoff(3000.0);
         self.synth.set_filter_resonance(0.5);
     }
-    
+
     /// Loads a lead preset.
     fn load_lead_preset(&mut self) {
         self.synth.set_master_volume(0.6);
@@ -176,7 +176,11 @@ impl WaveletSynth {
 /// Registers all WAVELET classes with Godot.
 #[gdextension]
 unsafe impl EntryPoint for WaveletSynth {
-    fn entry_point(_interface: &gdext::GdextInterface, _library: &gdext::GdextLibrary, _generator: &mut gdext::ClassGenerator) {
+    fn entry_point(
+        _interface: &gdext::GdextInterface,
+        _library: &gdext::GdextLibrary,
+        _generator: &mut gdext::ClassGenerator,
+    ) {
         godot_print!("WAVELET GDExtension loaded!");
     }
 }

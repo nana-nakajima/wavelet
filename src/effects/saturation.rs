@@ -30,13 +30,13 @@ use std::f32::consts::PI;
 pub struct SaturationConfig {
     /// Amount of saturation/drive (0.0 = clean, higher = more distortion)
     pub drive: f32,
-    
+
     /// Tone control for frequency response (0.0 = dark, 1.0 = bright)
     pub tone: f32,
-    
+
     /// Wet/dry mix (0.0 = dry, 1.0 = fully saturated)
     pub mix: f32,
-    
+
     /// Sample rate for internal processing
     pub sample_rate: f32,
 }
@@ -76,22 +76,22 @@ impl Default for SaturationConfig {
 pub struct Saturation {
     /// Saturation/drive amount
     drive: f32,
-    
+
     /// Tone control value
     tone: f32,
-    
+
     /// Wet/dry mix
     mix: f32,
-    
+
     /// Sample rate
     sample_rate: f32,
-    
+
     /// Low-pass filter coefficient for tone control
     tone_coef: f32,
-    
+
     /// Previous sample for tone filter
     prev_tone: f32,
-    
+
     /// Whether the effect is enabled
     enabled: bool,
 }
@@ -101,7 +101,7 @@ impl Saturation {
     pub fn new() -> Self {
         Self::with_config(SaturationConfig::default())
     }
-    
+
     /// Creates a new saturation effect with custom configuration.
     ///
     /// # Arguments
@@ -121,11 +121,11 @@ impl Saturation {
             prev_tone: 0.0,
             enabled: true,
         };
-        
+
         sat.calculate_coefficients();
         sat
     }
-    
+
     /// Applies the saturation waveshaper curve to an input sample.
     ///
     /// This is the core of the saturation effect. It uses a modified
@@ -153,15 +153,15 @@ impl Saturation {
     fn apply_saturation_curve(&self, input: f32, drive: f32) -> f32 {
         // Scale drive for practical use
         let k = drive * 3.0;
-        
+
         // Apply soft clipping curve
         // This creates smooth harmonic saturation similar to analog circuits
         let numerator = (1.0 + k) * input;
         let denominator = 1.0 + k * input.abs();
-        
+
         numerator / denominator
     }
-    
+
     /// Processes a single audio sample through the saturation effect.
     ///
     /// # Arguments
@@ -175,23 +175,23 @@ impl Saturation {
         if !self.enabled {
             return input;
         }
-        
+
         // Apply saturation curve to input
         let saturated = self.apply_saturation_curve(input, self.drive);
-        
+
         // Apply tone control (simple low-pass for high frequencies)
         // This simulates the darkening effect of some analog circuits
         let tone_filtered = self.prev_tone + self.tone_coef * (saturated - self.prev_tone);
         self.prev_tone = tone_filtered;
-        
+
         // Blend between original and saturated signal based on tone
         // Higher tone = more saturated high frequencies
         let tone_output = input * (1.0 - self.tone * 0.5) + saturated * (self.tone * 0.5);
-        
+
         // Apply final mix
         input * (1.0 - self.mix) + tone_output * self.mix
     }
-    
+
     /// Processes a buffer of audio samples.
     ///
     /// # Arguments
@@ -202,7 +202,7 @@ impl Saturation {
             *sample = self.process_sample(*sample);
         }
     }
-    
+
     /// Processes a single sample with bypass when disabled.
     ///
     /// This is an alias for process_sample() for API consistency.
@@ -217,7 +217,7 @@ impl Saturation {
     pub fn process_with_bypass(&mut self, input: f32) -> f32 {
         self.process_sample(input)
     }
-    
+
     /// Sets the saturation drive amount.
     ///
     /// # Arguments
@@ -226,7 +226,7 @@ impl Saturation {
     pub fn set_drive(&mut self, drive: f32) {
         self.drive = drive.clamp(0.0, 10.0);
     }
-    
+
     /// Sets the tone control value.
     ///
     /// # Arguments
@@ -236,7 +236,7 @@ impl Saturation {
         self.tone = tone.clamp(0.0, 1.0);
         self.calculate_coefficients();
     }
-    
+
     /// Sets the wet/dry mix.
     ///
     /// # Arguments
@@ -245,7 +245,7 @@ impl Saturation {
     pub fn set_mix(&mut self, mix: f32) {
         self.mix = mix.clamp(0.0, 1.0);
     }
-    
+
     /// Enables or disables the effect.
     ///
     /// # Arguments
@@ -254,7 +254,7 @@ impl Saturation {
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
-    
+
     /// Checks if the effect is enabled.
     ///
     /// # Returns
@@ -263,12 +263,12 @@ impl Saturation {
     pub fn is_enabled(&self) -> bool {
         self.enabled
     }
-    
+
     /// Resets the effect state.
     pub fn reset(&mut self) {
         self.prev_tone = 0.0;
     }
-    
+
     /// Sets the sample rate and recalculates coefficients.
     ///
     /// # Arguments
@@ -278,14 +278,14 @@ impl Saturation {
         self.sample_rate = sample_rate;
         self.calculate_coefficients();
     }
-    
+
     /// Calculates filter coefficients from current parameters.
     fn calculate_coefficients(&mut self) {
         // Calculate tone filter coefficient
         // Maps tone (0-1) to cutoff frequency
         // Low tone = darker (lower cutoff), high tone = brighter
         let cutoff_hz = 100.0 + self.tone * 10000.0;
-        
+
         // Simple RC low-pass filter coefficient
         let omega = 2.0 * PI * cutoff_hz / self.sample_rate;
         self.tone_coef = omega / (1.0 + omega);
@@ -332,7 +332,7 @@ pub fn saturate(sample: f32, drive: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_saturation_default() {
         let sat = Saturation::new();
@@ -341,7 +341,7 @@ mod tests {
         assert_eq!(sat.mix, 0.5);
         assert!(sat.enabled);
     }
-    
+
     #[test]
     fn test_saturation_process() {
         let mut sat = Saturation::new();
@@ -350,117 +350,117 @@ mod tests {
         // Should process without issues
         assert!(output.abs() <= 1.0);
     }
-    
+
     #[test]
     fn test_saturation_clipping() {
         let mut sat = Saturation::new();
-        
+
         // Process a loud signal - should not clip
         let output = sat.process_sample(2.0);
         assert!(output.abs() <= 1.0);
     }
-    
+
     #[test]
     fn test_saturation_drive_levels() {
         let mut sat = Saturation::new();
-        
+
         // Test different drive levels
         sat.set_drive(0.0);
         let clean = sat.process_sample(0.5);
-        
+
         sat.set_drive(1.0);
         let mild = sat.process_sample(0.5);
-        
+
         sat.set_drive(5.0);
         let heavy = sat.process_sample(0.5);
-        
+
         // All outputs should be valid
         assert!(clean.abs() <= 1.0);
         assert!(mild.abs() <= 1.0);
         assert!(heavy.abs() <= 1.0);
     }
-    
+
     #[test]
     fn test_saturation_mix() {
         let mut sat = Saturation::new();
         sat.set_drive(5.0); // High drive
-        
+
         sat.set_mix(0.0);
         let dry = sat.process_sample(0.5);
         assert!((dry - 0.5).abs() < 0.001);
-        
+
         sat.set_mix(1.0);
         let wet = sat.process_sample(0.5);
         assert!((wet - 0.5).abs() > 0.01);
     }
-    
+
     #[test]
     #[test]
     fn test_saturation_bypass() {
         let mut sat = Saturation::new();
         sat.set_drive(10.0);
-        
+
         sat.set_enabled(false);
         let passthrough = sat.process_sample(0.5);
         assert_eq!(passthrough, 0.5);
-        
+
         sat.set_enabled(true);
         let processed = sat.process_sample(0.5);
         assert_ne!(processed, 0.5);
     }
-    
+
     #[test]
     fn test_saturation_reset() {
         let mut sat = Saturation::new();
         sat.set_drive(5.0);
-        
+
         // Process some samples
         for _ in 0..100 {
             sat.process_sample(0.8);
         }
-        
+
         // Reset should clear state
         sat.reset();
         assert_eq!(sat.prev_tone, 0.0);
     }
-    
+
     #[test]
     fn test_saturation_tone_control() {
         let mut sat = Saturation::new();
         sat.set_drive(2.0);
-        
+
         // Process with different tone settings
         sat.set_tone(0.0);
         let dark = sat.process_sample(0.5);
-        
+
         sat.set_tone(0.5);
         let mid = sat.process_sample(0.5);
-        
+
         sat.set_tone(1.0);
         let bright = sat.process_sample(0.5);
-        
+
         // All should produce valid output
         assert!(dark.abs() <= 1.0);
         assert!(mid.abs() <= 1.0);
         assert!(bright.abs() <= 1.0);
     }
-    
+
     #[test]
     fn test_saturate_function() {
         let clean = saturate(0.5, 0.0);
         assert!((clean - 0.5).abs() < 0.001);
-        
+
         let saturated = saturate(0.5, 2.0);
         assert!(saturated.abs() <= 1.0);
     }
-    
+
     #[test]
     fn test_saturation_process_buffer() {
         let mut sat = Saturation::new();
         let mut samples = [0.5, 0.3, 0.7, 0.4, 0.6];
-        
+
         sat.process_buffer(&mut samples);
-        
+
         // All samples should still be in valid range
         for &sample in &samples {
             assert!(sample.abs() <= 1.0);

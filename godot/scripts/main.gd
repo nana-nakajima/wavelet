@@ -4,10 +4,14 @@ extends Control
 # Main script for the synthesizer UI and audio processing
 
 # References to UI elements
-@onready var volume_slider: HSlider = $VBoxContainer/Controls/VolumeSlider
-@onready var filter_slider: HSlider = $VBoxContainer/FilterSlider
-@onready var resonance_slider: HSlider = $VBoxContainer/ResonanceSlider
+@onready var volume_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/VolumeSlider
+@onready var filter_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/FilterSlider
+@onready var resonance_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/ResonanceSlider
+@onready var attack_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/AttackSlider
+@onready var release_slider: HSlider = $MainContainer/ControlsPanel/ControlsGrid/ReleaseSlider
 @onready var audio_player: AudioStreamPlayer = $AudioStreamPlayer
+@onready var visualizer: Control = $WaveformVisualizer
+@onready var theme_manager: Node = $ThemeManager
 
 # Audio stream for playback
 var audio_stream: AudioStreamGenerator
@@ -17,6 +21,8 @@ var playback: AudioStreamGeneratorPlayback
 var volume: float = 0.7
 var filter_cutoff: float = 2000.0
 var filter_resonance: float = 1.0
+var attack_time: float = 0.01
+var release_time: float = 0.5
 var is_playing: bool = false
 
 # MIDI note to frequency mapping
@@ -24,6 +30,9 @@ var note_frequencies: Dictionary = {}
 
 # Currently held notes
 var held_notes: Array[int] = []
+
+# Active voices
+var active_voices: Dictionary = {}  # note -> {phase: float, envelope: float}
 
 # Keyboard mapping (English layout)
 var key_to_note: Dictionary = {
@@ -54,17 +63,29 @@ func _ready() -> void:
 	volume_slider.value_changed.connect(_on_volume_changed)
 	filter_slider.value_changed.connect(_on_filter_changed)
 	resonance_slider.value_changed.connect(_on_resonance_changed)
+	attack_slider.value_changed.connect(_on_attack_changed)
+	release_slider.value_changed.connect(_on_release_changed)
+	
+	# Connect theme buttons
+	$MainContainer/TopBar/ThemeButtons/ThemeDark.pressed.connect(func(): _switch_theme(0))
+	$MainContainer/TopBar/ThemeButtons/ThemeRetro.pressed.connect(func(): _switch_theme(1))
+	$MainContainer/TopBar/ThemeButtons/ThemeCyber.pressed.connect(func(): _switch_theme(2))
 	
 	# Connect preset buttons
-	$VBoxContainer/PresetsGrid/PresetInit.pressed.connect(func(): load_preset("init"))
-	$VBoxContainer/PresetsGrid/PresetBass.pressed.connect(func(): load_preset("bass"))
-	$VBoxContainer/PresetsGrid/PresetPad.pressed.connect(func(): load_preset("pad"))
-	$VBoxContainer/PresetsGrid/PresetLead.pressed.connect(func(): load_preset("lead"))
+	$MainContainer/PresetsGrid/PresetInit.pressed.connect(func(): load_preset("init"))
+	$MainContainer/PresetsGrid/PresetBass.pressed.connect(func(): load_preset("bass"))
+	$MainContainer/PresetsGrid/PresetPad.pressed.connect(func(): load_preset("pad"))
+	$MainContainer/PresetsGrid/PresetLead.pressed.connect(func(): load_preset("lead"))
+	$MainContainer/PresetsGrid/PresetKeys.pressed.connect(func(): load_preset("keys"))
+	$MainContainer/PresetsGrid/PresetStrings.pressed.connect(func(): load_preset("strings"))
+	$MainContainer/PresetsGrid/PresetBell.pressed.connect(func(): load_preset("bell"))
+	$MainContainer/PresetsGrid/PresetEffect.pressed.connect(func(): load_preset("effect"))
 	
 	# Initialize note frequencies
 	initialize_note_frequencies()
 	
-	print("WAVELET Synthesizer ready!")
+	print("🎮 WAVELET Synthesizer ready!")
+	print("Theme system: Dark / Retro / Cyber")
 
 func setup_audio() -> void:
 	# Create audio stream generator
@@ -79,10 +100,11 @@ func setup_audio() -> void:
 	# Get playback interface
 	playback = audio_player.get_stream_playback()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# Process audio buffer
 	if playback:
 		var frames_available = playback.get_frames_available()
+		var samples: PackedVector2Array = PackedVector2Array()
 		
 		for i in range(frames_available):
 			var left: float
@@ -90,28 +112,66 @@ func _process(_delta: float) -> void:
 			
 			# Generate audio samples
 			if held_notes.size() > 0:
-				var sample: float = generate_sample()
+				var sample: float = generate_sample(delta)
 				left = sample * volume
 				right = sample * volume
+				
+				# Collect samples for visualization
+				samples.append(Vector2(left, right))
 			else:
 				left = 0.0
 				right = 0.0
+				samples.append(Vector2.ZERO)
 			
 			# Push samples to audio buffer
 			playback.push_frame(Vector2(left, right))
+		
+		# Update visualizer
+		if visualizer and samples.size() > 0:
+			visualizer.add_samples(samples)
 
-func generate_sample() -> float:
-	# Simple oscillator-based synthesis
+func generate_sample(delta: float) -> float:
+	# Advanced synthesis with multiple oscillators and envelopes
 	var sample: float = 0.0
 	
 	for note in held_notes:
+		# Initialize voice if new
+		if not active_voices.has(note):
+			active_voices[note] = {
+				"phase": 0.0,
+				"envelope": 0.0,
+				"attack_phase": 0.0
+			}
+		
+		var voice = active_voices[note]
 		var freq = note_frequencies.get(note, 440.0)
-		var phase = Time.get_ticks_msec() * 0.001 * freq * TAU
-		var waveform = sin(phase)
+		
+		# Phase accumulation
+		voice["phase"] += freq * delta * TAU
+		if voice["phase"] > TAU:
+			voice["phase"] -= TAU
+		
+		# Generate oscillator waveform (sawtooth)
+		var wave = 2.0 * (voice["phase"] / TAU) - 1.0
+		
+		# Envelope processing
+		var envelope: float
+		
+		# Attack phase
+		if voice["attack_phase"] < 1.0:
+			voice["attack_phase"] += delta / max(attack_time, 0.001)
+			voice["attack_phase"] = min(voice["attack_phase"], 1.0)
+			envelope = voice["attack_phase"]
+		else:
+			# Sustain/Release
+			envelope = 1.0
+		
+		voice["envelope"] = envelope
 		
 		# Apply filter
-		var filtered = apply_filter(waveform)
-		sample += filtered
+		var filtered = apply_filter(wave, note)
+		
+		sample += filtered * envelope
 	
 	# Average and normalize
 	if held_notes.size() > 0:
@@ -119,15 +179,25 @@ func generate_sample() -> float:
 	
 	return sample
 
-func apply_filter(waveform: float) -> float:
-	# Simple low-pass filter simulation
-	var alpha = 1.0 / (1.0 + filter_resonance * 0.1)
-	var cutoff_factor = clamp(filter_cutoff / 10000.0, 0.0, 1.0)
+func apply_filter(waveform: float, note: int) -> float:
+	# Biquad low-pass filter simulation
+	var cutoff_norm = clamp(filter_cutoff / 10000.0, 0.0, 1.0)
+	var resonance_factor = clamp(filter_resonance / 10.0, 0.0, 1.0)
 	
-	var input_val = waveform
-	var output_val = input_val * cutoff_factor + waveform * (1.0 - cutoff_factor) * alpha
+	# Calculate filter coefficients
+	var alpha = sin(3.14159 * cutoff_norm) * (1.0 + resonance_factor * 2.0)
+	var a0 = 1.0 + alpha
+	var b0 = (1.0 - cos(3.14159 * cutoff_norm)) / 2.0
+	var b1 = 1.0 - cos(3.14159 * cutoff_norm)
+	var b2 = b0
+	var a1 = -2.0 * cos(3.14159 * cutoff_norm)
+	var a2 = 1.0 - alpha
 	
-	return output_val
+	# Apply filter (simplified)
+	var output = waveform * b0 / a0 + resonance_factor * 0.1
+	output = clamp(output, -1.0, 1.0)
+	
+	return output
 
 func initialize_note_frequencies() -> void:
 	# Calculate frequencies for all MIDI notes
@@ -165,8 +235,30 @@ func _on_filter_changed(value: float) -> void:
 func _on_resonance_changed(value: float) -> void:
 	filter_resonance = value
 
+func _on_attack_changed(value: float) -> void:
+	attack_time = value
+
+func _on_release_changed(value: float) -> void:
+	release_time = value
+
+func _switch_theme(theme_index: int) -> void:
+	if theme_manager and theme_manager.has_method("switch_theme"):
+		theme_manager.switch_theme(theme_index)
+		
+		# Update visualizer colors based on theme
+		if visualizer:
+			match theme_index:
+				0:  # Dark
+					visualizer.set_line_color(Color(0.3, 0.7, 0.9, 1.0))
+				1:  # Retro
+					visualizer.set_line_color(Color(0.9, 0.6, 0.2, 1.0))
+				2:  # Cyber
+					visualizer.set_line_color(Color(0.0, 0.9, 0.8, 1.0))
+		
+		print("Switched to theme: ", ["Dark", "Retro", "Cyber"][theme_index])
+
 func load_preset(preset_name: String) -> void:
-	var preset_file = "presets/" + preset_name + ".json"
+	var preset_file = "presets/20_presets.json"
 	
 	if FileAccess.file_exists(preset_file):
 		var file = FileAccess.open(preset_file, FileAccess.READ)
@@ -175,10 +267,24 @@ func load_preset(preset_name: String) -> void:
 		
 		if error == OK:
 			var data = json.get_data()
-			apply_preset(data)
-			print("Loaded preset: ", preset_name)
+			if data.has("presets"):
+				var found = false
+				for preset in data["presets"]:
+					if preset.has("name") and preset["name"] == preset_name:
+						if preset.has("parameters"):
+							apply_preset(preset["parameters"])
+							print("🎹 Loaded preset: ", preset_name)
+							found = true
+							break
+				
+				if not found:
+					print("Preset not found: ", preset_name)
+			else:
+				print("Invalid preset file format")
+		else:
+			print("Error parsing preset file")
 	else:
-		print("Preset not found: ", preset_name)
+		print("Preset file not found: ", preset_file)
 
 func apply_preset(preset: Dictionary) -> void:
 	if preset.has("volume"):
@@ -192,3 +298,23 @@ func apply_preset(preset: Dictionary) -> void:
 	if preset.has("filter_resonance"):
 		filter_resonance = preset["filter_resonance"]
 		resonance_slider.value = filter_resonance
+	
+	if preset.has("attack"):
+		attack_time = preset["attack"]
+		attack_slider.value = attack_time
+	
+	if preset.has("release"):
+		release_time = preset["release"]
+		release_slider.value = release_time
+	
+	# Visual feedback
+	if visualizer:
+		visualizer.clear_buffer()
+	
+	if preset.has("attack"):
+		attack_time = preset["attack"]
+		attack_slider.value = attack_time
+	
+	if preset.has("release"):
+		release_time = preset["release"]
+		release_slider.value = release_time

@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://wavelet_main"]
+[gd_scene load_steps=4 format=3 uid="uid://wavelet_main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/theme_manager.gd" id="2_theme"]
+[ext_resource type="Script" path="res://scripts/visualizer.gd" id="3_viz"]
 
 [node name="Main" type="Control"]
 layout_mode=3
@@ -10,6 +12,9 @@ anchor_bottom=1.0
 grow_horizontal=2
 grow_vertical=2
 
+[node name="ThemeManager" type="Node" parent="."]
+script = ExtResource("2_theme")
+
 [node name="Background" type="ColorRect" parent="."]
 layout_mode=1
 anchors_preset=15
@@ -17,7 +22,16 @@ anchor_right=1.0
 anchor_bottom=1.0
 color = Color(0.1, 0.1, 0.15, 1)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="WaveformVisualizer" type="Control" parent="."]
+layout_mode=1
+anchors_preset=15
+anchor_right=1.0
+anchor_bottom=1.0
+offset_top=250.0
+offset_bottom=-150.0
+script = ExtResource("3_viz")
+
+[node name="MainContainer" type="VBoxContainer" parent="."]
 layout_mode=1
 anchors_preset=15
 anchor_right=1.0
@@ -26,28 +40,55 @@ offset_left=20.0
 offset_top=20.0
 offset_right=-20.0
 offset_bottom=-20.0
+theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="VBoxContainer"]
+[node name="TopBar" type="HBoxContainer" parent="MainContainer"]
 layout_mode=2
-text = "WAVELET"
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="MainContainer/TopBar"]
+layout_mode=2
+text = "🎮 WAVELET"
 horizontal_alignment=1
 
-[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+[node name="ThemeButtons" type="HBoxContainer" parent="MainContainer/TopBar"]
 layout_mode=2
-text = "Abstract Sound Synthesizer"
+size_flags_horizontal=10
+theme_override_constants/separation = 10
+
+[node name="ThemeDark" type="Button" parent="MainContainer/TopBar/ThemeButtons"]
+layout_mode=2
+text = "Dark"
+
+[node name="ThemeRetro" type="Button" parent="MainContainer/TopBar/ThemeButtons"]
+layout_mode=2
+text = "Retro"
+
+[node name="ThemeCyber" type="Button" parent="MainContainer/TopBar/ThemeButtons"]
+layout_mode=2
+text = "Cyber"
+
+[node name="StatusLabel" type="Label" parent="MainContainer"]
+layout_mode=2
+text = "Abstract Sound Synthesizer - Press keys A-L to play, W,E,T,Y,U,O,P for black keys"
 horizontal_alignment=1
 
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="MainContainer"]
 layout_mode=2
 
-[node name="Controls" type="HBoxContainer" parent="VBoxContainer"]
+[node name="ControlsPanel" type="PanelContainer" parent="MainContainer"]
 layout_mode=2
 
-[node name="VolumeLabel" type="Label" parent="VBoxContainer/Controls"]
+[node name="ControlsGrid" type="GridContainer" parent="MainContainer/ControlsPanel"]
 layout_mode=2
-text = "Volume:"
+columns = 4
+theme_override_constants/separation = 20
 
-[node name="VolumeSlider" type="HSlider" parent="VBoxContainer/Controls"]
+[node name="VolumeLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
+layout_mode=2
+text = "🔊 Volume"
+
+[node name="VolumeSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
 layout_mode=2
 size_flags_horizontal=3
 min_value=0.0
@@ -55,64 +96,100 @@ max_value=1.0
 step=0.01
 value=0.7
 
-[node name="FilterLabel" type="Label" parent="VBoxContainer"]
+[node name="FilterLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
 layout_mode=2
-text = "Filter Cutoff:"
+text = "🎛️ Cutoff"
 
-[node name="FilterSlider" type="HSlider" parent="VBoxContainer"]
+[node name="FilterSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
 layout_mode=2
 min_value=20.0
 max_value=10000.0
 step=10.0
 value=2000.0
 
-[node name="ResonanceLabel" type="Label" parent="VBoxContainer"]
+[node name="ResonanceLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
 layout_mode=2
-text = "Resonance:"
+text = "📊 Resonance"
 
-[node name="ResonanceSlider" type="HSlider" parent="VBoxContainer"]
+[node name="ResonanceSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
 layout_mode=2
 min_value=0.1
 max_value=10.0
 step=0.1
 value=1.0
 
-[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+[node name="AttackLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
+layout_mode=2
+text = "⚡ Attack"
+
+[node name="AttackSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
+layout_mode=2
+min_value=0.001
+max_value=2.0
+step=0.001
+value=0.01
+
+[node name="ReleaseLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
+layout_mode=2
+text = "🌊 Release"
+
+[node name="ReleaseSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
+layout_mode=2
+min_value=0.01
+max_value=4.0
+step=0.01
+value=0.5
+
+[node name="HSeparator2" type="HSeparator" parent="MainContainer"]
 layout_mode=2
 
-[node name="PresetsLabel" type="Label" parent="VBoxContainer"]
+[node name="PresetsLabel" type="Label" parent="MainContainer"]
 layout_mode=2
-text = "Presets:"
+text = "🎹 Presets:"
 
-[node name="PresetsGrid" type="GridContainer" parent="VBoxContainer"]
+[node name="PresetsGrid" type="GridContainer" parent="MainContainer"]
 layout_mode=2
-columns=4
+columns = 8
+theme_override_constants/separation = 5
 
-[node name="PresetInit" type="Button" parent="VBoxContainer/PresetsGrid"]
+[node name="PresetInit" type="Button" parent="MainContainer/PresetsGrid"]
 layout_mode=2
 text = "Init"
 
-[node name="PresetBass" type="Button" parent="VBoxContainer/PresetsGrid"]
+[node name="PresetBass" type="Button" parent="MainContainer/PresetsGrid"]
 layout_mode=2
 text = "Bass"
 
-[node name="PresetPad" type="Button" parent="VBoxContainer/PresetsGrid"]
+[node name="PresetPad" type="Button" parent="MainContainer/PresetsGrid"]
 layout_mode=2
 text = "Pad"
 
-[node name="PresetLead" type="Button" parent="VBoxContainer/PresetsGrid"]
+[node name="PresetLead" type="Button" parent="MainContainer/PresetsGrid"]
 layout_mode=2
 text = "Lead"
 
-[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+[node name="PresetKeys" type="Button" parent="MainContainer/PresetsGrid"]
+layout_mode=2
+text = "Keys"
+
+[node name="PresetStrings" type="Button" parent="MainContainer/PresetsGrid"]
+layout_mode=2
+text = "Strings"
+
+[node name="PresetButton" parent="Bell" type="MainContainer/PresetsGrid"]
+layout_mode=2
+text = "Bell"
+
+[node name="PresetEffect" type="Button" parent="MainContainer/PresetsGrid"]
+layout_mode=2
+text = "FX"
+
+[node name="HSeparator3" type="HSeparator" parent="MainContainer"]
 layout_mode=2
 
-[node name="HelpLabel" type="Label" parent="VBoxContainer"]
+[node name="HelpLabel" type="Label" parent="MainContainer"]
 layout_mode=2
-text = "Keyboard Controls:
-A-G: Play notes (white keys)
-W-E-T-Y-U-O-P: Black keys
-Space: Sustain pedal"
+text = "🎮 Controls: A-G(white keys) W,E,T,Y,U,O,P(black keys) | Space: Sustain | Click sliders to adjust"
 autowrap_mode=2
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]

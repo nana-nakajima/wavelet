@@ -4,12 +4,14 @@
 //! components (oscillators, filters, envelopes, LFOs, effects) into
 //! a complete instrument.
 
-use std::collections::HashMap;
-use crate::oscillator::{Oscillator, OscillatorConfig, Waveform, midi_to_frequency, OversampleFactor};
-use crate::filter::{Filter, FilterType, BiquadFilter, ZdfFilter, ZdfFilterMode, ZdfFilterConfig};
+use crate::effects::{EffectConfig, EffectProcessor, EffectType, Saturation};
 use crate::envelope::{AdsrEnvelope, EnvelopeConfig, EnvelopeStage};
+use crate::filter::{BiquadFilter, Filter, FilterType, ZdfFilter, ZdfFilterConfig, ZdfFilterMode};
 use crate::lfo::{Lfo, LfoConfig, LfoRate};
-use crate::effects::{EffectProcessor, EffectType, EffectConfig, Saturation};
+use crate::oscillator::{
+    midi_to_frequency, Oscillator, OscillatorConfig, OversampleFactor, Waveform,
+};
+use std::collections::HashMap;
 
 /// Maximum number of simultaneous voices (polyphony).
 const MAX_VOICES: usize = 16;
@@ -31,16 +33,16 @@ pub const PARAM_OVERSAMPLE: i32 = 56;
 struct Voice {
     /// Oscillator for this voice
     oscillator: Oscillator,
-    
+
     /// Amplitude envelope
     amplitude_envelope: AdsrEnvelope,
-    
+
     /// Current MIDI note
     note: u8,
-    
+
     /// Current velocity (0-127)
     velocity: u8,
-    
+
     /// Whether this voice is active
     active: bool,
 }
@@ -49,7 +51,7 @@ impl Voice {
     /// Creates a new voice for a specific note.
     fn new(note: u8, velocity: u8, sample_rate: f32) -> Self {
         let freq = midi_to_frequency(note);
-        
+
         let osc_config = OscillatorConfig {
             waveform: Waveform::Sawtooth,
             frequency: freq,
@@ -57,7 +59,7 @@ impl Voice {
             phase_offset: 0.0,
             sample_rate,
         };
-        
+
         let env_config = EnvelopeConfig {
             attack: 0.01,
             decay: 0.2,
@@ -66,7 +68,7 @@ impl Voice {
             sample_rate,
             ..Default::default()
         };
-        
+
         Self {
             oscillator: Oscillator::new(osc_config),
             amplitude_envelope: AdsrEnvelope::with_config(env_config),
@@ -75,34 +77,34 @@ impl Voice {
             active: true,
         }
     }
-    
+
     /// Processes one sample from this voice.
     fn process(&mut self) -> f32 {
         if !self.active {
             return 0.0;
         }
-        
+
         let env_level = self.amplitude_envelope.process();
         let osc_sample = self.oscillator.next_sample();
-        
+
         osc_sample * env_level
     }
-    
+
     /// Triggers the voice (note on).
     fn trigger(&mut self) {
         self.amplitude_envelope.note_on();
     }
-    
+
     /// Releases the voice (note off).
     fn release(&mut self) {
         self.amplitude_envelope.note_off();
     }
-    
+
     /// Checks if the voice is still active.
     fn is_active(&self) -> bool {
         self.active && self.amplitude_envelope.is_active()
     }
-    
+
     /// Stops the voice immediately.
     fn stop(&mut self) {
         self.active = false;
@@ -134,34 +136,34 @@ impl Voice {
 pub struct Synth {
     /// Active voices for polyphony
     voices: Vec<Voice>,
-    
+
     /// Global biquad filter (original filter)
     filter: Filter,
-    
+
     /// ZDF (Zero-Delay Feedback) ladder filter for VA character
     zdf_filter: ZdfFilter,
-    
+
     /// Whether ZDF filter is active
     zdf_enabled: bool,
-    
+
     /// Saturation effect for analog-style saturation
     saturation: Saturation,
-    
+
     /// Global LFOs for modulation
     lfos: Vec<Lfo>,
-    
+
     /// Global effect processor
     effects: EffectProcessor,
-    
+
     /// Master volume
     master_volume: f32,
-    
+
     /// Sample rate
     sample_rate: f32,
-    
+
     /// Active note tracking for voice allocation
     active_notes: HashMap<u8, usize>, // note -> voice index
-    
+
     /// Oversampling factor for oscillators
     oversample_factor: OversampleFactor,
 }
@@ -184,7 +186,7 @@ impl Synth {
             sample_rate,
             ..Default::default()
         };
-        
+
         let zdf_config = ZdfFilterConfig {
             mode: ZdfFilterMode::LowPass4,
             cutoff_frequency: 1000.0,
@@ -192,7 +194,7 @@ impl Synth {
             drive: 0.0,
             sample_rate,
         };
-        
+
         Self {
             voices: Vec::with_capacity(MAX_VOICES),
             filter: Filter::new(FilterType::LowPass, 2000.0, 1.0, sample_rate),
@@ -207,12 +209,12 @@ impl Synth {
             oversample_factor: OversampleFactor::None,
         }
     }
-    
+
     /// Creates a new synthesizer with default sample rate (44100 Hz).
     pub fn default() -> Self {
         Self::new(44100.0)
     }
-    
+
     /// Processes one stereo sample pair.
     ///
     /// # Returns
@@ -222,7 +224,7 @@ impl Synth {
         let sample = self.process_mono();
         (sample * self.master_volume, sample * self.master_volume)
     }
-    
+
     /// Processes one mono sample.
     ///
     /// # Returns
@@ -231,10 +233,10 @@ impl Synth {
     pub fn process_mono(&mut self) -> f32 {
         // Sum all active voices
         let mut output = 0.0f32;
-        
+
         // Process voices and collect output
         let mut voices_to_remove = Vec::new();
-        
+
         for (note, voice_idx) in &self.active_notes.clone() {
             if let Some(voice) = self.voices.get_mut(*voice_idx) {
                 if voice.is_active() {
@@ -244,27 +246,27 @@ impl Synth {
                 }
             }
         }
-        
+
         // Remove finished voices
         for note in voices_to_remove {
             self.active_notes.remove(&note);
         }
-        
+
         // Process through ZDF filter if enabled
         if self.zdf_enabled {
             output = self.zdf_filter.process_sample(output);
         }
-        
+
         // Process through biquad filter (original filter)
         let filtered = self.filter.process(output);
-        
+
         // Process through saturation
         let saturated = self.saturation.process_sample(filtered);
-        
+
         // Process through effects
         self.effects.process(saturated)
     }
-    
+
     /// Processes a block of stereo samples.
     ///
     /// # Arguments
@@ -277,7 +279,7 @@ impl Synth {
     pub fn process_block_stereo(&mut self, count: usize) -> Vec<(f32, f32)> {
         (0..count).map(|_| self.process_stereo()).collect()
     }
-    
+
     /// Processes a block of mono samples.
     ///
     /// # Arguments
@@ -290,7 +292,7 @@ impl Synth {
     pub fn process_block_mono(&mut self, count: usize) -> Vec<f32> {
         (0..count).map(|_| self.process_mono()).collect()
     }
-    
+
     /// Triggers a note (note on event).
     ///
     /// # Arguments
@@ -302,15 +304,16 @@ impl Synth {
             self.note_off(note);
             return;
         }
-        
+
         // Check if note is already playing
         if self.active_notes.contains_key(&note) {
             self.note_off(note);
         }
-        
+
         // Find available voice (oldest first for voice stealing)
         let voice_idx = if self.voices.len() < MAX_VOICES {
-            self.voices.push(Voice::new(note, velocity, self.sample_rate));
+            self.voices
+                .push(Voice::new(note, velocity, self.sample_rate));
             self.voices.len() - 1
         } else {
             // Voice stealing: steal oldest voice
@@ -319,7 +322,7 @@ impl Synth {
                 if let Some(&voice_idx) = self.active_notes.get(&old_note) {
                     // Reuse this voice
                     self.active_notes.remove(&old_note);
-                    
+
                     // Reinitialize voice
                     let freq = midi_to_frequency(note);
                     let osc_config = OscillatorConfig {
@@ -329,7 +332,7 @@ impl Synth {
                         phase_offset: 0.0,
                         sample_rate: self.sample_rate,
                     };
-                    
+
                     self.voices[voice_idx] = Voice::new(note, velocity, self.sample_rate);
                     voice_idx
                 } else {
@@ -339,15 +342,15 @@ impl Synth {
                 return;
             }
         };
-        
+
         self.active_notes.insert(note, voice_idx);
-        
+
         // Trigger the voice
         if let Some(voice) = self.voices.get_mut(voice_idx) {
             voice.trigger();
         }
     }
-    
+
     /// Releases a note (note off event).
     ///
     /// # Arguments
@@ -362,7 +365,7 @@ impl Synth {
         }
         self.active_notes.clear();
     }
-    
+
     /// Releases a specific note.
     ///
     /// # Arguments
@@ -376,7 +379,7 @@ impl Synth {
             self.active_notes.remove(&note);
         }
     }
-    
+
     /// Sets the master volume.
     ///
     /// # Arguments
@@ -385,7 +388,7 @@ impl Synth {
     pub fn set_master_volume(&mut self, volume: f32) {
         self.master_volume = volume.clamp(0.0, 1.0);
     }
-    
+
     /// Sets the global filter cutoff frequency.
     ///
     /// # Arguments
@@ -394,7 +397,7 @@ impl Synth {
     pub fn set_filter_cutoff(&mut self, cutoff: f32) {
         self.filter.set_cutoff(cutoff);
     }
-    
+
     /// Sets the global filter resonance.
     ///
     /// # Arguments
@@ -403,7 +406,7 @@ impl Synth {
     pub fn set_filter_resonance(&mut self, resonance: f32) {
         self.filter.set_resonance(resonance);
     }
-    
+
     /// Sets the global filter type.
     ///
     /// # Arguments
@@ -412,7 +415,7 @@ impl Synth {
     pub fn set_filter_type(&mut self, filter_type: FilterType) {
         self.filter.set_type(filter_type);
     }
-    
+
     /// Sets the active effect type.
     ///
     /// # Arguments
@@ -421,7 +424,7 @@ impl Synth {
     pub fn set_effect_type(&mut self, effect_type: EffectType) {
         self.effects.set_effect_type(effect_type);
     }
-    
+
     /// Sets the effect mix.
     ///
     /// # Arguments
@@ -430,9 +433,9 @@ impl Synth {
     pub fn set_effect_mix(&mut self, mix: f32) {
         self.effects.set_mix(mix);
     }
-    
+
     // ===== Virtual Analog Feature Controls =====
-    
+
     /// Enables or disables the ZDF (Zero-Delay Feedback) filter.
     ///
     /// When enabled, the ZDF ladder filter is used instead of the
@@ -444,7 +447,7 @@ impl Synth {
     pub fn set_zdf_enabled(&mut self, enabled: bool) {
         self.zdf_enabled = enabled;
     }
-    
+
     /// Sets the ZDF filter cutoff frequency.
     ///
     /// # Arguments
@@ -453,7 +456,7 @@ impl Synth {
     pub fn set_zdf_cutoff(&mut self, cutoff: f32) {
         self.zdf_filter.set_cutoff(cutoff);
     }
-    
+
     /// Sets the ZDF filter resonance.
     ///
     /// # Arguments
@@ -462,7 +465,7 @@ impl Synth {
     pub fn set_zdf_resonance(&mut self, resonance: f32) {
         self.zdf_filter.set_resonance(resonance);
     }
-    
+
     /// Sets the ZDF filter drive amount.
     ///
     /// # Arguments
@@ -471,7 +474,7 @@ impl Synth {
     pub fn set_zdf_drive(&mut self, drive: f32) {
         self.zdf_filter.set_drive(drive);
     }
-    
+
     /// Sets the saturation drive amount.
     ///
     /// # Arguments
@@ -480,7 +483,7 @@ impl Synth {
     pub fn set_saturation_drive(&mut self, drive: f32) {
         self.saturation.set_drive(drive);
     }
-    
+
     /// Sets the saturation mix.
     ///
     /// # Arguments
@@ -489,7 +492,7 @@ impl Synth {
     pub fn set_saturation_mix(&mut self, mix: f32) {
         self.saturation.set_mix(mix);
     }
-    
+
     /// Sets the oscillator oversampling factor.
     ///
     /// Higher oversampling reduces aliasing but increases CPU usage.
@@ -500,7 +503,7 @@ impl Synth {
     pub fn set_oversample_factor(&mut self, factor: OversampleFactor) {
         self.oversample_factor = factor;
     }
-    
+
     /// Gets the current oversampling factor.
     ///
     /// # Returns
@@ -509,7 +512,7 @@ impl Synth {
     pub fn oversample_factor(&self) -> OversampleFactor {
         self.oversample_factor
     }
-    
+
     /// Resets the synthesizer state.
     pub fn reset(&mut self) {
         for voice in &mut self.voices {
@@ -522,7 +525,7 @@ impl Synth {
         self.saturation.reset();
         self.effects.reset();
     }
-    
+
     /// Gets the number of active voices.
     pub fn active_voice_count(&self) -> usize {
         self.active_notes.len()
@@ -538,21 +541,21 @@ impl Default for Synth {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_synth_default() {
         let synth = Synth::default();
         assert_eq!(synth.master_volume, 0.7);
         assert_eq!(synth.active_voice_count(), 0);
     }
-    
+
     #[test]
     fn test_synth_note_on() {
         let mut synth = Synth::new(48000.0);
         synth.note_on(60, 100);
         assert_eq!(synth.active_voice_count(), 1);
     }
-    
+
     #[test]
     fn test_synth_note_off() {
         let mut synth = Synth::new(48000.0);
@@ -561,27 +564,27 @@ mod tests {
         // Voice should still be active during release
         assert!(synth.active_voice_count() <= 1);
     }
-    
+
     #[test]
     fn test_synth_process() {
         let mut synth = Synth::new(48000.0);
         synth.note_on(60, 100);
-        
+
         let sample = synth.process_mono();
         // Should produce some output
         assert!(sample.is_finite());
     }
-    
+
     #[test]
     fn test_synth_stereo() {
         let mut synth = Synth::new(48000.0);
         synth.note_on(60, 100);
-        
+
         let (left, right) = synth.process_stereo();
         // Stereo output should be equal for mono source
         assert!((left - right).abs() < 0.001);
     }
-    
+
     #[test]
     fn test_synth_reset() {
         let mut synth = Synth::new(48000.0);
@@ -590,25 +593,25 @@ mod tests {
         synth.reset();
         assert_eq!(synth.active_voice_count(), 0);
     }
-    
+
     #[test]
     fn test_synth_polyphony() {
         let mut synth = Synth::new(48000.0);
-        
+
         // Play multiple notes
         synth.note_on(60, 100);
         synth.note_on(64, 100);
         synth.note_on(67, 100);
-        
+
         assert_eq!(synth.active_voice_count(), 3);
     }
-    
+
     #[test]
     fn test_synth_filter() {
         let mut synth = Synth::new(48000.0);
         synth.set_filter_cutoff(500.0);
         synth.set_filter_resonance(5.0);
-        
+
         let sample = synth.process_mono();
         assert!(sample.is_finite());
     }

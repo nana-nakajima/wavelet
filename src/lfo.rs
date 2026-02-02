@@ -19,18 +19,18 @@
 //! - **Pan Spread**: LFO modulating stereo position
 //! - **Trill**: Rapid alternation between two notes
 
-use std::f32::consts::PI;
 use crate::oscillator::{Oscillator, OscillatorConfig, Waveform};
+use std::f32::consts::PI;
 
 /// LFO rate representation.
 #[derive(Debug, Clone, Copy)]
 pub enum LfoRate {
     /// Frequency in Hz
     Hertz(f32),
-    
+
     /// MIDI note number (converted to frequency)
     MidiNote(u8),
-    
+
     /// Synchronized to tempo (beats per second)
     Sync(f32),
 }
@@ -51,19 +51,19 @@ impl LfoRate {
 pub struct LfoConfig {
     /// LFO rate (frequency)
     pub rate: LfoRate,
-    
+
     /// Waveform shape
     pub waveform: Waveform,
-    
+
     /// Modulation depth (0.0 to 1.0)
     pub depth: f32,
-    
+
     /// Phase offset in radians
     pub phase_offset: f32,
-    
+
     /// Whether to delay LFO start
     pub delay_samples: u32,
-    
+
     /// Sample rate
     pub sample_rate: f32,
 }
@@ -108,19 +108,19 @@ impl Default for LfoConfig {
 pub struct Lfo {
     /// Internal oscillator for LFO waveform generation
     oscillator: Oscillator,
-    
+
     /// Current modulation depth
     depth: f32,
-    
+
     /// Delay counter for fade-in effect
     delay_counter: u32,
-    
+
     /// Total delay samples before LFO starts
     delay_samples: u32,
-    
+
     /// Current output value (bipolar)
     current_value: f32,
-    
+
     /// Sample rate for timing
     sample_rate: f32,
 }
@@ -130,7 +130,7 @@ impl Lfo {
     pub fn new() -> Self {
         Self::with_config(LfoConfig::default())
     }
-    
+
     /// Creates a new LFO with custom configuration.
     ///
     /// # Arguments
@@ -142,7 +142,7 @@ impl Lfo {
     /// A new Lfo instance
     pub fn with_config(config: LfoConfig) -> Self {
         let rate_hz = config.rate.to_hertz();
-        
+
         let osc_config = OscillatorConfig {
             waveform: config.waveform,
             frequency: rate_hz,
@@ -150,7 +150,7 @@ impl Lfo {
             phase_offset: config.phase_offset,
             sample_rate: config.sample_rate,
         };
-        
+
         Self {
             oscillator: Oscillator::new(osc_config),
             depth: config.depth,
@@ -160,7 +160,7 @@ impl Lfo {
             sample_rate: config.sample_rate,
         }
     }
-    
+
     /// Processes one sample from the LFO.
     ///
     /// Returns the modulation value, scaled by depth. Output is in range
@@ -176,13 +176,13 @@ impl Lfo {
             self.current_value = 0.0;
             return 0.0;
         }
-        
+
         // Get sample from internal oscillator (already bipolar -1 to 1)
         let sample = self.oscillator.next_sample();
         self.current_value = sample * self.depth;
         self.current_value
     }
-    
+
     /// Processes a block of samples.
     ///
     /// # Arguments
@@ -195,12 +195,12 @@ impl Lfo {
     pub fn process_block(&mut self, count: usize) -> Vec<f32> {
         (0..count).map(|_| self.process()).collect()
     }
-    
+
     /// Gets the current LFO output value.
     pub fn value(&self) -> f32 {
         self.current_value
     }
-    
+
     /// Sets the LFO rate.
     ///
     /// # Arguments
@@ -210,12 +210,12 @@ impl Lfo {
         let hz = rate.to_hertz();
         self.oscillator.set_frequency(hz);
     }
-    
+
     /// Sets the LFO rate in Hz.
     pub fn set_rate_hz(&mut self, hz: f32) {
         self.oscillator.set_frequency(hz);
     }
-    
+
     /// Sets the modulation depth.
     ///
     /// # Arguments
@@ -224,7 +224,7 @@ impl Lfo {
     pub fn set_depth(&mut self, depth: f32) {
         self.depth = depth.clamp(0.0, 1.0);
     }
-    
+
     /// Sets the LFO waveform.
     ///
     /// # Arguments
@@ -233,14 +233,14 @@ impl Lfo {
     pub fn set_waveform(&mut self, waveform: Waveform) {
         self.oscillator.set_waveform(waveform);
     }
-    
+
     /// Resets the LFO phase to the beginning.
     pub fn reset(&mut self) {
         self.oscillator.reset_phase();
         self.delay_counter = 0;
         self.current_value = 0.0;
     }
-    
+
     /// Resets the LFO with a specific phase.
     ///
     /// # Arguments
@@ -251,13 +251,13 @@ impl Lfo {
         self.delay_counter = 0;
         self.current_value = 0.0;
     }
-    
+
     /// Sets the sample rate for the LFO.
     pub fn set_sample_rate(&mut self, sample_rate: f32) {
         self.sample_rate = sample_rate;
         self.oscillator.set_sample_rate(sample_rate);
     }
-    
+
     /// Sets the delay before LFO starts.
     ///
     /// # Arguments
@@ -278,13 +278,13 @@ impl Default for Lfo {
 pub trait LfoTrait {
     /// Process one sample.
     fn process(&mut self) -> f32;
-    
+
     /// Set rate.
     fn set_rate(&mut self, rate: LfoRate);
-    
+
     /// Set depth.
     fn set_depth(&mut self, depth: f32);
-    
+
     /// Reset LFO.
     fn reset(&mut self);
 }
@@ -293,15 +293,15 @@ impl LfoTrait for Lfo {
     fn process(&mut self) -> f32 {
         self.process()
     }
-    
+
     fn set_rate(&mut self, rate: LfoRate) {
         self.set_rate(rate);
     }
-    
+
     fn set_depth(&mut self, depth: f32) {
         self.set_depth(depth);
     }
-    
+
     fn reset(&mut self) {
         self.reset();
     }
@@ -310,13 +310,13 @@ impl LfoTrait for Lfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_lfo_default() {
         let lfo = Lfo::new();
         assert_eq!(lfo.depth, 0.5);
     }
-    
+
     #[test]
     fn test_lfo_process() {
         let config = LfoConfig {
@@ -326,26 +326,26 @@ mod tests {
             sample_rate: 100.0,
             ..Default::default()
         };
-        
+
         let mut lfo = Lfo::with_config(config);
         let value = lfo.process();
-        
+
         // Value should be within [-1, 1]
         assert!(value >= -1.0 && value <= 1.0);
     }
-    
+
     #[test]
     fn test_lfo_set_depth() {
         let mut lfo = Lfo::new();
         lfo.set_depth(0.3);
         assert_eq!(lfo.depth, 0.3);
     }
-    
+
     #[test]
     fn test_lfo_rate_conversion() {
         assert!((LfoRate::Hertz(440.0).to_hertz() - 440.0).abs() < 0.001);
     }
-    
+
     #[test]
     fn test_lfo_reset() {
         let mut lfo = Lfo::new();

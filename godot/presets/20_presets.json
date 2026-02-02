@@ -8,11 +8,11 @@
         "volume": 0.7,
         "filter_cutoff": 2000.0,
         "filter_resonance": 1.0,
+        "attack": 0.01,
+        "release": 0.5,
         "waveform": "sawtooth"
       }
     },
-    
-    // ============ NEW PRESETS (21-50) ============
     
     {
       "name": "deep_house_bass",
@@ -22,20 +22,26 @@
         "volume": 0.75,
         "filter_cutoff": 300.0,
         "filter_resonance": 2.0,
+        "attack": 0.02,
+        "release": 0.3,
         "waveform": "sine"
       }
     },
+    
     {
-      "name": " fm_bass",
+      "name": "fm_bass",
       "category": "Bass",
       "description": "FM synthesis bass",
       "parameters": {
         "volume": 0.65,
         "filter_cutoff": 600.0,
         "filter_resonance": 3.0,
+        "attack": 0.005,
+        "release": 0.2,
         "waveform": "square"
       }
     },
+    
     {
       "name": "resonant_bass",
       "category": "Bass",
@@ -44,6 +50,8 @@
         "volume": 0.7,
         "filter_cutoff": 450.0,
         "filter_resonance": 7.0,
+        "attack": 0.01,
+        "release": 0.15,
         "waveform": "sawtooth"
       }
     },

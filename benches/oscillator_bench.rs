@@ -3,7 +3,7 @@
 //! Measures oscillator performance for various waveforms and configurations.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use wavelet::oscillator::{Oscillator, OscillatorConfig, Waveform, OversampleFactor};
+use wavelet::oscillator::{Oscillator, OscillatorConfig, OversampleFactor, Waveform};
 
 const SAMPLE_RATE: f32 = 48000.0;
 
@@ -15,7 +15,7 @@ fn bench_sine_wave(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_sine_440hz", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -33,7 +33,7 @@ fn bench_square_wave(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_square_440hz", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -51,7 +51,7 @@ fn bench_sawtooth_wave(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_sawtooth_440hz", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -69,7 +69,7 @@ fn bench_triangle_wave(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_triangle_440hz", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -87,7 +87,7 @@ fn bench_noise_wave(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_noise", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -105,7 +105,7 @@ fn bench_high_frequency(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_sawtooth_8khz", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -124,7 +124,7 @@ fn bench_oversampling_x2(c: &mut Criterion) {
         oversample_factor: OversampleFactor::X2,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_oversample_x2", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -143,7 +143,7 @@ fn bench_oversampling_x4(c: &mut Criterion) {
         oversample_factor: OversampleFactor::X4,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_oversample_x4", |b| {
         b.iter(|| {
             for _ in 0..100 {
@@ -161,7 +161,7 @@ fn bench_block_processing(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_block_1000_samples", |b| {
         b.iter(|| {
             black_box(osc.next_samples(1000));
@@ -177,7 +177,7 @@ fn bench_frequency_change(c: &mut Criterion) {
         sample_rate: SAMPLE_RATE,
         ..Default::default()
     });
-    
+
     c.bench_function("oscillator_frequency_change", |b| {
         b.iter(|| {
             osc.set_frequency(black_box(220.0 + _ as f32 % 1000.0));
