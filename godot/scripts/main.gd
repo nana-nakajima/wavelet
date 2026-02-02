@@ -86,11 +86,17 @@ func _ready() -> void:
 	$MainContainer/PresetsGrid/PresetBell.pressed.connect(func(): load_preset("bell"))
 	$MainContainer/PresetsGrid/PresetEffect.pressed.connect(func(): load_preset("effect"))
 	
+	# Connect share/export buttons
+	$MainContainer/TopBar/ShareButtons/ExportButton.pressed.connect(_export_project)
+	$MainContainer/TopBar/ShareButtons/ImportButton.pressed.connect(_import_project)
+	$MainContainer/TopBar/ShareButtons/ShareCommunityButton.pressed.connect(_share_to_community)
+	
 	# Initialize note frequencies
 	initialize_note_frequencies()
 	
 	print("🎮 WAVELET Synthesizer ready!")
 	print("Theme system: Dark / Retro / Cyber")
+	print("✓ Project sharing enabled: Export / Import / Share to Community")
 
 func setup_audio() -> void:
 	# Create audio stream generator
@@ -327,11 +333,119 @@ func apply_preset(preset: Dictionary) -> void:
 	# Visual feedback
 	if visualizer:
 		visualizer.clear_buffer()
+
+# ==========================================
+# Project Sharing / Export-Import Functions
+# ==========================================
+
+func _export_project() -> void:
+	"""
+	Export current project as JSON file
+	Users can save their patch and share it with others
+	"""
+	var project_data = {
+		"version": "2.3.0",
+		"name": "WAVELET Project",
+		"created_at": Time.get_datetime_string_from_system(true),
+		"author": "Unknown",
+		"parameters": {
+			"volume": volume,
+			"filter_cutoff": filter_cutoff,
+			"filter_resonance": filter_resonance,
+			"attack": attack_time,
+			"release": release_time
+		},
+		"settings": {
+			"theme": _get_current_theme(),
+			"presets_loaded": []
+		}
+	}
 	
-	if preset.has("attack"):
-		attack_time = preset["attack"]
-		attack_slider.value = attack_time
+	# Convert to JSON
+	var json_string = JSON.stringify(project_data, "\t")
 	
-	if preset.has("release"):
-		release_time = preset["release"]
-		release_slider.value = release_time
+	# Generate filename with timestamp
+	var timestamp = Time.get_unix_time_from_system()
+	var filename = "wavelet_project_%d.wlp" % timestamp
+	
+	# Save to file
+	var file = FileAccess.open(filename, FileAccess.WRITE)
+	if file:
+		file.store_string(json_string)
+		print("📦 Project exported to: ", filename)
+		_show_notification("Project exported to:\n" + filename)
+	else:
+		print("❌ Failed to export project")
+		_show_notification("Failed to export project")
+
+func _import_project() -> void:
+	"""
+	Import project from JSON file
+	Load a shared patch into the synthesizer
+	"""
+	# For now, we'll simulate file picker
+	# In a real implementation, use Godot's FileDialog
+	var default_file = "presets/20_presets.json"
+	
+	if FileAccess.file_exists(default_file):
+		var file = FileAccess.open(default_file, FileAccess.READ)
+		var json = JSON.new()
+		var error = json.parse(file.get_as_text())
+		
+		if error == OK:
+			var data = json.get_data()
+			if data.has("parameters"):
+				apply_preset(data["parameters"])
+				print("📥 Project imported successfully")
+				_show_notification("Project imported!")
+			else:
+				print("⚠️ Invalid project file format")
+				_show_notification("Invalid project file")
+		else:
+			print("❌ Failed to parse project file")
+			_show_notification("Failed to parse file")
+	else:
+		print("📂 Please select a .wlp file to import")
+		_show_notification("Select a .wlp file to import")
+
+func _share_to_community() -> void:
+	"""
+	Share current project to community
+	Upload to server and generate shareable link
+	"""
+	var project_data = {
+		"name": "My WAVELET Patch",
+		"description": "Created with WAVELET",
+		"parameters": {
+			"volume": volume,
+			"filter_cutoff": filter_cutoff,
+			"filter_resonance": filter_resonance,
+			"attack": attack_time,
+			"release": release_time
+		},
+		"is_public": true,
+		"tags": ["patch", "wavelet"]
+	}
+	
+	# Use HTTP client to upload
+	if http_client and http_client.has_method("upload_preset"):
+		print("🌐 Uploading project to community...")
+		_show_notification("Sharing to community...")
+		
+		# Call HTTP client upload method (async)
+		http_client.upload_preset(project_data)
+	else:
+		print("⚠️ Community features not available")
+		_show_notification("Community features\nnot available")
+
+func _get_current_theme() -> int:
+	"""Get current theme index"""
+	# This would be connected to the actual theme state
+	return 0  # Default to Dark
+
+func _show_notification(message: String) -> void:
+	"""
+	Show notification to user
+	In a real implementation, use Godot's Popup or notification system
+	"""
+	print("🔔 Notification: ", message)

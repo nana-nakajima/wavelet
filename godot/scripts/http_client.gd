@@ -132,6 +132,42 @@ func get_followers(user_id: String, page: int = 1, limit: int = 20) -> void:
 func get_following(user_id: String, page: int = 1, limit: int = 20) -> void:
 	_get("/api/users/" + user_id + "/following?page=" + str(page) + "&limit=" + str(limit))
 
+# ============ Project Sharing ============
+
+func upload_preset(project_data: Dictionary) -> void:
+	"""
+	Upload current project/preset to community
+	"""
+	if not is_logged_in():
+		request_completed.emit({
+			"error": "Please login to share projects",
+			"code": 401
+		})
+		return
+	
+	var body = {
+		"version": "2.3.0",
+		"name": project_data.get("name", "My WAVELET Patch"),
+		"description": project_data.get("description", ""),
+		"parameters": project_data.get("parameters", {}),
+		"settings": project_data.get("settings", {"theme": 0, "presets_loaded": []}),
+		"is_public": project_data.get("is_public", true),
+		"tags": project_data.get("tags", ["wavelet"])
+	}
+	_post("/api/projects", body)
+
+func download_shared_project(project_id: String) -> void:
+	"""
+	Download a shared project by ID
+	"""
+	_get("/api/projects/" + project_id)
+
+func delete_shared_project(project_id: String) -> void:
+	"""
+	Delete a shared project (owner only)
+	"""
+	_delete("/api/projects/" + project_id)
+
 # ============ Community Feed ============
 
 func get_feed(feed_type: String = "latest", page: int = 1, limit: int = 20, 

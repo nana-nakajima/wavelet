@@ -11,6 +11,8 @@ use services::user_service::{AppState, register, login, get_profile};
 use services::preset_service::PresetService;
 use handlers::preset_handler::configure_routes;
 use handlers::follow_handler::configure_follow_routes;
+use handlers::project_handler::configure_project_routes;
+use handlers::challenge_handler::configure_challenge_routes;
 use db::users::UserRepository;
 use std::sync::Arc;
 use storage::{StorageBackend, LocalStorage};
@@ -49,6 +51,12 @@ fn config_routes(cfg: &mut web::ServiceConfig) {
     
     // Follow routes
     configure_follow_routes(cfg);
+
+    // Project sharing routes
+    configure_project_routes(cfg);
+
+    // Challenge routes
+    configure_challenge_routes(cfg);
 }
 
 #[actix_web::main]

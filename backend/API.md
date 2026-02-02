@@ -356,5 +356,204 @@ Response:
 
 ---
 
-*Generated: 2026-02-02*
+## 🏆 Challenges API
+
+### Get Active Challenges
+**GET** `/api/challenges`
+
+Response:
+```json
+[
+  {
+    "id": 1,
+    "title": "Retro Synth Wave Challenge",
+    "description": "Create a synthwave track using only WAVELET presets! Show us your 80s vibes.",
+    "theme": "80s Retro",
+    "start_date": "2026-02-03T00:00:00Z",
+    "end_date": "2026-02-10T23:59:59Z",
+    "status": "active",
+    "participant_count": 5,
+    "created_by": 1,
+    "created_at": "2026-02-03T00:00:00Z"
+  }
+]
+```
+
+### Create Challenge
+**POST** `/api/challenges`
+
+Headers: `Authorization: Bearer <token>`
+
+Body:
+```json
+{
+  "title": "Ambient Soundscapes",
+  "description": "Create a relaxing ambient piece using WAVELET's reverb and delay effects.",
+  "theme": "Peaceful Nature",
+  "start_date": "2026-02-03T00:00:00Z",
+  "end_date": "2026-02-17T23:59:59Z"
+}
+```
+
+Response (201 Created):
+```json
+{
+  "id": 2,
+  "title": "Ambient Soundscapes",
+  "description": "Create a relaxing ambient piece...",
+  "theme": "Peaceful Nature",
+  "start_date": "2026-02-03T00:00:00Z",
+  "end_date": "2026-02-17T23:59:59Z",
+  "status": "active",
+  "participant_count": 0,
+  "created_by": 1
+}
+```
+
+### Get Challenge Details
+**GET** `/api/challenges/{id}`
+
+Response:
+```json
+{
+  "id": 1,
+  "title": "Retro Synth Wave Challenge",
+  "description": "Create a synthwave track...",
+  "theme": "80s Retro",
+  "start_date": "2026-02-03T00:00:00Z",
+  "end_date": "2026-02-10T23:59:59Z",
+  "status": "active",
+  "participant_count": 5,
+  "created_by": 1,
+  "created_at": "2026-02-03T00:00:00Z",
+  "submissions": [
+    {
+      "id": 1,
+      "challenge_id": 1,
+      "user_id": 2,
+      "username": "SynthMaster",
+      "project_name": "Neon Nights",
+      "description": "Pure 80s nostalgia with modern touch",
+      "download_url": "/api/challenges/1/submissions/1/download",
+      "votes": 42,
+      "rank": 1,
+      "submitted_at": "2026-02-03T12:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Challenge Leaderboard
+**GET** `/api/challenges/{id}/leaderboard`
+
+Response:
+```json
+[
+  {
+    "id": 1,
+    "challenge_id": 1,
+    "user_id": 2,
+    "username": "SynthMaster",
+    "project_name": "Neon Nights",
+    "description": "Pure 80s nostalgia with modern touch",
+    "download_url": "/api/challenges/1/submissions/1/download",
+    "votes": 42,
+    "rank": 1,
+    "submitted_at": "2026-02-03T12:00:00Z"
+  }
+]
+```
+
+### Submit Project to Challenge
+**POST** `/api/challenges/{challenge_id}/submissions`
+
+Headers: `Authorization: Bearer <token>`
+
+Body:
+```json
+{
+  "project_name": "My Awesome Track",
+  "description": "A synthwave track I created",
+  "download_url": "http://localhost:8080/api/projects/download/abc123"
+}
+```
+
+Response (201 Created):
+```json
+{
+  "id": 1,
+  "challenge_id": 1,
+  "user_id": 3,
+  "username": "testuser",
+  "project_name": "My Awesome Track",
+  "description": "A synthwave track I created",
+  "download_url": "http://localhost:8080/api/projects/download/abc123",
+  "votes": 0,
+  "rank": 0,
+  "submitted_at": "2026-02-03T12:00:00Z"
+}
+```
+
+### Vote for Submission
+**POST** `/api/challenges/{challenge_id}/submissions/{submission_id}/vote`
+
+Headers: `Authorization: Bearer <token>`
+
+Body:
+```json
+{
+  "vote": true
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "message": "Vote recorded successfully"
+}
+```
+
+---
+
+### Challenges Database Schema
+
+```sql
+CREATE TABLE challenges (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    theme VARCHAR(255) NOT NULL,
+    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE challenge_submissions (
+    id SERIAL PRIMARY KEY,
+    challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    project_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    download_url VARCHAR(500) NOT NULL,
+    votes INTEGER DEFAULT 0,
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(challenge_id, user_id)
+);
+
+CREATE TABLE challenge_votes (
+    id SERIAL PRIMARY KEY,
+    submission_id INTEGER NOT NULL REFERENCES challenge_submissions(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    vote BOOLEAN NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(submission_id, user_id)
+);
+```
+
+---
+
+*Generated: 2026-02-03*
 *WAVELET - Abstract Sound Synthesizer*
