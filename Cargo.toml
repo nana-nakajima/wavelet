@@ -1,6 +1,6 @@
 [package]
 name = "wavelet"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
 description = "WAVELET - Abstract Sound Synthesizer. A small wave, like a musical note."
 authors = ["WAVELET Team"]
@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 gdext = { git = "https://github.com/godot-rust/gdext", branch = "master" }
 godot = { package = "gdext", git = "https://github.com/godot-rust/gdext", branch = "master" }
+rand = "0.8"
 
 [features]
 default = ["gd-extension"]

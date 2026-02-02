@@ -18,6 +18,7 @@
 //! (below 20Hz, typically used for LFOs). See the [Lfo] module for control rate usage.
 
 use std::f32::consts::PI;
+use rand::Rng;
 
 /// Enumeration of supported oscillator waveforms.
 /// Each waveform has distinct harmonic characteristics.
@@ -37,6 +38,43 @@ pub enum Waveform {
     /// Triangle wave - ramps linearly up and down
     /// Contains only odd harmonics with 1/harmonic^2 amplitude decay
     Triangle,
+    
+    /// White noise - random values with uniform distribution
+    /// Contains equal energy at all frequencies
+    Noise,
+    
+    /// Phase modulation waveform - for FM synthesis
+    /// Generates carrier for phase modulation
+    PM,
+}
+
+/// Oversampling factor for anti-aliasing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OversampleFactor {
+    /// No oversampling (1x)
+    None = 1,
+    
+    /// 2x oversampling
+    X2 = 2,
+    
+    /// 4x oversampling
+    X4 = 4,
+    
+    /// 8x oversampling
+    X8 = 8,
+}
+
+impl OversampleFactor {
+    /// Gets the oversampling factor as u32.
+    pub fn as_u32(&self) -> u32 {
+        *self as u32
+    }
+}
+
+impl Default for OversampleFactor {
+    fn default() -> Self {
+        OversampleFactor::None
+    }
 }
 
 /// Enumeration for quick oscillator type selection.
@@ -54,6 +92,12 @@ pub enum OscillatorType {
     
     /// Triangle wave oscillator
     Triangle,
+    
+    /// White noise oscillator
+    Noise,
+    
+    /// Phase modulation oscillator
+    PM,
 }
 
 impl From<OscillatorType> for Waveform {
@@ -63,6 +107,8 @@ impl From<OscillatorType> for Waveform {
             OscillatorType::Square => Waveform::Square,
             OscillatorType::Sawtooth => Waveform::Sawtooth,
             OscillatorType::Triangle => Waveform::Triangle,
+            OscillatorType::Noise => Waveform::Noise,
+            OscillatorType::PM => Waveform::PM,
         }
     }
 }
@@ -85,6 +131,9 @@ pub struct OscillatorConfig {
     
     /// Sample rate of the audio system
     pub sample_rate: f32,
+    
+    /// Oversampling factor for anti-aliasing
+    pub oversample_factor: OversampleFactor,
 }
 
 impl Default for OscillatorConfig {
@@ -95,6 +144,7 @@ impl Default for OscillatorConfig {
             amplitude: 0.5,
             phase_offset: 0.0,
             sample_rate: 44100.0,
+            oversample_factor: OversampleFactor::None,
         }
     }
 }
@@ -105,10 +155,20 @@ impl Default for OscillatorConfig {
 /// samples on demand based on its configuration. Phase is continuously
 /// accumulated and wrapped around 2*PI radians.
 ///
+/// # Oversampling
+///
+/// For waveforms with strong harmonics (sawtooth, square), the oscillator
+/// can use oversampling to reduce aliasing. When oversampling is enabled:
+/// 1. The oscillator runs at a higher internal sample rate
+/// 2. Multiple samples are generated for each output sample
+/// 3. A decimation filter reduces the output back to the base sample rate
+///
+/// This significantly reduces aliasing artifacts in high-frequency content.
+///
 /// # Example
 ///
 /// ```rust
-/// use wavelet::oscillator::{Oscillator, OscillatorConfig, Waveform};
+/// use wavelet::oscillator::{Oscillator, OscillatorConfig, Waveform, OversampleFactor};
 ///
 /// let mut config = OscillatorConfig {
 ///     waveform: Waveform::Sawtooth,
@@ -116,6 +176,7 @@ impl Default for OscillatorConfig {
 ///     amplitude: 0.8,
 ///     sample_rate: 48000.0,
 ///     phase_offset: 0.0,
+///     oversample_factor: OversampleFactor::X4, // 4x oversampling for anti-aliasing
 /// };
 ///
 /// let mut osc = Oscillator::new(config);
@@ -137,6 +198,18 @@ pub struct Oscillator {
     
     /// Sample rate for phase calculations
     sample_rate: f32,
+    
+    /// Random number generator for noise
+    rng: rand::rngs::ThreadRng,
+    
+    /// Oversampling factor
+    oversample_factor: OversampleFactor,
+    
+    /// Oversampling buffer for decimation
+    oversample_buffer: Vec<f32>,
+    
+    /// Current position in oversample buffer
+    oversample_pos: usize,
 }
 
 impl Oscillator {
@@ -151,6 +224,8 @@ impl Oscillator {
     /// A new Oscillator instance ready to generate samples
     pub fn new(config: OscillatorConfig) -> Self {
         let phase_increment = config.frequency / config.sample_rate;
+        let oversample_factor = config.oversample_factor;
+        let oversample_count = oversample_factor.as_u32() as usize;
         
         Self {
             phase: 0.0,
@@ -158,6 +233,10 @@ impl Oscillator {
             waveform: config.waveform,
             amplitude: config.amplitude,
             sample_rate: config.sample_rate,
+            rng: rand::thread_rng(),
+            oversample_factor,
+            oversample_buffer: vec![0.0; oversample_count],
+            oversample_pos: 0,
         }
     }
     
@@ -206,6 +285,34 @@ impl Oscillator {
         self.phase_increment = self.phase_increment * (self.sample_rate / sample_rate);
     }
     
+    /// Sets the oversampling factor for anti-aliasing.
+    ///
+    /// Higher oversampling factors reduce aliasing but increase CPU usage.
+    /// 1x = no oversampling, 2x = 2x oversampling, etc.
+    ///
+    /// # Arguments
+    ///
+    /// * `factor` - Oversampling factor
+    pub fn set_oversample_factor(&mut self, factor: OversampleFactor) {
+        let new_factor = factor.as_u32() as usize;
+        
+        // Reallocate buffer if needed
+        if new_factor > 1 {
+            self.oversample_buffer.resize(new_factor, 0.0);
+        }
+        
+        self.oversample_factor = factor;
+    }
+    
+    /// Gets the current oversampling factor.
+    ///
+    /// # Returns
+    ///
+    /// Current oversampling factor
+    pub fn oversample_factor(&self) -> OversampleFactor {
+        self.oversample_factor
+    }
+    
     /// Resets the oscillator phase to the starting position.
     pub fn reset_phase(&mut self) {
         self.phase = 0.0;
@@ -226,13 +333,40 @@ impl Oscillator {
     /// This method calculates the sample value based on current phase
     /// and waveform type, then advances the phase for the next sample.
     ///
+    /// When oversampling is enabled, this method handles the oversampling
+    /// process automatically, generating multiple high-rate samples and
+    /// applying decimation to produce the final output sample.
+    ///
     /// # Returns
     ///
     /// The next sample value in the range [-amplitude, amplitude]
     pub fn next_sample(&mut self) -> f32 {
-        let sample = self.sample_waveform();
-        self.advance_phase();
-        sample
+        let oversample_factor = self.oversample_factor.as_u32() as usize;
+        
+        if oversample_factor <= 1 {
+            // No oversampling - generate sample directly
+            let sample = self.sample_waveform();
+            self.advance_phase();
+            sample
+        } else {
+            // Oversampling mode - generate and accumulate samples
+            // Calculate the phase increment for the oversampled rate
+            let oversample_phase_increment = self.phase_increment / oversample_factor as f32;
+            
+            // Generate oversampled samples
+            for i in 0..oversample_factor {
+                self.oversample_buffer[i] = self.sample_waveform();
+                self.phase += oversample_phase_increment;
+                if self.phase >= 1.0 {
+                    self.phase -= 1.0;
+                }
+            }
+            
+            // Apply simple decimation (average the oversampled samples)
+            // This acts as a low-pass filter to remove aliasing artifacts
+            let sum: f32 = self.oversample_buffer.iter().sum();
+            sum / oversample_factor as f32
+        }
     }
     
     /// Generates multiple samples for batch processing.
@@ -249,7 +383,7 @@ impl Oscillator {
     }
     
     /// Internal method to sample the current waveform at current phase.
-    fn sample_waveform(&self) -> f32 {
+    fn sample_waveform(&mut self) -> f32 {
         // Convert phase from [0, 1) to [0, 2*PI) for trigonometric functions
         let phase_2pi = self.phase * 2.0 * PI;
         
@@ -273,6 +407,16 @@ impl Oscillator {
                     3.0 - 4.0 * self.phase
                 };
                 value * self.amplitude
+            }
+            
+            Waveform::Noise => {
+                // White noise: random values in [-1, 1]
+                (self.rng.gen::<f32>() * 2.0 - 1.0) * self.amplitude
+            }
+            
+            Waveform::PM => {
+                // Phase modulation carrier - sine wave for FM synthesis
+                phase_2pi.sin() * self.amplitude
             }
         }
     }

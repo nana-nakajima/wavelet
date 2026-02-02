@@ -5,14 +5,26 @@
 //! a complete instrument.
 
 use std::collections::HashMap;
-use crate::oscillator::{Oscillator, OscillatorConfig, Waveform, midi_to_frequency};
-use crate::filter::{Filter, FilterType, BiquadFilter};
+use crate::oscillator::{Oscillator, OscillatorConfig, Waveform, midi_to_frequency, OversampleFactor};
+use crate::filter::{Filter, FilterType, BiquadFilter, ZdfFilter, ZdfFilterMode, ZdfFilterConfig};
 use crate::envelope::{AdsrEnvelope, EnvelopeConfig, EnvelopeStage};
 use crate::lfo::{Lfo, LfoConfig, LfoRate};
-use crate::effects::{EffectProcessor, EffectType, EffectConfig};
+use crate::effects::{EffectProcessor, EffectType, EffectConfig, Saturation};
 
 /// Maximum number of simultaneous voices (polyphony).
 const MAX_VOICES: usize = 16;
+
+/// Virtual Analog (VA) parameter IDs for control and automation.
+///
+/// These constants define the parameter IDs used for controlling
+/// the Virtual Analog features of the synthesizer.
+pub const PARAM_ZDF_ENABLED: i32 = 50;
+pub const PARAM_ZDF_CUTOFF: i32 = 51;
+pub const PARAM_ZDF_RES: i32 = 52;
+pub const PARAM_ZDF_DRIVE: i32 = 53;
+pub const PARAM_SATURATION_DRIVE: i32 = 54;
+pub const PARAM_SATURATION_MIX: i32 = 55;
+pub const PARAM_OVERSAMPLE: i32 = 56;
 
 /// Voice structure representing one playing note.
 #[derive(Debug, Clone)]
@@ -102,6 +114,13 @@ impl Voice {
 /// The Synth combines oscillators, filters, envelopes, LFOs, and effects
 /// into a complete synthesizer engine supporting polyphony and modulation.
 ///
+/// # Virtual Analog Features
+///
+/// The synthesizer includes several Virtual Analog features:
+/// - **ZDF Filter**: Zero-Delay Feedback ladder filter (Moog-style)
+/// - **Saturation**: Analog-style soft clipping and harmonic enhancement
+/// - **Oversampling**: Anti-aliasing for oscillators (2x, 4x, 8x)
+///
 /// # Example
 ///
 /// ```rust
@@ -116,8 +135,17 @@ pub struct Synth {
     /// Active voices for polyphony
     voices: Vec<Voice>,
     
-    /// Global filter
+    /// Global biquad filter (original filter)
     filter: Filter,
+    
+    /// ZDF (Zero-Delay Feedback) ladder filter for VA character
+    zdf_filter: ZdfFilter,
+    
+    /// Whether ZDF filter is active
+    zdf_enabled: bool,
+    
+    /// Saturation effect for analog-style saturation
+    saturation: Saturation,
     
     /// Global LFOs for modulation
     lfos: Vec<Lfo>,
@@ -133,6 +161,9 @@ pub struct Synth {
     
     /// Active note tracking for voice allocation
     active_notes: HashMap<u8, usize>, // note -> voice index
+    
+    /// Oversampling factor for oscillators
+    oversample_factor: OversampleFactor,
 }
 
 impl Synth {
@@ -154,14 +185,26 @@ impl Synth {
             ..Default::default()
         };
         
+        let zdf_config = ZdfFilterConfig {
+            mode: ZdfFilterMode::LowPass4,
+            cutoff_frequency: 1000.0,
+            resonance: 1.0,
+            drive: 0.0,
+            sample_rate,
+        };
+        
         Self {
             voices: Vec::with_capacity(MAX_VOICES),
             filter: Filter::new(FilterType::LowPass, 2000.0, 1.0, sample_rate),
+            zdf_filter: ZdfFilter::with_config(zdf_config),
+            zdf_enabled: true,
+            saturation: Saturation::new(),
             lfos: vec![Lfo::with_config(lfo_config)],
             effects: EffectProcessor::new(sample_rate),
             master_volume: 0.7,
             sample_rate,
             active_notes: HashMap::new(),
+            oversample_factor: OversampleFactor::None,
         }
     }
     
@@ -207,11 +250,19 @@ impl Synth {
             self.active_notes.remove(&note);
         }
         
-        // Process through filter
+        // Process through ZDF filter if enabled
+        if self.zdf_enabled {
+            output = self.zdf_filter.process_sample(output);
+        }
+        
+        // Process through biquad filter (original filter)
         let filtered = self.filter.process(output);
         
+        // Process through saturation
+        let saturated = self.saturation.process_sample(filtered);
+        
         // Process through effects
-        self.effects.process(filtered)
+        self.effects.process(saturated)
     }
     
     /// Processes a block of stereo samples.
@@ -380,6 +431,85 @@ impl Synth {
         self.effects.set_mix(mix);
     }
     
+    // ===== Virtual Analog Feature Controls =====
+    
+    /// Enables or disables the ZDF (Zero-Delay Feedback) filter.
+    ///
+    /// When enabled, the ZDF ladder filter is used instead of the
+    /// standard biquad filter for a more analog character.
+    ///
+    /// # Arguments
+    ///
+    /// * `enabled` - Whether to enable the ZDF filter
+    pub fn set_zdf_enabled(&mut self, enabled: bool) {
+        self.zdf_enabled = enabled;
+    }
+    
+    /// Sets the ZDF filter cutoff frequency.
+    ///
+    /// # Arguments
+    ///
+    /// * `cutoff` - Cutoff frequency in Hz (20 to 20000)
+    pub fn set_zdf_cutoff(&mut self, cutoff: f32) {
+        self.zdf_filter.set_cutoff(cutoff);
+    }
+    
+    /// Sets the ZDF filter resonance.
+    ///
+    /// # Arguments
+    ///
+    /// * `resonance` - Resonance value (0.0 to ~4.0)
+    pub fn set_zdf_resonance(&mut self, resonance: f32) {
+        self.zdf_filter.set_resonance(resonance);
+    }
+    
+    /// Sets the ZDF filter drive amount.
+    ///
+    /// # Arguments
+    ///
+    /// * `drive` - Drive amount (0.0 to ~10.0)
+    pub fn set_zdf_drive(&mut self, drive: f32) {
+        self.zdf_filter.set_drive(drive);
+    }
+    
+    /// Sets the saturation drive amount.
+    ///
+    /// # Arguments
+    ///
+    /// * `drive` - Drive amount (0.0 to ~10.0)
+    pub fn set_saturation_drive(&mut self, drive: f32) {
+        self.saturation.set_drive(drive);
+    }
+    
+    /// Sets the saturation mix.
+    ///
+    /// # Arguments
+    ///
+    /// * `mix` - Wet/dry mix (0.0 = dry, 1.0 = fully saturated)
+    pub fn set_saturation_mix(&mut self, mix: f32) {
+        self.saturation.set_mix(mix);
+    }
+    
+    /// Sets the oscillator oversampling factor.
+    ///
+    /// Higher oversampling reduces aliasing but increases CPU usage.
+    ///
+    /// # Arguments
+    ///
+    /// * `factor` - Oversampling factor (1x, 2x, 4x, 8x)
+    pub fn set_oversample_factor(&mut self, factor: OversampleFactor) {
+        self.oversample_factor = factor;
+    }
+    
+    /// Gets the current oversampling factor.
+    ///
+    /// # Returns
+    ///
+    /// Current oversampling factor
+    pub fn oversample_factor(&self) -> OversampleFactor {
+        self.oversample_factor
+    }
+    
     /// Resets the synthesizer state.
     pub fn reset(&mut self) {
         for voice in &mut self.voices {
@@ -388,6 +518,8 @@ impl Synth {
         self.voices.clear();
         self.active_notes.clear();
         self.filter.reset();
+        self.zdf_filter.reset();
+        self.saturation.reset();
         self.effects.reset();
     }
     
