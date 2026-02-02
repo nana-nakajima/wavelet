@@ -1,0 +1,23 @@
+# Rust
+target/
+Cargo.lock
+*.pdb
+
+# Godot
+.godot/
+*.import
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+*.so
+*.dylib
+*.dll
