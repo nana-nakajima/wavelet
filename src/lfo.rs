@@ -19,7 +19,7 @@
 //! - **Pan Spread**: LFO modulating stereo position
 //! - **Trill**: Rapid alternation between two notes
 
-use crate::oscillator::{Oscillator, OscillatorConfig, Waveform};
+use crate::oscillator::{Oscillator, OscillatorConfig, OversampleFactor, Waveform};
 use std::f32::consts::PI;
 
 /// LFO rate representation.
@@ -149,6 +149,7 @@ impl Lfo {
             amplitude: 1.0, // LFO uses bipolar output
             phase_offset: config.phase_offset,
             sample_rate: config.sample_rate,
+            oversample_factor: OversampleFactor::None,
         };
 
         Self {

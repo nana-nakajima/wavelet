@@ -4,10 +4,10 @@
 //! components (oscillators, filters, envelopes, LFOs, effects) into
 //! a complete instrument.
 
-use crate::effects::{EffectConfig, EffectProcessor, EffectType, Saturation};
-use crate::envelope::{AdsrEnvelope, EnvelopeConfig, EnvelopeStage};
+use crate::effects::{Effect, EffectConfig, EffectProcessor, EffectType, Saturation};
+use crate::envelope::{AdsrEnvelope, Envelope, EnvelopeConfig, EnvelopeStage};
 use crate::filter::{BiquadFilter, Filter, FilterType, ZdfFilter, ZdfFilterConfig, ZdfFilterMode};
-use crate::lfo::{Lfo, LfoConfig, LfoRate};
+use crate::lfo::{Lfo, LfoConfig, LfoRate, LfoTrait};
 use crate::oscillator::{
     midi_to_frequency, Oscillator, OscillatorConfig, OversampleFactor, Waveform,
 };
@@ -66,6 +66,7 @@ impl Voice {
             amplitude: velocity as f32 / 127.0,
             phase_offset: 0.0,
             sample_rate,
+            oversample_factor: OversampleFactor::None,
         };
 
         let env_config = EnvelopeConfig {
@@ -309,13 +310,13 @@ impl Synth {
     /// * `velocity` - Note velocity (0-127)
     pub fn note_on(&mut self, note: u8, velocity: u8) {
         if velocity == 0 {
-            self.note_off(note);
+            self.note_off_specific(note);
             return;
         }
 
         // Check if note is already playing
         if self.active_notes.contains_key(&note) {
-            self.note_off(note);
+            self.note_off_specific(note);
         }
 
         // Find available voice (oldest first for voice stealing)
@@ -339,6 +340,7 @@ impl Synth {
                         amplitude: velocity as f32 / 127.0,
                         phase_offset: 0.0,
                         sample_rate: self.sample_rate,
+                        oversample_factor: OversampleFactor::None,
                     };
 
                     self.voices[voice_idx] = Voice::new(note, velocity, self.sample_rate);
@@ -537,6 +539,91 @@ impl Synth {
     /// Gets the number of active voices.
     pub fn active_voice_count(&self) -> usize {
         self.active_notes.len()
+    }
+
+    // ===== AI Melody Generation Methods =====
+
+    /// Generates a new melody based on the specified style.
+    ///
+    /// # Arguments
+    ///
+    /// * `root_note` - Root MIDI note (default 60 = C4)
+    /// * `style` - Melody style (Pop, Jazz, LoFi, EDM, Ambient, Classical)
+    /// * `tempo` - Tempo in BPM (default 120)
+    /// * `length` - Number of measures (default 4)
+    ///
+    /// # Returns
+    ///
+    /// A Melody struct with the generated melody
+    pub fn generate_melody(
+        &self,
+        root_note: u8,
+        style: crate::melody_generator::MelodyStyle,
+        tempo: f64,
+        length: usize,
+    ) -> crate::melody_generator::Melody {
+        let key = crate::melody_generator::Key {
+            root: root_note,
+            scale: match style {
+                crate::melody_generator::MelodyStyle::Jazz => crate::melody_generator::Scale::Mixolydian,
+                crate::melody_generator::MelodyStyle::Ambient => crate::melody_generator::Scale::Lydian,
+                _ => crate::melody_generator::Scale::Major,
+            },
+        };
+
+        let mut generator = crate::melody_generator::MelodyGenerator::new(key, tempo, length);
+        generator.generate_preset(style)
+    }
+
+    /// Plays a generated melody on the synthesizer.
+    ///
+    /// # Arguments
+    ///
+    /// * `melody` - The melody to play
+    /// * `start_delay_ms` - Delay before starting (in milliseconds)
+    pub fn play_melody(&mut self, melody: &crate::melody_generator::Melody, start_delay_ms: u64) {
+        // Calculate delay in samples
+        let sample_delay = (start_delay_ms as f64 / 1000.0 * self.sample_rate as f64) as usize;
+        let beats_per_second = melody.tempo / 60.0;
+        let samples_per_beat = self.sample_rate as f64 / beats_per_second;
+
+        for note in &melody.notes {
+            let delay_samples = sample_delay + (note.start_beat * samples_per_beat) as usize;
+            let velocity = (note.velocity * 127.0) as u8;
+
+            // Trigger note after delay
+            // Note: In a real implementation, this would use a scheduler
+            self.note_on(note.pitch, velocity);
+        }
+    }
+
+    /// Generates and plays a melody in one step.
+    ///
+    /// # Arguments
+    ///
+    /// * `root_note` - Root MIDI note
+    /// * `style` - Melody style
+    /// * `tempo` - Tempo in BPM
+    /// * `length` - Number of measures
+    pub fn generate_and_play(
+        &mut self,
+        root_note: u8,
+        style: crate::melody_generator::MelodyStyle,
+        tempo: f64,
+        length: usize,
+    ) -> crate::melody_generator::Melody {
+        let melody = self.generate_melody(root_note, style, tempo, length);
+        self.play_melody(&melody, 0);
+        melody
+    }
+
+    /// Gets the current tempo.
+    ///
+    /// # Returns
+    ///
+    /// Current tempo in BPM (default 120)
+    pub fn get_tempo(&self) -> f64 {
+        120.0 // Default tempo, can be extended to store actual tempo
     }
 }
 

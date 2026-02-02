@@ -491,7 +491,9 @@ mod tests {
     #[test]
     fn test_oscillator_default() {
         let osc = Oscillator::default();
-        assert_eq!(osc.frequency, 440.0);
+        // frequency is stored as phase_increment = 440.0 / 44100.0
+        let expected_phase_increment = 440.0 / 44100.0;
+        assert!((osc.phase_increment - expected_phase_increment).abs() < 0.00001);
         assert_eq!(osc.amplitude, 0.5);
         assert_eq!(osc.waveform, Waveform::Sine);
     }

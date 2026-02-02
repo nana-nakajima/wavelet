@@ -721,7 +721,7 @@ impl MelodyGenerator {
                 if rng.gen::<f32>() > leap_chance {
                     // Step up or down
                     let step = if rng.gen_bool(0.5) { 1 } else { -1 };
-                    let new_idx = (last_idx as i32 + step).clamp(0, scale_notes.len() - 1) as usize;
+                    let new_idx = (last_idx as i32 + step).clamp(0i32, (scale_notes.len() as i32) - 1) as usize;
                     return scale_notes[new_idx];
                 }
             }
@@ -982,8 +982,8 @@ mod tests {
         let mut generator = create_test_generator();
         let mut melody = generator.generate();
 
-        // Quantize to 8th notes
-        generator.quantize(0.5);
+        // Quantize to 8th notes (using Melody's quantize method)
+        melody.quantize(0.5);
 
         for note in &melody.notes {
             let start_quantized = (note.start_beat / 0.5).round() * 0.5;
