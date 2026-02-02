@@ -38,6 +38,7 @@ pub mod melody_generator;
 pub mod oscillator;
 pub mod synth;
 pub mod chord_generator;
+pub mod rhythm_generator;
 
 pub use effects::{Effect, EffectType, Saturation};
 pub use envelope::{Envelope, EnvelopeStage};
@@ -47,6 +48,7 @@ pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};
 pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
 pub use synth::Synth;
 pub use chord_generator::{ChordGenerator, ChordStyle, Key, Scale, Chord, ChordType, ProgressionPattern};
+pub use rhythm_generator::{RhythmGenerator, DrumPattern, DrumNote, RhythmStyle, DrumSound, Complexity};
 
 // Re-export commonly used types for convenience
 pub use crate::envelope::AdsrEnvelope;
