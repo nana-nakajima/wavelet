@@ -1,3 +1,154 @@
 {
-  "tasks": {}
+  "tasks": {
+    "task-001": {
+      "id": "task-001",
+      "title": "WAVELET Week 3 效果器开发",
+      "description": "实现15种专业音频效果器，包括Delay、Reverb、Distortion、Compressor、Saturation、Chorus、Phaser、Flanger、RingMod、BitCrusher、FilterBank、Freeze、Tremolo、SimpleEQ、Warp。每个效果器都需要完整的理论验证测试和边界测试。",
+      "status": "done",
+      "priority": "urgent",
+      "category": "effect",
+      "assignee": "Nana",
+      "created_at": "2026-02-03T12:00:00Z",
+      "updated_at": "2026-02-03T22:00:00Z",
+      "comments": [
+        {
+          "id": "c001",
+          "author": "Nana",
+          "content": "所有15种效果器已完成！338个测试全部通过！",
+          "created_at": "2026-02-03T22:00:00Z"
+        }
+      ]
+    },
+    "task-002": {
+      "id": "task-002",
+      "title": "WAVELET Week 4 打包与发布准备",
+      "description": "完成Rust代码清理、测试验证、Steam素材准备。等待图形环境进行Godot UI录制和完整打包测试。",
+      "status": "on_hold",
+      "priority": "high",
+      "category": "ui",
+      "assignee": "Nana",
+      "created_at": "2026-02-03T23:00:00Z",
+      "updated_at": "2026-02-04T01:00:00Z",
+      "comments": [
+        {
+          "id": "c002",
+          "author": "Nana",
+          "content": "代码清理完成，338测试通过。等待图形环境录制Godot UI。",
+          "created_at": "2026-02-04T00:00:00Z"
+        }
+      ]
+    },
+    "task-003": {
+      "id": "task-003",
+      "title": "Tonverk功能对齐",
+      "description": "基于Elektron Tonverk v1.0.2用户手册，实现WAVELET与Tonverk功能和操作逻辑的一致性。当前进度51%，需要继续实现插入效果器、Subtracks机器等。",
+      "status": "in_progress",
+      "priority": "high",
+      "category": "effect",
+      "assignee": "Nana",
+      "created_at": "2026-02-03T00:00:00Z",
+      "updated_at": "2026-02-04T01:00:00Z",
+      "comments": []
+    },
+    "task-004": {
+      "id": "task-004",
+      "title": "WAVELET任务中心开发",
+      "description": "使用Actix-web + HTML/CSS/JS构建内网任务管理系统，支持新建/编辑/删除任务、评论系统、状态流转、过滤器等功能。支持6种任务状态：待办/进行中/审核/完成/暂定/废弃。",
+      "status": "done",
+      "priority": "medium",
+      "category": "ui",
+      "assignee": "Nana",
+      "created_at": "2026-02-03T21:50:00Z",
+      "updated_at": "2026-02-04T01:10:00Z",
+      "comments": [
+        {
+          "id": "c003",
+          "author": "Nana",
+          "content": "任务中心已上线！支持看板视图、评论系统、过滤器等功能。新增暂定和废弃状态！",
+          "created_at": "2026-02-04T01:10:00Z"
+        }
+      ]
+    },
+    "task-005": {
+      "id": "task-005",
+      "title": "Subtracks采样播放机器",
+      "description": "实现8个独立采样播放轨，支持独立音高、滤波器，包络控制。这是Tonverk功能对齐中的重要组成部分。",
+      "status": "todo",
+      "priority": "high",
+      "category": "sampler",
+      "assignee": "Nana",
+      "created_at": "2026-02-04T01:00:00Z",
+      "updated_at": "2026-02-04T01:00:00Z",
+      "comments": []
+    },
+    "task-006": {
+      "id": "task-006",
+      "title": "音频分析模块完善",
+      "description": "为所有效果器添加理论验证测试，确保每个模块都有正确的RMS、延迟、频谱分析测试用例。当前进度80%。",
+      "status": "in_progress",
+      "priority": "medium",
+      "category": "effect",
+      "assignee": "Nana",
+      "created_at": "2026-02-04T00:30:00Z",
+      "updated_at": "2026-02-04T01:00:00Z",
+      "comments": [
+        {
+          "id": "c004",
+          "author": "Nana",
+          "content": "已添加RingModulator、BitCrusher、FilterBank、Freeze的理论验证测试。",
+          "created_at": "2026-02-04T01:00:00Z"
+        }
+      ]
+    },
+    "task-007": {
+      "id": "task-007",
+      "title": "Godot UI录制与导出",
+      "description": "录制WAVELET UI演示视频，制作宣传素材。需要图形环境支持（VNC/远程桌面）。",
+      "status": "on_hold",
+      "priority": "urgent",
+      "category": "ui",
+      "assignee": "Eli",
+      "created_at": "2026-02-04T00:00:00Z",
+      "updated_at": "2026-02-04T00:00:00Z",
+      "comments": [
+        {
+          "id": "c005",
+          "author": "Nana",
+          "content": "等待Eli在有图形环境时录制UI画面。",
+          "created_at": "2026-02-04T00:00:00Z"
+        }
+      ]
+    },
+    "task-008": {
+      "id": "task-008",
+      "title": "Steam商店页面上传",
+      "description": "整理商店素材、撰写商店描述、上传宣传视频和截图。需要先完成Godot UI录制。",
+      "status": "todo",
+      "priority": "high",
+      "category": "docs",
+      "assignee": "Nana",
+      "created_at": "2026-02-04T00:00:00Z",
+      "updated_at": "2026-02-04T00:00:00Z",
+      "comments": []
+    },
+    "task-009": {
+      "id": "task-009",
+      "title": "旧效果器重构",
+      "description": "重构Delay、Reverb等早期效果器代码，添加理论验证测试，与新效果器保持一致。",
+      "status": "deprecated",
+      "priority": "low",
+      "category": "effect",
+      "assignee": "Nana",
+      "created_at": "2026-02-04T01:00:00Z",
+      "updated_at": "2026-02-04T01:15:00Z",
+      "comments": [
+        {
+          "id": "c006",
+          "author": "Nana",
+          "content": "标记为废弃，因为新实现已经完成。需要清理旧代码。",
+          "created_at": "2026-02-04T01:15:00Z"
+        }
+      ]
+    }
+  }
 }

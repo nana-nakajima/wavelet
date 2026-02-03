@@ -2,11 +2,12 @@
 
 let allTasks = [];
 let currentTaskId = null;
+let draggedTaskId = null;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
-    loadStats();
+    initDragAndDrop();
 });
 
 // 加载任务列表
@@ -17,29 +18,92 @@ async function loadTasks() {
         renderKanban();
     } catch (error) {
         console.error('Failed to load tasks:', error);
-        // 如果API不可用，使用示例数据
         allTasks = getSampleTasks();
         renderKanban();
     }
 }
 
+// 初始化拖拽
+function initDragAndDrop() {
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('drop', handleDrop);
+}
+
+// 拖拽开始
+function handleDragStart(event) {
+    if (!event.target.classList.contains('task-card')) return;
+    draggedTaskId = event.target.dataset.taskId;
+    event.target.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', draggedTaskId);
+}
+
+// 拖拽结束
+function handleDragEnd(event) {
+    if (!event.target.classList.contains('task-card')) return;
+    event.target.classList.remove('dragging');
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        col.classList.remove('drag-over');
+    });
+}
+
+// 拖拽经过
+function handleDragOver(event) {
+    event.preventDefault();
+    const column = event.target.closest('.kanban-column');
+    if (column) {
+        column.classList.add('drag-over');
+    }
+}
+
+// 放置处理
+async function handleDrop(event) {
+    event.preventDefault();
+    const column = event.target.closest('.kanban-column');
+    if (!column || !draggedTaskId) return;
+    
+    const newStatus = column.dataset.status;
+    const task = allTasks.find(t => t.id === draggedTaskId);
+    
+    if (task && task.status !== newStatus) {
+        task.status = newStatus;
+        await moveTaskStatus(newStatus);
+    }
+    
+    column.classList.remove('drag-over');
+    draggedTaskId = null;
+}
+
+// 过滤任务
+function filterTasks() {
+    renderKanban();
+}
+
 // 获取统计数据
-async function loadStats() {
+function loadStats() {
     const todo = allTasks.filter(t => t.status === 'todo').length;
     const inProgress = allTasks.filter(t => t.status === 'in_progress').length;
+    const onHold = allTasks.filter(t => t.status === 'on_hold').length;
     const done = allTasks.filter(t => t.status === 'done').length;
-    document.getElementById('taskStats').textContent = 
-        `📋 ${todo} 待办 | 🔄 ${inProgress} 进行中 | ✅ ${done} 已完成 | 📊 ${allTasks.length} 总计`;
+    document.getElementById('taskStats').innerHTML = `
+        <span>📋 ${todo} 待办</span>
+        <span>🔄 ${inProgress} 进行中</span>
+        <span>⏸️ ${onHold} 暂定</span>
+        <span>✅ ${done} 已完成</span>
+        <span>📊 ${allTasks.length} 总计</span>
+    `;
 }
 
 // 渲染看板
 function renderKanban() {
-    const columns = ['todo', 'in_progress', 'review', 'done'];
+    const columns = ['todo', 'in_progress', 'review', 'done', 'on_hold', 'deprecated'];
     const columnNames = {
-        todo: '📋 待办',
-        in_progress: '🔄 进行中',
-        review: '👀 审核',
-        done: '✅ 完成'
+        todo: '待办',
+        in_progress: '进行中',
+        review: '审核',
+        done: '已完成',
+        on_hold: '暂定',
+        deprecated: '废弃'
     };
     
     const board = document.getElementById('kanbanBoard');
@@ -59,13 +123,16 @@ function renderKanban() {
         
         const column = document.createElement('div');
         column.className = `kanban-column ${status}`;
+        column.dataset.status = status;
+        
         column.innerHTML = `
-            <h3>${columnNames[status]} (${columnTasks.length})</h3>
+            <h3>${columnNames[status]} <small style="opacity: 0.7; font-weight: 400;">(${columnTasks.length})</small></h3>
             <div class="tasks-container">
                 ${columnTasks.map(task => renderTaskCard(task)).join('')}
                 ${columnTasks.length === 0 ? '<div class="empty-column">暂无任务</div>' : ''}
             </div>
         `;
+        
         board.appendChild(column);
     });
     
@@ -91,7 +158,13 @@ function renderTaskCard(task) {
     };
     
     return `
-        <div class="task-card" onclick="showTaskDetail('${task.id}')">
+        <div class="task-card" 
+             draggable="true"
+             data-task-id="${task.id}"
+             data-priority="${task.priority}"
+             ondragstart="handleDragStart(event)"
+             ondragend="handleDragEnd(event)"
+             onclick="showTaskDetail('${task.id}')">
             <div class="task-title">${escapeHtml(task.title)}</div>
             <div class="task-badges">
                 <span class="badge priority-${task.priority}">${priorityLabels[task.priority]}</span>
@@ -105,16 +178,11 @@ function renderTaskCard(task) {
     `;
 }
 
-// 过滤任务
-function filterTasks() {
-    renderKanban();
-}
-
 // 打开新建任务模态框
 function openModal(taskId = null) {
     const modal = document.getElementById('taskModal');
-    const form = document.getElementById('taskForm');
     const title = document.getElementById('modalTitle');
+    const form = document.getElementById('taskForm');
     
     if (taskId) {
         const task = allTasks.find(t => t.id === taskId);
@@ -136,7 +204,7 @@ function openModal(taskId = null) {
     modal.style.display = 'block';
 }
 
-// 关闭新建任务模态框
+// 关闭模态框
 function closeModal() {
     document.getElementById('taskModal').style.display = 'none';
 }
@@ -178,7 +246,6 @@ async function saveTask(event) {
         }
     } catch (error) {
         console.error('Save error:', error);
-        // 离线模式：直接更新本地数据
         if (taskId) {
             const index = allTasks.findIndex(t => t.id === taskId);
             if (index !== -1) {
@@ -227,7 +294,9 @@ function showTaskDetail(taskId) {
         todo: '📋 待办',
         in_progress: '🔄 进行中',
         review: '👀 审核',
-        done: '✅ 完成'
+        done: '✅ 完成',
+        on_hold: '⏸️ 暂定',
+        deprecated: '🗑️ 废弃'
     };
     
     document.getElementById('detailTitle').textContent = task.title;
@@ -246,17 +315,18 @@ function showTaskDetail(taskId) {
     document.getElementById('commentsList').innerHTML = comments.map(comment => `
         <div class="comment">
             <div class="comment-header">
+                <div class="comment-avatar">${escapeHtml(comment.author.charAt(0).toUpperCase())}</div>
                 <span class="comment-author">${escapeHtml(comment.author)}</span>
-                <span class="comment-time">${new Date(comment.created_at).toLocaleString('zh-CN')}</span>
+                <span class="comment-time">${formatTimeAgo(comment.created_at)}</span>
             </div>
             <div class="comment-content">${escapeHtml(comment.content)}</div>
         </div>
-    `).join('') || '<div style="color: #666; text-align: center;">暂无评论</div>';
+    `).join('') || '<div style="color: var(--text-tertiary); text-align: center; padding: 20px;">💬 暂无评论</div>';
     
     document.getElementById('detailModal').style.display = 'block';
 }
 
-// 关闭任务详情
+// 关闭详情模态框
 function closeDetailModal() {
     document.getElementById('detailModal').style.display = 'none';
     currentTaskId = null;
@@ -287,7 +357,6 @@ async function addComment(event) {
         }
     } catch (error) {
         console.error('Comment error:', error);
-        // 离线模式
         const task = allTasks.find(t => t.id === currentTaskId);
         if (task) {
             if (!task.comments) task.comments = [];
@@ -375,13 +444,29 @@ window.onclick = function(event) {
     }
 }
 
-// 示例数据（API不可用时）
+// 格式化时间
+function formatTimeAgo(date) {
+    const now = new Date();
+    const then = new Date(date);
+    const diffMs = now - then;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return '刚刚';
+    if (diffMins < 60) return `${diffMins}分钟前`;
+    if (diffHours < 24) return `${diffHours}小时前`;
+    if (diffDays < 7) return `${diffDays}天前`;
+    return then.toLocaleDateString('zh-CN');
+}
+
+// 示例数据
 function getSampleTasks() {
     return [
         {
             id: '1',
             title: '实现Subtracks采样播放',
-            description: '实现8个独立采样播放轨，支持独立音高、滤波器、包络控制',
+            description: '实现8个独立采样播放轨，支持独立音高、滤波器，包络控制',
             status: 'todo',
             priority: 'high',
             category: 'sampler',
@@ -403,30 +488,6 @@ function getSampleTasks() {
             comments: [
                 { id: 'c1', author: 'Nana', content: '基本实现完成，测试中', created_at: new Date() }
             ]
-        },
-        {
-            id: '3',
-            title: '更新Tonverk文档',
-            description: '更新完整功能对齐文档',
-            status: 'done',
-            priority: 'low',
-            category: 'docs',
-            assignee: 'Nana',
-            created_at: new Date(Date.now() - 86400000),
-            updated_at: new Date(Date.now() - 86400000),
-            comments: []
-        },
-        {
-            id: '4',
-            title: '测试音频分析模块',
-            description: '验证RMS、延迟、频谱分析等测试用例',
-            status: 'review',
-            priority: 'medium',
-            category: 'effect',
-            assignee: 'Nana',
-            created_at: new Date(Date.now() - 172800000),
-            updated_at: new Date(Date.now() - 43200000),
-            comments: []
         }
     ];
 }
