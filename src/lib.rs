@@ -57,7 +57,7 @@ pub use audio_analysis::{
     measure_cross_correlation, measure_peak, measure_peak_db, measure_rms, measure_rms_db,
     measure_stereo_correlation,
 };
-pub use effects::{Chorus, Effect, EffectType, Flanger, FlangerConfig, Phaser, PhaserConfig, Saturation, SimpleEq, StereoFlanger, StereoPhaser};
+pub use effects::{BitCrusher, BitCrusherConfig, Chorus, DecimationMode, Effect, EffectType, FilterBank, FilterBankConfig, FilterBankType, FilterBandConfig, Flanger, FlangerConfig, Freeze, FreezeConfig, FreezeType, Phaser, PhaserConfig, RingModulator, RingModulatorConfig, RingModulatorMode, RingModulatorWave, Saturation, SimpleEq, StereoBitCrusher, StereoFlanger, StereoPhaser, StereoRingModulator};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
 pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};

@@ -786,7 +786,7 @@ mod tests {
     fn test_sample_library_get() {
         let mut library = SampleLibrary::new();
         
-        let sample = Sample::new("Kick", vec![0.5; 1000], 44100);
+        let _sample = Sample::new("Kick", vec![0.5; 1000], 44100);
         let mut sample = Sample::new("Kick", vec![0.5; 1000], 44100);
         sample.info.root_note = 36;
         library.add_sample(sample);

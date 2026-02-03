@@ -27,6 +27,18 @@ pub mod phaser;
 // Re-export flanger module
 pub mod flanger;
 
+// Re-export ring modulator module
+pub mod ring_modulator;
+
+// Re-export bit crusher module
+pub mod bit_crusher;
+
+// Re-export filter bank module
+pub mod filter_bank;
+
+// Re-export freeze module
+pub mod freeze;
+
 // Re-export simple EQ module
 pub mod simple_eq;
 
@@ -37,6 +49,10 @@ pub use saturation::{saturate, Saturation, SaturationConfig};
 pub use chorus::Chorus;
 pub use phaser::{Phaser, PhaserConfig, StereoPhaser};
 pub use flanger::{Flanger, FlangerConfig, StereoFlanger};
+pub use ring_modulator::{RingModulator, RingModulatorConfig, RingModulatorMode, RingModulatorWave, StereoRingModulator};
+pub use bit_crusher::{BitCrusher, BitCrusherConfig, DecimationMode, StereoBitCrusher};
+pub use filter_bank::{FilterBank, FilterBankConfig, FilterBankType, FilterBandConfig};
+pub use freeze::{Freeze, FreezeConfig, FreezeType};
 pub use simple_eq::SimpleEq;
 // pub use track_effects::{
 //     TrackEffectSlot,
