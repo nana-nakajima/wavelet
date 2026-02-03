@@ -132,7 +132,7 @@ impl WaveletSynth {
     ///
     /// * `preset_name` - Name of the preset to load
     #[func]
-    pub fn load_preset(&mut self, preset_name: GodotString) {
+    pub fn load_preset(&mut self, preset_name: GdString) {
         let name = preset_name.to_string();
 
         match name.as_str() {
@@ -175,12 +175,4 @@ impl WaveletSynth {
 
 /// Registers all WAVELET classes with Godot.
 #[gdextension]
-unsafe impl EntryPoint for WaveletSynth {
-    fn entry_point(
-        _interface: &gdext::GdextInterface,
-        _library: &gdext::GdextLibrary,
-        _generator: &mut gdext::ClassGenerator,
-    ) {
-        godot_print!("WAVELET GDExtension loaded!");
-    }
-}
+unsafe impl ExtensionLibrary for WaveletSynth {}

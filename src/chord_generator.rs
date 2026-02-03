@@ -154,6 +154,7 @@ pub enum ProgressionPattern {
 /// Chord progression generator.
 ///
 /// Main struct for generating chord progressions based on key, style, and preferences.
+#[allow(dead_code)]
 pub struct ChordGenerator {
     /// The musical key for progression
     key: Key,

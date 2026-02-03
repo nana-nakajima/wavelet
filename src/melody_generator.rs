@@ -205,6 +205,7 @@ pub struct Chord {
 /// * `complexity` - How complex the melody is (0.0-1.0)
 /// * `randomness` - How random the melody is (0.0-1.0)
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct MelodyGenerator {
     /// Audio sample rate in Hz
     sample_rate: f64,
