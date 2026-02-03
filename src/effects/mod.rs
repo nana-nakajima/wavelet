@@ -45,6 +45,9 @@ pub mod tremolo;
 // Re-export simple EQ module
 pub mod simple_eq;
 
+// Re-export warp module
+pub mod warp;
+
 // Track effects module is temporarily disabled for compilation
 // pub mod track_effects;
 
@@ -58,6 +61,7 @@ pub use filter_bank::{FilterBank, FilterBankConfig, FilterBankType, FilterBandCo
 pub use freeze::{Freeze, FreezeConfig, FreezeType};
 pub use tremolo::{Tremolo, TremoloConfig, TremoloWaveform};
 pub use simple_eq::SimpleEq;
+pub use warp::{Warp, WarpConfig, WarpMode, StereoWarp};
 // pub use track_effects::{
 //     TrackEffectSlot,
 //     TrackEffectSlotConfig,

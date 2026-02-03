@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 WAVELET 任务中心</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1>🎯 WAVELET 任务中心</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal()">➕ 新建任务</button>
+                <span class="stats" id="taskStats">加载中...</span>
+            </div>
+        </header>
+
+        <!-- 过滤器 -->
+        <div class="filters">
+            <select id="filterStatus" onchange="filterTasks()">
+                <option value="all">所有状态</option>
+                <option value="todo">📋 待办</option>
+                <option value="in_progress">🔄 进行中</option>
+                <option value="review">👀 审核</option>
+                <option value="done">✅ 完成</option>
+            </select>
+            <select id="filterPriority" onchange="filterTasks()">
+                <option value="all">所有优先级</option>
+                <option value="urgent">🔴 紧急</option>
+                <option value="high">🟠 高</option>
+                <option value="medium">🟡 中</option>
+                <option value="low">🟢 低</option>
+            </select>
+            <select id="filterCategory" onchange="filterTasks()">
+                <option value="all">所有分类</option>
+                <option value="effect">🎛️ 效果器</option>
+                <option value="sampler">🎵 采样器</option>
+                <option value="sequencer">📝 音序器</option>
+                <option value="midi">🎹 MIDI</option>
+                <option value="ui">🖥️ UI</option>
+                <option value="docs">📚 文档</option>
+            </select>
+        </div>
+
+        <!-- 任务看板 -->
+        <div class="kanban-board" id="kanbanBoard">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+
+    <!-- 新建/编辑任务模态框 -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">新建任务</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="taskForm" onsubmit="saveTask(event)">
+                <input type="hidden" id="taskId">
+                <div class="form-group">
+                    <label>标题</label>
+                    <input type="text" id="taskTitle" required placeholder="任务标题">
+                </div>
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea id="taskDescription" rows="3" placeholder="详细描述..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>优先级</label>
+                        <select id="taskPriority">
+                            <option value="low">🟢 低</option>
+                            <option value="medium" selected>🟡 中</option>
+                            <option value="high">🟠 高</option>
+                            <option value="urgent">🔴 紧急</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>分类</label>
+                        <select id="taskCategory">
+                            <option value="effect">🎛️ 效果器</option>
+                            <option value="sampler" selected>🎵 采样器</option>
+                            <option value="sequencer">📝 音序器</option>
+                            <option value="midi">🎹 MIDI</option>
+                            <option value="ui">🖥️ UI</option>
+                            <option value="docs">📚 文档</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>负责人</label>
+                        <input type="text" id="taskAssignee" placeholder="Nana">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 任务详情模态框 -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="detailTitle">任务详情</h2>
+                <span class="close" onclick="closeDetailModal()">&times;</span>
+            </div>
+            <div class="detail-content">
+                <div class="detail-main">
+                    <div class="detail-meta">
+                        <span class="badge" id="detailPriority">🟡 中</span>
+                        <span class="badge" id="detailCategory">🎵 采样器</span>
+                        <span class="badge" id="detailStatus">📋 待办</span>
+                        <span class="badge" id="detailAssignee">👤 Nana</span>
+                    </div>
+                    <p id="detailDescription">任务描述...</p>
+                    <div class="detail-timestamps">
+                        <span>创建: <span id="detailCreated"></span></span>
+                        <span>更新: <span id="detailUpdated"></span></span>
+                    </div>
+                </div>
+                
+                <!-- 评论区域 -->
+                <div class="comments-section">
+                    <h3>💬 评论</h3>
+                    <div id="commentsList" class="comments-list">
+                        <!-- 动态生成 -->
+                    </div>
+                    <form id="commentForm" onsubmit="addComment(event)">
+                        <input type="hidden" id="commentTaskId">
+                        <div class="comment-input">
+                            <input type="text" id="commentAuthor" placeholder="你的名字" required>
+                            <input type="text" id="commentContent" placeholder="添加评论..." required>
+                            <button type="submit" class="btn btn-primary">发送</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="detail-actions">
+                    <button class="btn btn-secondary" onclick="moveTaskStatus('todo')">📋 待办</button>
+                    <button class="btn btn-secondary" onclick="moveTaskStatus('in_progress')">🔄 进行中</button>
+                    <button class="btn btn-secondary" onclick="moveTaskStatus('review')">👀 审核</button>
+                    <button class="btn btn-secondary" onclick="moveTaskStatus('done')">✅ 完成</button>
+                    <button class="btn btn-danger" onclick="deleteCurrentTask()">🗑️ 删除</button>
+                    <button class="btn btn-secondary" onclick="editCurrentTask()">✏️ 编辑</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
