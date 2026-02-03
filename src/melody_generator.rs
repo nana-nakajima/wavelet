@@ -572,7 +572,9 @@ impl MelodyGenerator {
     ///
     /// This requires the `mido` crate to be available. If not available,
     /// the function will return an error.
-    pub fn export_midi(&mut self, _path: &str) -> Result<(), Box<dyn Error>> {
+    pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
+        #[allow(unused_variables)]
+        let path = path;
         // Try to use mido if available, otherwise return helpful error
         #[cfg(feature = "midi")]
         {
