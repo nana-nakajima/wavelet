@@ -1,5 +1,3 @@
-#![cfg(feature = "gdext")]
-
 //! GDExtension Bindings Module
 //!
 //! This module provides the Godot 4 GDExtension bindings for WAVELET.
@@ -9,10 +7,12 @@
 //!
 //! To use WAVELET in Godot 4:
 //!
-//! 1. Build the Rust library: `cargo build --release`
+//! 1. Build the Rust library: `cargo build --release --features gdext`
 //! 2. Copy the resulting `.dylib`/`.so` to the godot project
 //! 3. Add the GDExtension registration code
 //! 4. Use the WAVELET node in Godot scenes
+
+#![cfg(feature = "gdext")]
 
 use crate::synth::Synth;
 use godot::prelude::*;

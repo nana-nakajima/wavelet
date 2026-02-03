@@ -35,6 +35,7 @@ pub mod chord_generator;
 pub mod effects;
 pub mod envelope;
 pub mod filter;
+#[cfg(feature = "gdext")]
 pub mod gdextension;
 pub mod lfo;
 pub use lfo::{Lfo, LfoRate};
