@@ -191,15 +191,11 @@ pub struct Arpeggiator {
 
     /// Current swing modifier (alternates between 0 and swing)
     swing_index: usize,
-
-    /// Note order tracking (for Order pattern)
-    note_order: Vec<usize>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ArpDirection {
     Up,
-    Down,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -222,7 +218,6 @@ impl Default for Arpeggiator {
             samples_until_next: 0.0,
             samples_per_step: 0.0,
             swing_index: 0,
-            note_order: Vec::new(),
         }
     }
 }

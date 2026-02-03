@@ -69,12 +69,11 @@ pub struct Tremolo {
     config: TremoloConfig,
     lfo_left: Lfo,
     lfo_right: Lfo,
-    sample_rate: f64,
 }
 
 impl Tremolo {
     /// Create new Tremolo instance
-    pub fn new(sample_rate: f64) -> Self {
+    pub fn new(_sample_rate: f64) -> Self {
         // Configure LFOs
         let config = LfoConfig::default();
         let mut lfo_left = Lfo::with_config(config);
@@ -87,7 +86,6 @@ impl Tremolo {
             config: TremoloConfig::default(),
             lfo_left,
             lfo_right,
-            sample_rate,
         }
     }
 
@@ -111,7 +109,6 @@ impl Tremolo {
             config,
             lfo_left,
             lfo_right,
-            sample_rate,
         }
     }
 

@@ -51,6 +51,7 @@ pub struct NoteEvent {
 
 /// Piano roll editor state
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct PianoRoll {
     /// Current resolution
     resolution: Resolution,

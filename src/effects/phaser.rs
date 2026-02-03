@@ -12,6 +12,8 @@
 // - MIX: 干湿比
 
 use std::f32::consts::PI;
+
+#[cfg(test)]
 use crate::audio_analysis;
 
 /// Phaser配置
@@ -48,9 +50,6 @@ impl Default for PhaserConfig {
 /// 单个全通滤波器
 #[derive(Debug, Clone, Copy)]
 struct AllpassFilter {
-    /// 当前频率
-    frequency: f32,
-    
     /// Q值
     q: f32,
     
@@ -66,7 +65,6 @@ struct AllpassFilter {
 impl AllpassFilter {
     fn new() -> Self {
         Self {
-            frequency: 1000.0,
             q: 1.0,
             x1: 0.0,
             x2: 0.0,
