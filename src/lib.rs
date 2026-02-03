@@ -29,6 +29,7 @@
 //! synth.note_on(60, 127); // MIDI note 60 (C4) with velocity 127
 //! ```
 
+pub mod arpeggiator;
 pub mod chord_generator;
 pub mod effects;
 pub mod envelope;
@@ -40,6 +41,7 @@ pub mod oscillator;
 pub mod rhythm_generator;
 pub mod synth;
 
+pub use arpeggiator::{ArpConfig, ArpNoteValue, ArpPattern, Arpeggiator};
 pub use chord_generator::{
     Chord, ChordGenerator, ChordStyle, ChordType, Key, ProgressionPattern, Scale,
 };
