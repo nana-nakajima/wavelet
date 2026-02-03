@@ -3,6 +3,8 @@
 //! This module provides envelope generator implementations for controlling
 //! the amplitude and modulation of synthesizer parameters over time.
 
+#![allow(dead_code)] // Reserve envelope fields for future features
+
 /// Enumeration of possible envelope stages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EnvelopeStage {

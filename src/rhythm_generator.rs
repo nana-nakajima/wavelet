@@ -17,6 +17,8 @@
 //! use wavelet::rhythm_generator::{RhythmGenerator, DrumSound, RhythmStyle};
 //!
 //! // Create a rhythm generator with 120 BPM
+
+#![allow(dead_code)] // Reserve rhythm fields for future pattern sharing features
 //! let mut generator = RhythmGenerator::new(120.0, 4);
 //! let pattern = generator.generate_preset(RhythmStyle::EDM);
 //! ```

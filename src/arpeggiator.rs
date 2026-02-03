@@ -10,6 +10,8 @@
 //! - Syncable to MIDI clock
 //! - Automatic chord holding when keys are released
 
+#![allow(dead_code)] // Reserve fields for future MIDI sync features
+
 use std::fmt;
 
 /// Arpeggiator pattern types.

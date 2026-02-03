@@ -13,6 +13,8 @@
 //! - **Flanger**: Modulated comb filtering
 //! - **Saturation**: Analog-style soft clipping and harmonic enhancement
 
+#![allow(dead_code)] // Reserve fields for future use
+
 use std::f32::consts::PI;
 
 // Re-export saturation module

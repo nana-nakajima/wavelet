@@ -1,6 +1,6 @@
 // WAVELET - Step Sequencer Module
 // 参考: Elektron Digitakt / OctatrACK 风格
-// 
+//
 // 功能:
 // - 8 tracks × 16 steps
 // - Per-step note + velocity
@@ -8,6 +8,8 @@
 // - Probability trigger (概率触发)
 // - Swing/Shuffle
 // - Per-track length (独立长度)
+
+#![allow(dead_code)] // Reserve sequencer fields for future MIDI sync features
 
 /// Number of tracks in the sequencer
 pub const NUM_TRACKS: usize = 8;

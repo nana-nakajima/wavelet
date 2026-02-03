@@ -18,6 +18,8 @@
 //! ```rust
 //! use wavelet::piano_roll::{PianoRoll, NoteEvent};
 //!
+
+#![allow(dead_code)] // Reserve piano roll fields for future GUI features
 //! let mut pr = PianoRoll::new();
 //! pr.set_grid_resolution(Resolution::Sixteenth);
 //! pr.add_note(60, 0.0, 1.0, 100); // C4, beat 0-1, velocity 100

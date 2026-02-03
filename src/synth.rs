@@ -4,6 +4,8 @@
 //! components (oscillators, filters, envelopes, LFOs, effects) into
 //! a complete instrument.
 
+#![allow(dead_code)] // Reserve VA parameters for future automation features
+
 use crate::effects::{Effect, EffectProcessor, EffectType, Saturation};
 use crate::envelope::{AdsrEnvelope, EnvelopeConfig};
 use crate::filter::{Filter, FilterType, ZdfFilter, ZdfFilterConfig, ZdfFilterMode};

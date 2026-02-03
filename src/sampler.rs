@@ -1,6 +1,6 @@
 // WAVELET - Sampler Module
 // 参考: Elektron Tonverk 采样播放功能
-// 
+//
 // 功能:
 // - WAV/AIFF采样导入和播放
 // - 切片播放 (Slicing)
@@ -8,6 +8,8 @@
 // - 时间拉伸 (Time Stretching)
 // - 与音序器集成
 // - 速度同步
+
+#![allow(dead_code)] // Reserve sampler fields for future sample editing features
 
 use std::collections::HashMap;
 

@@ -17,6 +17,8 @@
 //! Oscillators can operate at audio rate (20Hz-20kHz, audible) or control rate
 //! (below 20Hz, typically used for LFOs). See the [Lfo] module for control rate usage.
 
+#![allow(dead_code)] // Reserve oversample fields for future features
+
 use rand::Rng;
 use std::f32::consts::PI;
 
