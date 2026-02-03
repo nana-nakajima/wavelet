@@ -90,7 +90,7 @@ impl Tremolo {
     }
 
     /// Create with custom configuration
-    pub fn with_config(config: TremoloConfig, sample_rate: f64) -> Self {
+    pub fn with_config(config: TremoloConfig, _sample_rate: f64) -> Self {
         // Set LFO parameters
         let mut lfo_config = LfoConfig::default();
         lfo_config.rate = LfoRate::Hertz(config.rate as f32);
