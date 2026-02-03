@@ -455,7 +455,7 @@ impl RhythmGenerator {
     }
 
     /// Simple pattern generation - basic 4/4 beat.
-    fn generate_simple_pattern(&self, measure_start: f64, rng: &mut impl Rng) -> Vec<DrumNote> {
+    fn generate_simple_pattern(&self, measure_start: f64, _rng: &mut impl Rng) -> Vec<DrumNote> {
         let mut notes = Vec::new();
 
         // Kick on beats 1 and 3
@@ -747,7 +747,7 @@ impl RhythmGenerator {
     /// # Returns
     ///
     /// Vector of DrumNotes for the fill.
-    fn generate_fill(&self, start_beat: f64, rng: &mut impl Rng) -> Vec<DrumNote> {
+    fn generate_fill(&self, start_beat: f64, _rng: &mut impl Rng) -> Vec<DrumNote> {
         let mut notes = Vec::new();
         let _fill_length = 1.0; // One beat fill
 
@@ -890,7 +890,7 @@ impl RhythmGenerator {
     /// # Returns
     ///
     /// Ok(()) on success, or an error message on failure.
-    pub fn export_midi(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn export_midi(&self, _path: &str) -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "midi")]
         {
             use std::fs::File;

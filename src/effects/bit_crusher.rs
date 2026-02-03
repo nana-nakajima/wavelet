@@ -287,7 +287,7 @@ impl StereoBitCrusher {
         self.crusher_l.set_config(config);
         
         // 右声道使用相位偏移
-        let mut config_r = config;
+        let config_r = config;
         self.stereo_offset = (config.sample_rate_reduction as usize) / 2;
         self.crusher_r.set_config(config_r);
     }
@@ -309,6 +309,7 @@ impl StereoBitCrusher {
 mod tests {
     use super::*;
     use crate::audio_analysis::{measure_rms, measure_peak, measure_rms_db, measure_stereo_correlation};
+    use std::f32::consts::PI;
     
     // ============ 理论验证测试 ============
     

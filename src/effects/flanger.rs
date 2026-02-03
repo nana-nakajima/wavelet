@@ -393,7 +393,7 @@ impl StereoFlanger {
     #[inline]
     pub fn process(&mut self, input_left: f32, input_right: f32) -> (f32, f32) {
         // 右声道使用相位偏移
-        let phase_offset = PI * self.stereo_offset;
+        let _phase_offset = PI * self.stereo_offset;
         
         // 直接处理
         self.flanger_l.process_stereo(input_left, input_right)

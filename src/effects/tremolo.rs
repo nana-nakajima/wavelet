@@ -75,15 +75,10 @@ pub struct Tremolo {
 impl Tremolo {
     /// Create new Tremolo instance
     pub fn new(sample_rate: f64) -> Self {
-        let mut lfo_left = Lfo::new();
-        let mut lfo_right = Lfo::new();
-
         // Configure LFOs
-        let mut config = LfoConfig::default();
-        config.rate = LfoRate::Hertz(4.0);
-        config.waveform = Waveform::Sine;
-        lfo_left = Lfo::with_config(config.clone());
-        lfo_right = Lfo::with_config(config);
+        let config = LfoConfig::default();
+        let mut lfo_left = Lfo::with_config(config.clone());
+        let mut lfo_right = Lfo::with_config(config);
 
         lfo_left.set_depth(1.0);
         lfo_right.set_depth(1.0);
@@ -98,15 +93,12 @@ impl Tremolo {
 
     /// Create with custom configuration
     pub fn with_config(config: TremoloConfig, sample_rate: f64) -> Self {
-        let mut lfo_left = Lfo::new();
-        let mut lfo_right = Lfo::new();
-
         // Set LFO parameters
         let mut lfo_config = LfoConfig::default();
         lfo_config.rate = LfoRate::Hertz(config.rate as f32);
         lfo_config.waveform = config.waveform.into();
-        lfo_left = Lfo::with_config(lfo_config.clone());
-        lfo_right = Lfo::with_config(lfo_config);
+        let mut lfo_left = Lfo::with_config(lfo_config.clone());
+        let mut lfo_right = Lfo::with_config(lfo_config);
 
         lfo_left.set_depth(1.0);
         lfo_right.set_depth(1.0);

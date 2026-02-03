@@ -295,7 +295,7 @@ impl Arpeggiator {
     }
 
     /// Adds a note to the held notes.
-    pub fn note_on(&mut self, note: u8, velocity: u8) {
+    pub fn note_on(&mut self, note: u8, _velocity: u8) {
         // Only care about note number, not velocity for arpeggio
         let order_index = self.held_notes.len();
         self.held_notes.push(ArpNote::new(note, order_index));
@@ -452,7 +452,7 @@ impl Arpeggiator {
                         return None;
                     }
                 }
-                let note = extended_notes[self.position];
+                let _note = extended_notes[self.position];
                 self.position += 1;
                 // Use a simple hash for randomness
                 let seed = self.position + (self.swing_index * 7919);

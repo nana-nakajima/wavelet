@@ -12,6 +12,7 @@
 // - MIX: 干湿比
 
 use std::f32::consts::PI;
+use crate::audio_analysis;
 
 /// Phaser配置
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -379,7 +380,7 @@ impl StereoPhaser {
         self.stereo_width = width.clamp(0.0, 1.0);
         
         // 右声道使用稍有不同的LFO
-        let phase_offset = PI * self.stereo_width;
+        let _phase_offset = PI * self.stereo_width;
         // 这里简化处理，实际应该使用不同的LFO相位
     }
     

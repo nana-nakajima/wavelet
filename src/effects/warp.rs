@@ -286,7 +286,7 @@ impl Warp {
         let warp_amount = self.config.amount;
         let lfo = self.get_lfo_value();
 
-        let (delayed, output) = match self.mode {
+        let (_delayed, output) = match self.mode {
             WarpMode::TimeWarp => {
                 // Time warp: modulate read speed
                 let speed = 1.0 + (lfo - 0.5) * warp_amount * 2.0;
@@ -339,7 +339,7 @@ impl StereoWarp {
 
     /// Creates a stereo warp with configuration
     pub fn with_config(config: WarpConfig) -> Self {
-        let mut left_config = config;
+        let left_config = config;
         let mut right_config = config;
 
         // Offset LFO phase for stereo width

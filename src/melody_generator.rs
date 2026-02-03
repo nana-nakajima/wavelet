@@ -570,7 +570,7 @@ impl MelodyGenerator {
     ///
     /// This requires the `mido` crate to be available. If not available,
     /// the function will return an error.
-    pub fn export_midi(&self, path: &str) -> Result<(), Box<dyn Error>> {
+    pub fn export_midi(&self, _path: &str) -> Result<(), Box<dyn Error>> {
         // Try to use mido if available, otherwise return helpful error
         #[cfg(feature = "midi")]
         {
@@ -708,7 +708,7 @@ impl MelodyGenerator {
         scale_notes: &[u8],
         last_note: Option<&MelodyNote>,
         rng: &mut R,
-        phrase_idx: usize,
+        _phrase_idx: usize,
         current_beat: f64,
     ) -> u8 {
         // Get tonic for reference

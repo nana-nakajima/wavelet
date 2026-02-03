@@ -334,7 +334,7 @@ impl Synth {
 
                     // Reinitialize voice
                     let freq = midi_to_frequency(note);
-                    let osc_config = OscillatorConfig {
+                    let _osc_config = OscillatorConfig {
                         waveform: Waveform::Sawtooth,
                         frequency: freq,
                         amplitude: velocity as f32 / 127.0,
@@ -592,7 +592,7 @@ impl Synth {
         let samples_per_beat = self.sample_rate as f64 / beats_per_second;
 
         for note in &melody.notes {
-            let delay_samples = sample_delay + (note.start_beat * samples_per_beat) as usize;
+            let _delay_samples = sample_delay + (note.start_beat * samples_per_beat) as usize;
             let velocity = (note.velocity * 127.0) as u8;
 
             // Trigger note after delay

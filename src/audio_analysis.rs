@@ -181,7 +181,7 @@ impl SpectrumAnalyzer {
         let mut spectrum = vec![-100.0; self.bins];
         
         // 计算DC分量和Nyquist
-        let mut sum: f32 = windowed.iter().sum();
+        let sum: f32 = windowed.iter().sum();
         spectrum[0] = gain_db(sum.abs() / len as f32);
         
         if self.bins > 2 {

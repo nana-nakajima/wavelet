@@ -97,7 +97,7 @@ impl BiquadFilter {
         let omega = 2.0 * PI * freq / sample_rate;
         let sin_omega = omega.sin();
         let cos_omega = omega.cos();
-        let alpha = sin_omega / (2.0 * q);
+        let _alpha = sin_omega / (2.0 * q);
         let a = 10.0f32.powf(gain_db / 40.0);
         
         let a_plus_1 = a + 1.0;
@@ -120,7 +120,7 @@ impl BiquadFilter {
         let omega = 2.0 * PI * freq / sample_rate;
         let sin_omega = omega.sin();
         let cos_omega = omega.cos();
-        let alpha = sin_omega / (2.0 * q);
+        let _alpha = sin_omega / (2.0 * q);
         let a = 10.0f32.powf(gain_db / 40.0);
         
         let a_plus_1 = a + 1.0;
@@ -172,7 +172,7 @@ impl FilterBank {
     pub fn new() -> Self { Self::new_with_sample_rate(44100.0) }
     
     pub fn new_with_sample_rate(sample_rate: f32) -> Self {
-        let mut filters: [BiquadFilter; 8] = [BiquadFilter::new(); 8];
+        let filters: [BiquadFilter; 8] = [BiquadFilter::new(); 8];
         let mut bank = Self {
             config: FilterBankConfig::default(),
             sample_rate,

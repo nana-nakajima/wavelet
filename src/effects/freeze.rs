@@ -20,7 +20,6 @@
 // - REVERSE: 反向播放
 // - TYPE: Freeze/Stutter/Slice
 
-use std::f32::consts::PI;
 
 /// Freeze/Stutter类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -116,7 +115,7 @@ impl Freeze {
     
     /// 创建带采样率的Freeze
     pub fn new_with_sample_rate(sample_rate: f32) -> Self {
-        let samples_per_second = sample_rate as usize;
+        let _samples_per_second = sample_rate as usize;
         let buffer_size = sample_rate as usize; // 1秒缓冲区
         
         Self {
@@ -284,7 +283,7 @@ impl Freeze {
     
     /// Slice模式处理
     #[inline]
-    fn process_slice(&mut self, input: f32) -> f32 {
+    fn process_slice(&mut self, _input: f32) -> f32 {
         let length = self.config.length;
         
         // 随机切片播放
@@ -328,6 +327,7 @@ impl Freeze {
 mod tests {
     use super::*;
     use crate::audio_analysis::{measure_rms, measure_peak};
+    use std::f32::consts::PI;
     
     // ============ 理论验证测试 ============
     
