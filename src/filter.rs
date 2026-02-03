@@ -228,7 +228,7 @@ impl BiquadFilter {
     /// # Arguments
     ///
     /// * `gain` - Gain in dB
-    pub fn set_gain(&mut self, gain: f32) {
+    pub fn set_gain(&mut self, _gain: f32) {
         self.calculate_coefficients();
     }
 

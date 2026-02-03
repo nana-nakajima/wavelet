@@ -301,7 +301,7 @@ impl MelodyGenerator {
     pub fn generate(&mut self) -> Melody {
         let scale_notes = self.scale_notes();
         let beats_per_measure = 4.0;
-        let total_beats = self.length as f64 * beats_per_measure;
+        let _total_beats = self.length as f64 * beats_per_measure;
 
         let mut notes = Vec::new();
         let mut durations = Vec::new();
@@ -531,7 +531,7 @@ impl MelodyGenerator {
     /// # Arguments
     ///
     /// * `grid` - Grid size in beats (e.g., 0.25 for 16th notes, 0.5 for 8th notes)
-    pub fn quantize(&mut self, grid: f64) {
+    pub fn quantize(&mut self, _grid: f64) {
         // This method is deprecated - use Melody::quantize instead
         // Kept for backward compatibility
     }

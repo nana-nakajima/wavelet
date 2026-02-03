@@ -22,41 +22,83 @@ WAVELET is an abstract sound synthesizer that combines the power of Rust for aud
 - **Biquad Filters**: Low-pass, High-pass, Band-pass, Notch, and All-pass filters
 
 ### Effects
-- **Reverb**: Room simulation for depth and space
-- **Delay**: Echo effects for rhythmic interest
-- **Distortion**: Waveshaping for grit and character
+- **Reverb**: Schroeder algorithmic room simulation
+- **Delay**: Stereo delay with feedback control
+- **Distortion**: Soft, Hard, Tube, and Fuzz algorithms
+- **Chorus**: Stereo expansion and modulation
+- **Compressor**: MSEC dynamics processing
+- **SimpleEQ**: 3-band parametric equalizer
+
+### AI-Powered Generation (Pro Feature)
+- **Smart Melody Generator**: Generate original melodies in 14 scales and 6 styles
+- **Intelligent Chord Progressions**: Auto-generate progressions in 8 styles
+- **Rhythm Pattern Generator**: Create drum patterns in 12 genres
 
 ### Presets
-20 professionally designed presets across categories:
-- Basic, Bass, Pad, Lead
-- Keys, Strings, Bell, Effect
+50 professionally designed presets across categories:
+- **Bass**: Sub, Reese, Acid, FM Bass
+- **Pad**: Ambient, Electric, Synth Pad
+- **Lead**: Pluck, Saw Lead, Square Lead
+- **Keys**: Electric Piano, Clavi, Organ
+- **Strings**: Orchestral, Synth Strings
+- **Bell**: FM Bell, Glass Bell, Digital Bell
+- **Effect**: Sci-Fi, Impact, Texture
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Rust 1.70+ and Cargo
-- Godot 4.2+
-- macOS, Linux, or Windows
+- **Rust**: 1.70+ with Cargo
+- **Godot**: 4.2+ (4.6 recommended)
+- **Platforms**: macOS 12+, Windows 10+, or Linux (Ubuntu 22.04+)
 
-### Building
+### Installation
+
+#### Option 1: From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/n3kjm/wavelet.git
+git clone https://github.com/nana-nakajima/wavelet.git
 cd wavelet
 
-# Build the Rust library
+# Build the Rust audio engine
 cargo build --release
 
 # Copy the library to Godot project
 cp target/release/libwavelet.* godot/
 ```
 
+#### Option 2: Download Pre-built (Coming Soon)
+Download from GitHub Releases or Steam (when available).
+
 ### Running in Godot
 
-1. Open Godot 4.2+
-2. Import the `godot/` folder as a project
-3. Run the project (F5)
+1. **Launch Godot 4.6+**
+2. **Import Project**: Click "Import" and select `godot/project.godot`
+3. **Run**: Press F5 or click "Run Project"
+
+### First Sound (30 seconds!)
+
+1. Click any **preset button** on the right panel
+2. Press keys on your keyboard (Z=lower octaves, Q=upper octaves)
+3. Adjust the **ADSR knobs** to shape your sound
+4. Try the **AI Generate** button for instant inspiration!
+
+### Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Space` | Play/Pause |
+| `Z-M` | Lower octave keys |
+| `Q-]` | Upper octave keys |
+| `1-8` | Quick preset select |
+| `R` | Randomize parameters |
+
+### MIDI Support
+
+WAVELET supports MIDI keyboards:
+1. Connect your MIDI device
+2. Press any key to activate
+3. Use pitch bend and modulation wheel
 
 ## Architecture
 
@@ -116,30 +158,90 @@ func _ready():
     note_off(60)      # Release C4
 ```
 
-## File Structure
+## 📁 File Structure
 
 ```
 wavelet/
-├── Cargo.toml              # Rust project configuration
-├── README.md               # This file
-├── src/
-│   ├── lib.rs              # Library entry point
-│   ├── oscillator.rs       # Oscillator module
-│   ├── filter.rs           # Filter module
-│   ├── envelope.rs         # Envelope module
-│   ├── lfo.rs              # LFO module
-│   ├── effects/
-│   │   └── mod.rs          # Effects module
-│   ├── synth.rs            # Main synth module
-│   └── gdextension.rs      # Godot bindings
-└── godot/
-    ├── project.godot       # Godot 4 project file
-    ├── scenes/
-    │   └── main.tscn       # Main scene
-    ├── scripts/
-    │   └── main.gd         # Main script
-    └── presets/
-        └── 20_presets.json # Preset bank
+├── Cargo.toml                    # Rust project configuration
+├── README.md                     # This file
+├── src/                          # Rust audio engine
+│   ├── lib.rs                    # Library entry point (12KB)
+│   ├── oscillator.rs             # Oscillator module (12KB)
+│   ├── filter.rs                 # Filter module (10KB)
+│   ├── envelope.rs               # Envelope module (6KB)
+│   ├── lfo.rs                    # LFO module (4KB)
+│   ├── synth.rs                  # Main synth module (15KB)
+│   ├── modulation/               # Modulation system
+│   │   ├── mod_matrix.rs         # Modulation matrix (30KB)
+│   │   └── lfo.rs                # LFO with modulation
+│   ├── effects/                  # Effects modules
+│   │   ├── mod.rs                # Effects module
+│   │   ├── reverb.rs             # Schroeder reverb (12KB)
+│   │   ├── delay.rs              # Stereo delay (8KB)
+│   │   ├── distortion.rs         # Distortion (5KB)
+│   │   ├── chorus.rs             # Chorus effect (19KB)
+│   │   ├── compressor.rs         # MSEC compressor (6KB)
+│   │   └── simple_eq.rs          # 3-band EQ (5KB)
+│   ├── generators/               # AI generators
+│   │   ├── melody_generator.rs   # Smart melody (30KB)
+│   │   ├── chord_generator.rs    # Chord progressions (25KB)
+│   │   └── rhythm_generator.rs   # Drum patterns (20KB)
+│   ├── step_sequencer.rs         # Step sequencer (50KB)
+│   ├── arpeggiator.rs            # Arpeggiator (20KB)
+│   ├── presets.rs                # Preset system (12KB)
+│   └── gdextension.rs            # Godot bindings
+├── godot/                        # Godot UI project
+│   ├── project.godot             # Project configuration
+│   ├── scenes/
+│   │   ├── main.tscn             # Main interface
+│   │   ├── community_panel.tscn  # Community features
+│   │   └── challenge_panel.tscn  # Challenge system
+│   ├── scripts/
+│   │   ├── main.gd               # Main controller
+│   │   ├── http_client.gd        # API client
+│   │   ├── community_panel.gd    # Community UI
+│   │   └── challenge_panel.gd    # Challenge UI
+│   └── presets/
+│       └── wavelet_presets.json  # 50 presets
+├── backend/                      # Community backend (Actix-web)
+│   ├── Cargo.toml                # Backend configuration
+│   ├── src/
+│   │   ├── main.rs               # Server entry
+│   │   ├── handlers/             # API handlers
+│   │   ├── models/               # Data models
+│   │   └── middleware/           # Auth middleware
+│   └── migrations/               # Database migrations
+├── PACKAGING.md                   # Cross-platform build guide
+├── STEAM_PREPARE.md               # Steam publishing guide
+└── MARKETING.md                   # Marketing materials
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+cargo test --lib
+
+# Test specific module
+cargo test modulation --lib
+cargo test generators --lib
+
+# Check code coverage
+cargo tarpaulin --out Html
+```
+
+## 📦 Building for Release
+
+```bash
+# Build Rust library
+cargo build --release
+
+# Build for different targets
+cargo build --release --target x86_64-apple-darwin    # macOS
+cargo build --release --target x86_64-pc-windows-msvc # Windows
+cargo build --release --target x86_64-unknown-linux-gnu # Linux
+
+# Package with PyInstaller (see PACKAGING.md)
 ```
 
 ## Contributing
@@ -150,12 +252,30 @@ Contributions are welcome! Please read our contributing guidelines before submit
 
 MIT License - see LICENSE file for details.
 
-## Credits
+## 👥 Credits
 
-- **Developer**: n3kjm
+- **Developer**: [Nana Nakajima](https://github.com/nana-nakajima)
 - **Audio Engine**: Rust + custom DSP
 - **UI Framework**: Godot 4
-- **Inspiration**: Classic hardware synthesizers
+- **Inspiration**: Classic hardware synthesizers, VCV Rack
+
+## 📞 Support
+
+- **GitHub Issues**: Report bugs or request features
+- **Discord**: Join our community server
+- **Steam**: Subscribe for updates
+
+---
+
+<div align="center">
+
+**Made with 💕 for the music technology community**
+
+*WAVELET - A small wave, like a musical note.*
+
+🌊 🎹 🎵
+
+</div>
 
 ---
 

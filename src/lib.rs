@@ -43,6 +43,7 @@ pub mod oscillator;
 pub mod piano_roll;
 pub mod presets;
 pub mod rhythm_generator;
+pub mod sampler;
 pub mod step_sequencer;
 pub mod synth;
 
@@ -66,6 +67,10 @@ pub use presets::{
 };
 pub use rhythm_generator::{
     Complexity, DrumNote, DrumPattern, DrumSound, RhythmGenerator, RhythmStyle,
+};
+pub use sampler::{
+    AutoSlicer, LoopInfo, LoopMode, Sample, SampleFormat, SampleInfo, SampleLibrary,
+    Sampler, SlicingMode, SlicePoint,
 };
 pub use step_sequencer::{
     DrumStyle, NUM_STEPS, NUM_TRACKS, ParamLocks, Scale as SeqScale, Step, StepSequencer, Track,

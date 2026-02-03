@@ -20,7 +20,6 @@
 //! - **Trill**: Rapid alternation between two notes
 
 use crate::oscillator::{Oscillator, OscillatorConfig, OversampleFactor, Waveform};
-use std::f32::consts::PI;
 
 /// LFO rate representation.
 #[derive(Debug, Clone, Copy)]
@@ -247,7 +246,7 @@ impl Lfo {
     /// # Arguments
     ///
     /// * `phase` - Phase to reset to (0.0 to 1.0)
-    pub fn reset_phase(&mut self, phase: f32) {
+    pub fn reset_phase(&mut self, _phase: f32) {
         self.oscillator.reset_phase();
         self.delay_counter = 0;
         self.current_value = 0.0;

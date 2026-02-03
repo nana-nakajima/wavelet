@@ -5,7 +5,7 @@
 
 use std::f32::consts::PI;
 
-use super::{Effect, EffectConfig};
+use super::Effect;
 
 /// Simple 3-band EQ using cascaded single-pole filters
 #[derive(Debug, Clone)]

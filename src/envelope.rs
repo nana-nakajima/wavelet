@@ -3,8 +3,6 @@
 //! This module provides envelope generator implementations for controlling
 //! the amplitude and modulation of synthesizer parameters over time.
 
-use std::f32::consts::PI;
-
 /// Enumeration of possible envelope stages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EnvelopeStage {
