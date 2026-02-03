@@ -572,12 +572,16 @@ impl MelodyGenerator {
     ///
     /// This requires the `mido` crate to be available. If not available,
     /// the function will return an error.
-    pub fn export_midi(&self, _path: &str) -> Result<(), Box<dyn Error>> {
+    pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
         // Try to use mido if available, otherwise return helpful error
         #[cfg(feature = "midi")]
         {
             use std::fs::File;
             use std::io::Write;
+
+            // Generate the melody first
+            let melody = self.generate();
+            let notes = &melody.notes;
 
             let mut file = File::create(path)?;
 
@@ -591,7 +595,7 @@ impl MelodyGenerator {
             file.write_all(&header)?;
 
             // Write track chunk header
-            let track_size = (self.notes.len() * 10) as u32;
+            let track_size = (notes.len() * 10) as u32;
             let mut track_header = b"MTrk\x00\x00\x00".to_vec();
             track_header.extend_from_slice(&track_size.to_be_bytes());
             file.write_all(&track_header)?;
@@ -604,10 +608,10 @@ impl MelodyGenerator {
             file.write_all(&tempo_msg)?;
 
             // Write note events
-            let mut current_time = 0;
-            for note in &self.notes {
-                let delta_time = (note.start_beat - current_time) as u32;
-                current_time = note.start_beat;
+            let mut previous_time = 0f64;
+            for note in notes {
+                let delta_time = ((note.start_beat - previous_time) * 480.0) as u32;
+                previous_time = note.start_beat;
 
                 // Note on: delta_time, 0x90, pitch, velocity
                 let mut on_event = delta_time.to_be_bytes().to_vec();

@@ -892,11 +892,15 @@ impl RhythmGenerator {
     /// # Returns
     ///
     /// Ok(()) on success, or an error message on failure.
-    pub fn export_midi(&self, _path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "midi")]
         {
             use std::fs::File;
             use std::io::Write;
+
+            // Generate the pattern first
+            let pattern = self.generate();
+            let notes = &pattern.notes;
 
             let mut file = File::create(path)?;
 
@@ -930,7 +934,7 @@ impl RhythmGenerator {
             file.write_all(&header)?;
 
             // Write track chunk header
-            let track_size = (self.notes.len() * 12) as u32;
+            let track_size = (notes.len() * 12) as u32;
             let mut track_header = b"MTrk\x00\x00\x00".to_vec();
             track_header.extend_from_slice(&track_size.to_be_bytes());
             file.write_all(&track_header)?;
@@ -943,10 +947,9 @@ impl RhythmGenerator {
             file.write_all(&tempo_msg)?;
 
             // Write drum events - sort by start time
-            let mut sorted_notes: Vec<_> = self.notes.iter().collect();
+            let mut sorted_notes: Vec<_> = notes.iter().collect();
             sorted_notes.sort_by(|a, b| a.start_beat.partial_cmp(&b.start_beat).unwrap());
 
-            let mut current_time = 0;
             for note in sorted_notes {
                 let delta_time = (note.start_beat * 480.0) as u32; // 480 ticks per beat
                 let midi_note = drum_map
@@ -969,8 +972,6 @@ impl RhythmGenerator {
                 off_event.push(midi_note);
                 off_event.push(0x00);
                 file.write_all(&off_event)?;
-
-                current_time = delta_time + duration_ticks;
             }
 
             // End of track

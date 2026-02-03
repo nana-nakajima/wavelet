@@ -132,7 +132,7 @@ impl WaveletSynth {
     ///
     /// * `preset_name` - Name of the preset to load
     #[func]
-    pub fn load_preset(&mut self, preset_name: GdString) {
+    pub fn load_preset(&mut self, preset_name: GString) {
         let name = preset_name.to_string();
 
         match name.as_str() {
