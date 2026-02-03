@@ -4,8 +4,8 @@
 //! components (oscillators, filters, envelopes, LFOs, effects) into
 //! a complete instrument.
 
-use crate::effects::{Effect, EffectConfig, EffectProcessor, EffectType, Saturation};
-use crate::envelope::{AdsrEnvelope, Envelope, EnvelopeConfig, EnvelopeStage};
+use crate::effects::{Effect, EffectProcessor, EffectType, Saturation};
+use crate::envelope::{AdsrEnvelope, Envelope, EnvelopeConfig};
 use crate::filter::{BiquadFilter, Filter, FilterType, ZdfFilter, ZdfFilterConfig, ZdfFilterMode};
 use crate::lfo::{Lfo, LfoConfig, LfoRate, LfoTrait};
 use crate::oscillator::{
