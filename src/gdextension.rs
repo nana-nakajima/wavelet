@@ -12,8 +12,6 @@
 //! 3. Add the GDExtension registration code
 //! 4. Use the WAVELET node in Godot scenes
 
-#![cfg(feature = "gdext")]
-
 use crate::synth::Synth;
 use godot::prelude::*;
 
@@ -172,7 +170,3 @@ impl WaveletSynth {
         self.synth.set_filter_resonance(2.0);
     }
 }
-
-/// Registers all WAVELET classes with Godot.
-#[gdextension]
-unsafe impl ExtensionLibrary for WaveletSynth {}

@@ -892,7 +892,7 @@ impl RhythmGenerator {
     /// # Returns
     ///
     /// Ok(()) on success, or an error message on failure.
-    pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn export_midi(&mut self, _path: &str) -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "midi")]
         {
             use std::fs::File;

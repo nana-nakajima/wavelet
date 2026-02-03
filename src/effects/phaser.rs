@@ -195,7 +195,7 @@ impl Phaser {
     /// 设置滤波器级数
     pub fn set_poles(&mut self, poles: u8) {
         self.config.poles = poles.clamp(2, 8);
-        if self.config.poles % 2 != 0 {
+        if !self.config.poles.is_multiple_of(2) {
             self.config.poles += 1; // 确保是偶数
         }
         self.resize_filters();

@@ -194,7 +194,7 @@ impl BitCrusher {
     /// 处理样本
     #[inline]
     pub fn process(&mut self, input: f32) -> f32 {
-        let is_decimation_point = self.sample_counter % self.decimation_interval == 0;
+        let is_decimation_point = self.sample_counter.is_multiple_of(self.decimation_interval);
         
         let processed = match (is_decimation_point, self.config.decimation_mode) {
             (true, _) => {

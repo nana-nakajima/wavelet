@@ -228,10 +228,11 @@ impl Arpeggiator {
     /// Creates a new arpeggiator with the given sample rate.
     /// The arpeggiator is disabled by default.
     pub fn new(sample_rate: f32) -> Self {
-        let mut config = ArpConfig::default();
-        config.enabled = false;
         Self {
-            config,
+            config: ArpConfig {
+                enabled: false,
+                ..Default::default()
+            },
             sample_rate,
             ..Default::default()
         }
@@ -366,7 +367,7 @@ impl Arpeggiator {
 
         // Base octave notes and higher octaves
         for octave in 0..octave_span {
-            let octave_offset = (octave * 12) as u8;
+            let octave_offset = octave * 12;
             for (i, note) in self.initial_notes.iter().enumerate() {
                 let new_note = note.note.saturating_add(octave_offset);
                 if new_note <= 127 {
