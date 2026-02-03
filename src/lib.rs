@@ -30,6 +30,7 @@
 //! ```
 
 pub mod arpeggiator;
+pub mod audio_analysis;
 pub mod chord_generator;
 pub mod effects;
 pub mod envelope;
@@ -51,7 +52,12 @@ pub use arpeggiator::{ArpConfig, ArpNoteValue, ArpPattern, Arpeggiator};
 pub use chord_generator::{
     Chord, ChordGenerator, ChordStyle, ChordType, Key, ProgressionPattern, Scale,
 };
-pub use effects::{Chorus, Effect, EffectType, Phaser, PhaserConfig, Saturation, SimpleEq, StereoPhaser};
+pub use audio_analysis::{
+    AudioAssertions, HarmonicDistortionAnalyzer, LatencyMeasurer, SpectrumAnalyzer,
+    measure_cross_correlation, measure_peak, measure_peak_db, measure_rms, measure_rms_db,
+    measure_stereo_correlation,
+};
+pub use effects::{Chorus, Effect, EffectType, Flanger, FlangerConfig, Phaser, PhaserConfig, Saturation, SimpleEq, StereoFlanger, StereoPhaser};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
 pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};

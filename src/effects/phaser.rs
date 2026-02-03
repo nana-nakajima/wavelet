@@ -13,6 +13,8 @@
 
 use std::f32::consts::PI;
 
+use crate::audio_analysis;
+
 /// Phaser配置
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PhaserConfig {
@@ -602,5 +604,221 @@ mod tests {
         for _ in 0..100 {
             let _ = phaser.process(0.5);
         }
+    }
+
+    // ============ 音频分析测试 ============
+
+    #[test]
+    fn test_phaser_dry_signal_integrity() {
+        // 测试干信号直通应该保持完整
+        let mut phaser = Phaser::new_with_sample_rate(44100.0);
+        phaser.set_mix(0.0); // 100% dry
+        
+        let input: Vec<f32> = (0..1000).map(|i| (i as f32 / 100.0).sin() * 0.5).collect();
+        let output: Vec<f32> = input.iter().map(|&s| phaser.process(s)).collect();
+        
+        // 干信号应该几乎相同 (误差 < 0.001)
+        for (i, (inp, out)) in input.iter().zip(output.iter()).enumerate() {
+            assert!(
+                (inp - out).abs() < 0.001,
+                "Dry signal mismatch at sample {}: {} vs {}",
+                i, inp, out
+            );
+        }
+    }
+
+    #[test]
+    fn test_phaser_wet_signal_gain() {
+        // 测试效果信号应该有合理的增益变化
+        let mut phaser = Phaser::new_with_sample_rate(44100.0);
+        phaser.set_rate(1.0);
+        phaser.set_depth(0.8);
+        phaser.set_feedback(0.3);
+        phaser.set_mix(1.0); // 100% wet
+        
+        let input: Vec<f32> = (0..44100).map(|i| (i as f32 / 44100.0 * 440.0).sin() * 0.5).collect();
+        
+        // 处理
+        let output: Vec<f32> = input.iter().map(|&s| phaser.process(s)).collect();
+        
+        // 增益变化应该在6dB内
+        let input_rms = audio_analysis::measure_rms(&input);
+        let output_rms = audio_analysis::measure_rms(&output);
+        let gain_db = 20.0 * (output_rms / input_rms.max(0.0001)).log10();
+        
+        assert!(
+            gain_db.abs() <= 6.0,
+            "Gain change {} dB exceeds 6 dB limit",
+            gain_db
+        );
+    }
+
+    #[test]
+    fn test_phaser_no_dc_offset() {
+        // 测试Phaser不应该引入直流偏移
+        let mut phaser = Phaser::new_with_sample_rate(44100.0);
+        phaser.set_rate(2.0);
+        phaser.set_depth(0.5);
+        phaser.set_mix(1.0);
+        
+        let input: Vec<f32> = (0..44100).map(|i| (i as f32 / 44100.0 * 440.0).sin() * 0.8).collect();
+        let output: Vec<f32> = input.iter().map(|&s| phaser.process(s)).collect();
+        
+        // 检查DC偏移
+        let mean: f32 = output.iter().sum();
+        let dc_offset = mean / output.len() as f32;
+        
+        assert!(
+            dc_offset.abs() < 0.01,
+            "DC offset detected: {} (expected < 0.01)",
+            dc_offset
+        );
+    }
+
+    #[test]
+    fn test_phaser_stereo_width() {
+        // 测试立体声宽度 - 使用稍微不同的输入信号
+        let mut phaser = StereoPhaser::new_with_sample_rate(44100.0);
+        phaser.set_rate(0.5);
+        phaser.set_depth(0.8);
+        phaser.set_mix(1.0);
+        
+        // 使用相同频率但不同相位的信号
+        let freq = 440.0;
+        let input: Vec<f32> = (0..44100).map(|i| {
+            let t = i as f32 / 44100.0;
+            (2.0 * std::f32::consts::PI * freq * t).sin() * 0.5
+        }).collect();
+        
+        // 右声道使用反相
+        let input_right: Vec<f32> = input.iter().map(|&s| -s).collect();
+        
+        let mut left = Vec::new();
+        let mut right = Vec::new();
+        
+        for (l, r) in input.iter().zip(input_right.iter()) {
+            let (out_l, out_r) = phaser.process(*l, *r);
+            left.push(out_l);
+            right.push(out_r);
+        }
+        
+        // 检查立体声相关性 (应该不是完美相关)
+        let correlation = audio_analysis::measure_stereo_correlation(&left, &right);
+        
+        assert!(
+            correlation < 0.99,
+            "Stereo too correlated: {} (expected < 0.99 for modulated effect)",
+            correlation
+        );
+    }
+
+    #[test]
+    fn test_phaser_frequency_spectrum() {
+        // 测试频率响应
+        let mut phaser = Phaser::new_with_sample_rate(44100.0);
+        phaser.set_rate(0.5);
+        phaser.set_depth(0.5);
+        phaser.set_mix(1.0);
+        
+        // 1kHz测试信号
+        let freq = 1000.0;
+        let input: Vec<f32> = (0..44100)
+            .take(22050) // 0.5秒
+            .map(|i| {
+                let t = i as f32 / 44100.0;
+                (2.0 * std::f32::consts::PI * freq * t).sin() * 0.5
+            })
+            .collect();
+        
+        let output: Vec<f32> = input.iter().map(|&s| phaser.process(s)).collect();
+        
+        // 应该看到频率梳状效应 (多个峰值)
+        let analyzer = audio_analysis::SpectrumAnalyzer::new(1024, 44100.0);
+        let spectrum = analyzer.analyze(&output);
+        
+        // 至少有3个明显的峰值 (基波 + 2个相位相关峰值)
+        let mut peaks = 0;
+        for i in 1..spectrum.len() - 1 {
+            if spectrum[i] > spectrum[i-1] && spectrum[i] > spectrum[i+1] && spectrum[i] > -40.0 {
+                peaks += 1;
+            }
+        }
+        
+        assert!(
+            peaks >= 3,
+            "Expected at least 3 spectral peaks, got {}",
+            peaks
+        );
+    }
+
+    #[test]
+    fn test_phaser_latency() {
+        // 测试Phaser延迟 (应该接近0)
+        let mut phaser = Phaser::new_with_sample_rate(44100.0);
+        phaser.set_rate(1.0);
+        phaser.set_depth(0.5);
+        phaser.set_mix(0.5);
+        
+        // 脉冲信号
+        let mut input = vec![0.0; 1000];
+        input[0] = 1.0;
+        
+        // 查找峰值位置
+        let output: Vec<f32> = input.iter().map(|&s| phaser.process(s)).collect();
+        
+        let max_idx = output.iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .map(|(i, _)| i)
+            .unwrap();
+        
+        // Phaser的延迟应该在几个samples以内
+        assert!(
+            max_idx <= 10,
+            "Latency too high: peak at sample {}",
+            max_idx
+        );
+    }
+
+    #[test]
+    fn test_phaser_parameter_response() {
+        // 测试参数是否正确存储和生效
+        let mut phaser = Phaser::new_with_sample_rate(44100.0);
+        
+        // 验证默认值
+        assert_eq!(phaser.config.rate, 0.5);
+        assert_eq!(phaser.config.depth, 0.5);
+        assert_eq!(phaser.config.feedback, 0.3);
+        assert_eq!(phaser.config.poles, 4);
+        assert_eq!(phaser.config.mix, 0.5);
+        
+        // 测试参数修改
+        phaser.set_rate(2.0);
+        assert_eq!(phaser.config.rate, 2.0);
+        
+        phaser.set_depth(0.8);
+        assert_eq!(phaser.config.depth, 0.8);
+        
+        phaser.set_feedback(0.5);
+        assert_eq!(phaser.config.feedback, 0.5);
+        
+        phaser.set_poles(6);
+        assert_eq!(phaser.config.poles, 6);
+        
+        phaser.set_mix(0.9);
+        assert_eq!(phaser.config.mix, 0.9);
+        
+        // 验证参数限制
+        phaser.set_rate(100.0);
+        assert_eq!(phaser.config.rate, 10.0); // 应该被限制
+        
+        phaser.set_depth(1.5);
+        assert_eq!(phaser.config.depth, 1.0); // 应该被限制
+        
+        phaser.set_feedback(1.0);
+        assert_eq!(phaser.config.feedback, 0.95); // 应该被限制
+        
+        phaser.set_poles(12);
+        assert_eq!(phaser.config.poles, 8); // 应该被限制
     }
 }
