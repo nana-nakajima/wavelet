@@ -77,7 +77,7 @@ impl Tremolo {
     pub fn new(sample_rate: f64) -> Self {
         // Configure LFOs
         let config = LfoConfig::default();
-        let mut lfo_left = Lfo::with_config(config.clone());
+        let mut lfo_left = Lfo::with_config(config);
         let mut lfo_right = Lfo::with_config(config);
 
         lfo_left.set_depth(1.0);
@@ -97,7 +97,7 @@ impl Tremolo {
         let mut lfo_config = LfoConfig::default();
         lfo_config.rate = LfoRate::Hertz(config.rate as f32);
         lfo_config.waveform = config.waveform.into();
-        let mut lfo_left = Lfo::with_config(lfo_config.clone());
+        let mut lfo_left = Lfo::with_config(lfo_config);
         let mut lfo_right = Lfo::with_config(lfo_config);
 
         lfo_left.set_depth(1.0);
