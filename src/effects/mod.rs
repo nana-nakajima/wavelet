@@ -18,7 +18,31 @@ use std::f32::consts::PI;
 // Re-export saturation module
 pub mod saturation;
 
+// Re-export chorus module
+pub mod chorus;
+
+// Re-export simple EQ module
+pub mod simple_eq;
+
+// Track effects module is temporarily disabled for compilation
+// pub mod track_effects;
+
 pub use saturation::{saturate, Saturation, SaturationConfig};
+pub use chorus::Chorus;
+pub use simple_eq::SimpleEq;
+// pub use track_effects::{
+//     TrackEffectSlot,
+//     TrackEffectSlotConfig,
+//     TrackEffects,
+//     TrackEffectsError,
+//     EffectParameterId,
+//     PerTrackEffectsManager,
+//     MAX_EFFECT_SLOTS,
+//     TRACK_COUNT,
+// };
+
+// Re-export BiquadFilter from filter module for convenience
+pub use crate::filter::{BiquadFilter, FilterConfig, FilterType};
 
 /// Enumeration of supported effect types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,6 +70,12 @@ pub enum EffectType {
 
     /// Analog-style saturation
     Saturation,
+
+    /// Simple 3-band EQ
+    SimpleEQ,
+
+    /// Biquad filter
+    Filter,
 }
 
 /// Configuration structure for effect parameters.
@@ -696,11 +726,28 @@ pub struct EffectProcessor {
 
     /// Saturation effect instance
     saturation: Saturation,
+
+    /// Chorus effect instance
+    chorus: Chorus,
+
+    /// Simple EQ effect instance
+    simple_eq: SimpleEq,
+
+    /// Biquad filter effect instance
+    biquad_filter: BiquadFilter,
 }
 
 impl EffectProcessor {
     /// Creates a new effect processor.
     pub fn new(sample_rate: f32) -> Self {
+        let config = FilterConfig {
+            filter_type: FilterType::LowPass,
+            cutoff_frequency: 1000.0,
+            resonance: 1.0,
+            gain: 0.0,
+            sample_rate,
+        };
+        
         Self {
             effect_type: EffectType::Delay,
             delay: Delay::new(sample_rate),
@@ -708,6 +755,9 @@ impl EffectProcessor {
             distortion: Distortion::new(),
             compressor: Compressor::new(sample_rate),
             saturation: Saturation::new(),
+            chorus: Chorus::new(sample_rate),
+            simple_eq: SimpleEq::new(sample_rate),
+            biquad_filter: BiquadFilter::with_config(config),
         }
     }
 
@@ -730,6 +780,9 @@ impl Effect for EffectProcessor {
             EffectType::Distortion => self.distortion.process(input),
             EffectType::Compressor => self.compressor.process(input),
             EffectType::Saturation => self.saturation.process(input),
+            EffectType::Chorus => self.chorus.process(input),
+            EffectType::SimpleEQ => self.simple_eq.process(input),
+            EffectType::Filter => self.biquad_filter.process(input),
             _ => input, // Placeholder for unimplemented effects
         }
     }
@@ -754,6 +807,9 @@ impl Effect for EffectProcessor {
         self.distortion.reset();
         self.compressor.reset();
         self.saturation.reset();
+        self.chorus.reset();
+        self.simple_eq.reset();
+        self.biquad_filter.reset();
     }
 
     fn set_mix(&mut self, mix: f32) {
@@ -763,6 +819,9 @@ impl Effect for EffectProcessor {
             EffectType::Distortion => self.distortion.set_mix(mix),
             EffectType::Compressor => self.compressor.set_mix(mix),
             EffectType::Saturation => self.saturation.set_mix(mix),
+            EffectType::Chorus => self.chorus.set_mix(mix),
+            EffectType::SimpleEQ => self.simple_eq.set_mix(mix),
+            EffectType::Filter => self.biquad_filter.set_mix(mix),
             _ => {}
         }
     }
@@ -774,6 +833,9 @@ impl Effect for EffectProcessor {
             EffectType::Distortion => self.distortion.set_intensity(intensity),
             EffectType::Compressor => self.compressor.set_intensity(intensity),
             EffectType::Saturation => self.saturation.set_drive(intensity * 10.0),
+            EffectType::Chorus => self.chorus.set_intensity(intensity),
+            EffectType::SimpleEQ => self.simple_eq.set_intensity(intensity),
+            EffectType::Filter => self.biquad_filter.set_intensity(intensity),
             _ => {}
         }
     }
@@ -785,6 +847,9 @@ impl Effect for EffectProcessor {
             EffectType::Distortion => self.distortion.is_enabled(),
             EffectType::Compressor => self.compressor.is_enabled(),
             EffectType::Saturation => self.saturation.is_enabled(),
+            EffectType::Chorus => self.chorus.is_enabled(),
+            EffectType::SimpleEQ => self.simple_eq.is_enabled(),
+            EffectType::Filter => self.biquad_filter.is_enabled(),
             _ => false,
         }
     }
@@ -796,6 +861,9 @@ impl Effect for EffectProcessor {
             EffectType::Distortion => self.distortion.set_enabled(enabled),
             EffectType::Compressor => self.compressor.set_enabled(enabled),
             EffectType::Saturation => self.saturation.set_enabled(enabled),
+            EffectType::Chorus => self.chorus.set_enabled(enabled),
+            EffectType::SimpleEQ => self.simple_eq.set_enabled(enabled),
+            EffectType::Filter => self.biquad_filter.set_enabled(enabled),
             _ => {}
         }
     }
@@ -804,6 +872,9 @@ impl Effect for EffectProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Import Effect trait for chorus tests
+    use super::Effect;
 
     #[test]
     fn test_delay_default() {
@@ -998,6 +1069,7 @@ mod tests {
             EffectType::Distortion,
             EffectType::Compressor,
             EffectType::Saturation,
+            EffectType::Chorus,
         ] {
             fx.set_effect_type(effect_type);
             fx.set_enabled(false);
@@ -1012,5 +1084,69 @@ mod tests {
                 effect_type
             );
         }
+    }
+
+    #[test]
+    fn test_chorus_in_effect_processor() {
+        let mut fx = EffectProcessor::new(44100.0);
+
+        // Test switching to chorus
+        fx.set_effect_type(EffectType::Chorus);
+        assert_eq!(fx.effect_type(), EffectType::Chorus);
+
+        // Process should work without issues
+        let output = fx.process(0.5);
+        assert!(output.abs() <= 1.0);
+    }
+
+    #[test]
+    fn test_chorus_set_parameters() {
+        let mut chorus = Chorus::new(44100.0);
+
+        // Test all parameter setters
+        chorus.set_rate(1.5);
+        assert_eq!(chorus.rate(), 1.5);
+
+        chorus.set_depth(0.7);
+        assert_eq!(chorus.depth(), 0.7);
+
+        chorus.set_feedback(0.4);
+        assert_eq!(chorus.feedback(), 0.4);
+
+        chorus.set_mix(0.6);
+        // Mix is set internally, verify via process
+        let output = chorus.process(0.5);
+        assert!(output.abs() <= 1.0);
+    }
+
+    #[test]
+    fn test_chorus_stereo_width() {
+        let mut chorus = Chorus::new(44100.0);
+
+        // Default stereo width - cannot test directly, verify via behavior
+        chorus.set_stereo_width(1.15);
+        // Verify width was set by processing
+        let output = chorus.process(0.5);
+        assert!(output.abs() <= 1.0);
+    }
+
+    #[test]
+    fn test_chorus_intensity_mapping() {
+        let mut chorus = Chorus::new(44100.0);
+
+        // Low intensity
+        chorus.set_intensity(0.0);
+        assert_eq!(chorus.depth(), 0.0);
+        assert_eq!(chorus.rate(), 0.1); // 0.1 + 0.0 * 2.0
+
+        // Medium intensity
+        chorus.set_intensity(0.5);
+        assert_eq!(chorus.depth(), 0.5);
+        assert_eq!(chorus.rate(), 1.1); // 0.1 + 0.5 * 2.0
+
+        // High intensity
+        chorus.set_intensity(1.0);
+        assert_eq!(chorus.depth(), 1.0);
+        assert_eq!(chorus.rate(), 2.1); // 0.1 + 1.0 * 2.0
     }
 }

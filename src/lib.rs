@@ -36,23 +36,40 @@ pub mod envelope;
 pub mod filter;
 pub mod gdextension;
 pub mod lfo;
+pub use lfo::{Lfo, LfoRate};
 pub mod melody_generator;
+pub mod modulation;
 pub mod oscillator;
+pub mod piano_roll;
+pub mod presets;
 pub mod rhythm_generator;
+pub mod step_sequencer;
 pub mod synth;
 
 pub use arpeggiator::{ArpConfig, ArpNoteValue, ArpPattern, Arpeggiator};
 pub use chord_generator::{
     Chord, ChordGenerator, ChordStyle, ChordType, Key, ProgressionPattern, Scale,
 };
-pub use effects::{Effect, EffectType, Saturation};
+pub use effects::{Chorus, Effect, EffectType, Saturation, SimpleEq};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
-pub use lfo::{Lfo, LfoRate};
 pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};
+pub use modulation::{
+    ModulationConnection, ModulationConnectionConfig, ModulationMatrix, ModulationMatrixError,
+    ModulationSource, ModulationSourceType, ModulationTarget, ModulationTargetType,
+    MAX_CONNECTIONS, MAX_SOURCES_PER_TRACK,
+};
 pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
+pub use piano_roll::{EditMode, NoteEvent, PianoRoll, PianoRollConfig, Resolution};
+pub use presets::{
+    Preset, PresetCategory, PresetCollection, PresetManager, PresetParameters,
+};
 pub use rhythm_generator::{
     Complexity, DrumNote, DrumPattern, DrumSound, RhythmGenerator, RhythmStyle,
+};
+pub use step_sequencer::{
+    DrumStyle, NUM_STEPS, NUM_TRACKS, ParamLocks, Scale as SeqScale, Step, StepSequencer, Track,
+    TrigCondition,
 };
 pub use synth::Synth;
 

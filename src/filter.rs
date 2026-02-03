@@ -114,6 +114,12 @@ pub struct BiquadFilter {
 
     /// Sample rate for coefficient updates
     sample_rate: f32,
+    
+    /// Whether the filter is enabled
+    enabled: bool,
+    
+    /// Wet/dry mix
+    mix: f32,
 }
 
 impl BiquadFilter {
@@ -146,6 +152,8 @@ impl BiquadFilter {
             cutoff: config.cutoff_frequency,
             resonance: config.resonance,
             sample_rate: config.sample_rate,
+            enabled: true,
+            mix: 1.0,
         };
 
         filter.calculate_coefficients();
@@ -853,5 +861,51 @@ mod tests {
         zdf.set_enabled(true);
         let filtered = zdf.process(0.5);
         assert_ne!(filtered, 0.5);
+    }
+}
+
+// Import Effect trait for BiquadFilter implementation
+use crate::effects::Effect;
+
+/// Effect trait implementation for BiquadFilter
+impl Effect for BiquadFilter {
+    fn process(&mut self, input: f32) -> f32 {
+        let filtered = self.process_sample(input);
+        input * (1.0 - self.mix) + filtered * self.mix
+    }
+
+    fn process_with_bypass(&mut self, input: f32) -> f32 {
+        if self.enabled {
+            self.process(input)
+        } else {
+            input
+        }
+    }
+
+    fn process_buffer(&mut self, samples: &mut [f32]) {
+        for sample in samples.iter_mut() {
+            *sample = self.process(*sample);
+        }
+    }
+
+    fn reset(&mut self) {
+        self.reset();
+    }
+
+    fn set_mix(&mut self, mix: f32) {
+        self.mix = mix.clamp(0.0, 1.0);
+    }
+
+    fn set_intensity(&mut self, intensity: f32) {
+        // Map intensity to resonance for simplicity
+        self.set_resonance(0.1 + intensity * 19.9); // 0.1 to 20.0
+    }
+
+    fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
+    fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
     }
 }
