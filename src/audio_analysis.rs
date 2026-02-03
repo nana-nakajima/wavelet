@@ -1,7 +1,9 @@
 // WAVELET - Audio Analysis Module
-// 
+//
 // 音频分析工具，用于测试和验证音频处理模块
 // 包括：RMS测量、峰值检测、频谱分析、延迟测量等
+
+#![allow(dead_code)] // Analysis functions reserved for future use
 
 use std::f32::consts::PI;
 
@@ -222,15 +224,17 @@ impl SpectrumAnalyzer {
     }
 }
 
-/// 延迟测量器
+/// 延迟测量器 - reserved for future latency measurement features
+#[allow(dead_code)]
 pub struct LatencyMeasurer {
     /// 已知延迟 (samples)
     known_delay: usize,
-    
+
     /// 互相关结果
     cross_correlation: Vec<f32>,
 }
 
+#[allow(dead_code)]
 impl LatencyMeasurer {
     /// 创建新的延迟测量器
     pub fn new(known_delay: usize) -> Self {
@@ -280,18 +284,20 @@ impl LatencyMeasurer {
     }
 }
 
-/// 谐波失真分析器
+/// 谐波失真分析器 - reserved for future FFT-based analysis
+#[allow(dead_code)]
 pub struct HarmonicDistortionAnalyzer {
     /// 采样率
     sample_rate: f32,
-    
+
     /// 基波频率
     fundamental_freq: f32,
-    
+
     /// 分析窗口大小
     window_size: usize,
 }
 
+#[allow(dead_code)]
 impl HarmonicDistortionAnalyzer {
     /// 创建新的谐波失真分析器
     pub fn new(sample_rate: f32, fundamental_freq: f32) -> Self {

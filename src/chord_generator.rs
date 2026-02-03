@@ -163,6 +163,7 @@ pub struct ChordGenerator {
     rng: rand::rngs::ThreadRng,
 }
 
+#[allow(dead_code)]
 impl ChordGenerator {
     /// Create a new chord generator.
     ///

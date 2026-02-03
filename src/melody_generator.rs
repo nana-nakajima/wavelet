@@ -221,6 +221,7 @@ pub struct MelodyGenerator {
 }
 
 /// Melody generator implementation.
+#[allow(dead_code)]
 impl MelodyGenerator {
     /// Creates a new melody generator.
     ///
