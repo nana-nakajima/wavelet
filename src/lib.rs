@@ -51,7 +51,7 @@ pub use arpeggiator::{ArpConfig, ArpNoteValue, ArpPattern, Arpeggiator};
 pub use chord_generator::{
     Chord, ChordGenerator, ChordStyle, ChordType, Key, ProgressionPattern, Scale,
 };
-pub use effects::{Chorus, Effect, EffectType, Saturation, SimpleEq};
+pub use effects::{Chorus, Effect, EffectType, Phaser, PhaserConfig, Saturation, SimpleEq, StereoPhaser};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
 pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};

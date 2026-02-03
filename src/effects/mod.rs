@@ -21,6 +21,9 @@ pub mod saturation;
 // Re-export chorus module
 pub mod chorus;
 
+// Re-export phaser module
+pub mod phaser;
+
 // Re-export simple EQ module
 pub mod simple_eq;
 
@@ -29,6 +32,7 @@ pub mod simple_eq;
 
 pub use saturation::{saturate, Saturation, SaturationConfig};
 pub use chorus::Chorus;
+pub use phaser::{Phaser, PhaserConfig, StereoPhaser};
 pub use simple_eq::SimpleEq;
 // pub use track_effects::{
 //     TrackEffectSlot,
