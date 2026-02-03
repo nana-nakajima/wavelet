@@ -39,6 +39,9 @@ pub mod filter_bank;
 // Re-export freeze module
 pub mod freeze;
 
+// Re-export tremolo module
+pub mod tremolo;
+
 // Re-export simple EQ module
 pub mod simple_eq;
 
@@ -53,6 +56,7 @@ pub use ring_modulator::{RingModulator, RingModulatorConfig, RingModulatorMode, 
 pub use bit_crusher::{BitCrusher, BitCrusherConfig, DecimationMode, StereoBitCrusher};
 pub use filter_bank::{FilterBank, FilterBankConfig, FilterBankType, FilterBandConfig};
 pub use freeze::{Freeze, FreezeConfig, FreezeType};
+pub use tremolo::{Tremolo, TremoloConfig, TremoloWaveform};
 pub use simple_eq::SimpleEq;
 // pub use track_effects::{
 //     TrackEffectSlot,
