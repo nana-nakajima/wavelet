@@ -5,9 +5,9 @@
 //! a complete instrument.
 
 use crate::effects::{Effect, EffectProcessor, EffectType, Saturation};
-use crate::envelope::{AdsrEnvelope, Envelope, EnvelopeConfig};
-use crate::filter::{BiquadFilter, Filter, FilterType, ZdfFilter, ZdfFilterConfig, ZdfFilterMode};
-use crate::lfo::{Lfo, LfoConfig, LfoRate, LfoTrait};
+use crate::envelope::{AdsrEnvelope, EnvelopeConfig};
+use crate::filter::{Filter, FilterType, ZdfFilter, ZdfFilterConfig, ZdfFilterMode};
+use crate::lfo::{Lfo, LfoConfig, LfoRate};
 use crate::oscillator::{
     midi_to_frequency, Oscillator, OscillatorConfig, OversampleFactor, Waveform,
 };

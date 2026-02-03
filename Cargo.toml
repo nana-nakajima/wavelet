@@ -19,6 +19,7 @@ criterion = "0.5"
 [features]
 default = []
 gdext = []
+midi = []
 
 [[bench]]
 name = "oscillator_bench"

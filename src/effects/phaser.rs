@@ -13,8 +13,6 @@
 
 use std::f32::consts::PI;
 
-use crate::audio_analysis;
-
 /// Phaser配置
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PhaserConfig {

@@ -4,7 +4,6 @@
 // Filter Bank (滤波器组) 提供8个并行滤波器，每个都有独立的频率和增益控制
 
 use std::f32::consts::PI;
-use crate::audio_analysis;
 
 /// 滤波器类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

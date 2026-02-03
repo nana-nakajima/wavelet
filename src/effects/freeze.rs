@@ -21,7 +21,6 @@
 // - TYPE: Freeze/Stutter/Slice
 
 use std::f32::consts::PI;
-use crate::audio_analysis;
 
 /// Freeze/Stutter类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

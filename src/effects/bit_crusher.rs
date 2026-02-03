@@ -21,9 +21,6 @@
 // - 低位深度: 产生量化噪声，粗糙感
 // - 降采样: 产生折叠频率(alias)，金属质感
 
-use std::f32::consts::PI;
-use crate::audio_analysis;
-
 /// 降采样模式
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DecimationMode {

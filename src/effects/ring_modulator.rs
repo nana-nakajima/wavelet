@@ -18,7 +18,6 @@
 // - LFO DEPTH: LFO调制深度
 
 use std::f32::consts::PI;
-use crate::audio_analysis;
 
 /// Ring Modulator载波模式
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
