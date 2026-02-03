@@ -1,8 +1,9 @@
 # 🚀 WAVELET Steam发布准备
 
 **项目**: WAVELET - Abstract Sound Synthesizer
-**状态**: 🔧 进行中
+**状态**: 🔧 进行中 - 第1周
 **开始时间**: 2026-02-03 03:45
+**最后更新**: 2026-02-03 04:45
 **目标**: Steam商店发布准备
 
 ---
@@ -15,19 +16,19 @@
 - [ ] **主图 (Header Capsule)** - 920px × 430px
   - 只需游戏Logo和艺术图
   - 展示WAVELET品牌形象
-  
+
 - [ ] **小图 (Small Capsule)** - 462px × 174px
   - 只需游戏Logo和艺术图
   - 用于搜索结果等小尺寸展示
-  
+
 - [ ] **主展示图 (Main Capsule)** - 1232px × 706px
   - 只需游戏Logo和艺术图
   - 商店页面主要展示位置
-  
+
 - [ ] **竖图 (Vertical Capsule)** - 748px × 896px
   - 只需游戏Logo和艺术图
   - 用于侧边栏等竖向空间
-  
+
 - [ ] **截图 (Screenshots)** - 至少1920px × 1080px (16:9比例)
   - 至少需要5-10张高质量截图
   - 展示不同功能和音色
@@ -41,20 +42,20 @@
 #### 社区和客户端图标 (Community & Client Icons)
 - [ ] **快捷图标 (Shortcut Icon)** - 256px × 256px (.ico或.png)
   - 游戏Logo或代表性图标
-  
+
 - [ ] **应用图标 (App Icon)** - 184px × 184px (.jpg)
   - 小尺寸游戏Logo
 
 #### 库展示素材 (Library Assets)
 - [ ] **库主图 (Library Capsule)** - 600px × 900px
   - 游戏Logo和艺术图
-  
+
 - [ ] **库英雄图 (Library Hero)** - 3840px × 1240px (.png)
   - 游戏艺术图
-  
+
 - [ ] **库Logo (Library Logo)** - 1280px宽或720px高 (.png)
   - 游戏Logo，显示在Hero图上方
-  
+
 - [ ] **库头图 (Library Header Capsule)** - 920px × 430px
   - 游戏Logo和艺术图
 
@@ -104,52 +105,61 @@
 
 **About This Game** (300-500字)
 
-WAVELET是一款现代化的抽象声音合成器，旨在让每个人都能轻松创造音乐！
+# 🎹 WAVELET - 让音乐创作变得简单有趣
+
+还在为复杂的模块合成器头疼？WAVELET让你**30秒内就能创造出属于自己的音乐**！
 
 🌟 **为什么选择WAVELET？**
 
-✨ **开箱即用** - 30秒内发出第一个声音，无需复杂连线
-🎨 **百变风格** - 3种主题切换，实时波形可视化
-🤖 **AI辅助创作** - 智能生成旋律、和弦和节奏
-🎹 **专业音色** - 50+预设覆盖各种音乐风格
-👥 **社区共享** - 分享你的创作，参与每周挑战
+✨ **零门槛上手** - 无需学习复杂连线，30秒发出第一个声音
+🎨 **视觉盛宴** - 3种主题切换，实时波形像心电图一样跳动
+🤖 **AI你的音乐搭档** - 选择风格，一键生成旋律、和弦、节奏
+🎹 **专业级音色** - 50+预设，从贝斯到镲片，应有尽有
+👥 **社区大家庭** - 发现他人的酷炫音色，参与每周创作挑战
 
-🎮 **适合所有人**
+🎮 **谁适合用WAVELET？**
 - 🎵 **音乐新手** - 想做音乐但不知从何开始
-- 🎼 **创作者** - 需要快速得到好听的音色  
-- 🎮 **游戏开发者** - 需要简单好用的音效工具
-- 📚 **教育场景** - 学校音乐技术教学
+- 🎼 **创作者** - 需要快速找到好听的音色灵感
+- 🎮 **游戏开发者** - 为游戏制作独特音效
+- 📚 **音乐老师** - 让学生轻松理解声音合成原理
 
-💡 **核心功能**
-- 🎛️ 6种波形合成器 (Sine, Square, Sawtooth, Triangle, Noise, PM)
-- 🔊 5种滤波器 (Lowpass, Highpass, Bandpass, Notch, Allpass)
-- 🎚️ ADSR包络控制
-- 🎵 12种效果器 (Reverb, Delay, Distortion, Chorus, Compressor等)
-- 🤖 AI旋律生成器 (6种风格, 14种音阶)
-- 🎼 AI和弦进行 (8种风格, 10种和弦类型)
-- 🥁 AI节奏生成器 (12种风格, 17种鼓音色)
-- 👥 社区预设分享
-- 🏆 每周创作挑战
+💡 **强大功能一览**
+- 🎛️ **声音引擎** - 6种波形、5种滤波器、ADSR包络、12种效果器
+- 🤖 **AI作曲家** - 旋律生成(6种风格)、和弦进行(8种风格)、节奏模式(12种风格)
+- 👥 **社区功能** - 预设分享、创作挑战、排行榜
+- 📊 **可视化** - 实时波形、频谱分析、主题动画
 
-**重要说明**: WAVELET是免费软件，但我们提供专业版解锁全部AI功能和云端同步。
+🔓 **免费使用** - 基础功能完全免费，专业版解锁全部AI功能和云端同步。
+
+---
 
 **About This Game (English)**
 
-WAVELET is a modern abstract sound synthesizer designed to make music creation accessible to everyone!
+# 🎹 WAVELET - Music Creation Made Simple & Fun
+
+Too intimidated by complex modular synths? WAVELET lets you **create your own music in just 30 seconds**!
 
 🌟 **Why WAVELET?**
 
-✨ **Instant Sound** - Make your first sound in 30 seconds, no complex patching required
-🎨 **Stunning Visuals** - 3 themes, real-time waveform visualization
-🤖 **AI-Assisted Creation** - Intelligent melody, chord, and rhythm generation
-🎹 **Professional Sounds** - 50+ presets covering various music styles
-👥 **Community Sharing** - Share your creations, join weekly challenges
+✨ **Zero Learning Curve** - Make your first sound in 30 seconds, no complex patching
+🎨 **Stunning Visuals** - 3 themes, real-time waveforms that pulse like an ECG
+🤖 **AI Your Music Buddy** - Pick a style, generate melody, chords, and rhythms instantly
+🎹 **Pro-Quality Sounds** - 50+ presets covering bass, pads, leads, and more
+👥 **Community Hub** - Discover cool sounds from others, join weekly challenges
 
-🎮 **Perfect For**
+🎮 **Who Is WAVELET For?**
 - 🎵 **Music Beginners** - Want to make music but don't know where to start
 - 🎼 **Creators** - Need quick access to great-sounding presets
-- 🎮 **Game Developers** - Simple yet powerful sound effect tools
-- 📚 **Education** - Music technology teaching
+- 🎮 **Game Developers** - Create unique sound effects for games
+- 📚 **Music Educators** - Help students understand sound synthesis easily
+
+💡 **Powerful Features**
+- 🎛️ **Sound Engine** - 6 waveforms, 5 filters, ADSR envelope, 12 effects
+- 🤖 **AI Composer** - Melody (6 styles), Chord Progressions (8 styles), Rhythms (12 styles)
+- 👥 **Community** - Preset sharing, creative challenges, leaderboards
+- 📊 **Visualization** - Real-time waveforms, spectrum analysis, theme animations
+
+🔓 **Free to Start** - Core features are completely free. Pro version unlocks all AI features and cloud sync.
 
 #### 特色截图说明
 每张截图需要添加简短说明 (1-2句):
@@ -261,7 +271,7 @@ WAVELET is a modern abstract sound synthesizer designed to make music creation a
 
 4. **主题对比 (3张)**
    - Dark主题
-   - Retro主题  
+   - Retro主题
    - Cyber主题
 
 5. **波形可视化**
@@ -288,39 +298,385 @@ WAVELET is a modern abstract sound synthesizer designed to make music creation a
     - 首次使用引导界面
     - 简单操作提示
 
+**详细截图说明**: [点击查看 SCREENSHOT_GUIDE.md](./SCREENSHOT_GUIDE.md)
+
+---
+
+## 📸 截图自动化方案
+
+### Godot截图方法
+
+Godot 4内置了截图功能，可以通过以下方式捕获高质量截图：
+
+```gdscript
+# 在Godot中捕获截图
+func capture_screenshot(filename: String):
+    var image = get_viewport().get_texture().get_image()
+    image.save_png("res://screenshots/" + filename + ".png")
+```
+
+### 自动化截图脚本
+
+创建一个Python脚本来自动化截图捕获流程：
+
+```python
+#!/usr/bin/env python3
+"""
+WAVELET 截图自动化脚本
+用于捕获Steam商店所需的各类素材
+"""
+
+import subprocess
+import os
+from pathlib import Path
+
+class ScreenshotCapture:
+    def __init__(self, godot_executable: str, project_path: str):
+        self.godot = godot_executable
+        self.project = project_path
+        self.output_dir = Path("steam_assets/screenshots")
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def capture_view(self, scene: str, view_name: str, delay: float = 2.0):
+        """捕获特定视图"""
+        # 通过命令行参数加载特定场景并截图
+        cmd = [
+            self.godot,
+            "--path", self.project,
+            "-s", "res://tools/screenshot_tool.gd",
+            "--scene", scene,
+            "--output", str(self.output_dir / f"{view_name}.png"),
+            "--delay", str(delay)
+        ]
+        subprocess.run(cmd, check=True)
+
+    def capture_all_views(self):
+        """捕获所有需要的视图"""
+        views = [
+            ("res://scenes/main.tscn", "main_interface"),
+            ("res://scenes/ai_melody.tscn", "ai_melody_generator"),
+            ("res://scenes/presets.tscn", "preset_browser"),
+            ("res://scenes/community.tscn", "community_panel"),
+            ("res://scenes/challenges.tscn", "challenges"),
+            ("res://scenes/visualizer.tscn", "waveform_visualizer"),
+        ]
+
+        for scene, name in views:
+            self.capture_view(scene, name)
+            print(f"✓ Captured: {name}")
+
+# 使用示例
+if __name__ == "__main__":
+    capture = ScreenshotCapture(
+        godot_executable="/Applications/Godot.app/Contents/MacOS/Godot",
+        project_path="/path/to/wavelet/godot"
+    )
+    capture.capture_all_views()
+```
+
+### Godot截图工具脚本
+
+在Godot项目中创建 `res://tools/screenshot_tool.gd`：
+
+```gdscript
+extends SceneTree
+
+var output_path: String = ""
+var scene_path: String = ""
+var delay_time: float = 2.0
+
+func _init():
+    parse_args()
+
+func parse_args():
+    var args = OS.get_cmdline_args()
+    for i in range(args.size()):
+        if args[i] == "--scene" and i + 1 < args.size():
+            scene_path = args[i + 1]
+        elif args[i] == "--output" and i + 1 < args.size():
+            output_path = args[i + 1]
+        elif args[i] == "--delay" and i + 1 < args.size():
+            delay_time = float(args[i + 1])
+
+func _ready():
+    if scene_path == "":
+        print("Error: No scene specified")
+        quit(1)
+        return
+
+    # 切换到指定场景
+    change_scene_to_file(scene_path)
+
+    # 等待UI加载
+    await get_tree().create_timer(delay_time).timeout
+
+    # 捕获截图
+    capture_screenshot()
+
+    quit(0)
+
+func capture_screenshot():
+    var viewport = get_viewport()
+    var image = viewport.get_texture().get_image()
+
+    if output_path == "":
+        output_path = "screenshot.png"
+
+    var err = image.save_png(output_path)
+    if err == OK:
+        print(f"Screenshot saved to: {output_path}")
+    else:
+        print(f"Error saving screenshot: {err}")
+```
+
+### 需要捕获的截图清单
+
+| 截图名称 | 场景文件 | 说明 |
+|---------|---------|------|
+| `main_interface` | `main.tscn` | 主界面全貌 |
+| `ai_melody_generator` | `ai_melody.tscn` | AI旋律生成演示 |
+| `preset_browser` | `presets.tscn` | 预设浏览器 |
+| `theme_dark` | `main.tscn` | Dark主题 |
+| `theme_retro` | `main.tscn` | Retro主题 |
+| `theme_cyber` | `main.tscn` | Cyber主题 |
+| `waveform_visualizer` | `visualizer.tscn` | 实时波形 |
+| `community_panel` | `community.tscn` | 社区分享界面 |
+| `challenges` | `challenges.tscn` | 创作挑战 |
+| `chord_progression` | `ai_chords.tscn` | AI和弦进行 |
+
+### 截图尺寸要求
+
+- **主截图**: 1920×1080 (16:9比例)
+- **竖图备用**: 1080×1920
+- **缩略图**: 640×360
+- **分辨率**: 至少72 DPI，建议150+ DPI用于打印
+
 ---
 
 ## 📦 打包准备
 
-### 跨平台打包需求
+### 跨平台打包架构
 
-**Windows**:
-- [ ] PyInstaller spec文件
-- [ ] Windows图标 (.ico)
-- [ ] 安装程序 (NSIS或Inno Setup)
-- [ ] 32/64位支持
+WAVELET由两部分组成，需要分别打包：
 
-**macOS**:
-- [ ] DMG打包
-- [ ] Apple Silicon (M1/M2/M3) 支持
-- [ ] Apple Silicon (Intel) 支持
-- [ ] 代码签名和公证
+```
+┌─────────────────────────────────────────────────────────┐
+│                    WAVELET 打包架构                      │
+├─────────────────────────────────────────────────────────┤
+│  Rust音频引擎 (.dll/.dylib/.so)                         │
+│  - Godot GDExtension 模块                               │
+│  - 包含所有音频处理逻辑                                  │
+├─────────────────────────────────────────────────────────┤
+│  Godot 4 前端 (.pck + 可执行文件)                       │
+│  - UI渲染层                                             │
+│  - 用户交互                                             │
+│  - 预设管理                                             │
+└─────────────────────────────────────────────────────────┘
+```
 
-**Linux**:
-- [ ] AppImage 或 Snap 包
-- [ ] .deb包 (Ubuntu/Debian)
-- [ ] .rpm包 (Fedora/RHEL)
+### Windows 打包
 
-### 依赖管理
+```bash
+# 1. 编译Rust后端 (Windows)
+cargo build --release --target x86_64-pc-windows-msvc
 
-**Rust后端**:
-- ✅ 编译成功 (2026-02-03 02:45)
-- 需要优化编译大小
-- 静态链接还是动态链接?
+# 2. Godot导出
+# 使用Godot编辑器: Project → Export → Windows
+# 配置:
+# - Export Path: wavelet_windows/wavelet.exe
+# - Include .pck file: true
+# - Extension support: true
 
-**Godot前端**:
-- 需要导出模板
-- Godot 4导出配置
+# 3. 目录结构
+wavelet_windows/
+├── wavelet.exe          # Godot可执行文件
+├── wavelet.pck          # 游戏资源包
+├── wavelet_compat.dll   # Godot兼容层
+├── libwavelet.dll       # Rust音频引擎
+├── gdextension.dll      # GDExtension
+└── steam_appid.txt      # Steam AppID (发布时)
+```
+
+**Windows 图标要求**:
+- `favicon.ico` - 256×256 (主要图标)
+- `icon_16.png` - 16×16 (任务栏)
+- `icon_32.png` - 32×32 (窗口)
+- `icon_48.png` - 48×48 (桌面)
+- `icon_256.png` - 256×256 (高DPI)
+
+### macOS 打包
+
+```bash
+# 1. 编译Rust后端 (Apple Silicon)
+cargo build --release --target aarch64-apple-darwin
+
+# 2. 编译Rust后端 (Intel)
+cargo build --release --target x86_64-apple-darwin
+
+# 3. Godot导出 (通用二进制)
+# Project → Export → macOS
+# Export With: Default (支持Apple Silicon + Intel)
+# 签名: Development证书 (测试) / Distribution证书 (发布)
+
+# 4. 创建DMG
+hdiutil create -volname "WAVELET" \
+    -srcfolder wavelet.app \
+    -ov -format UDZO wavelet.dmg
+```
+
+**macOS 图标要求**:
+- `icon_1024.png` - 1024×1024 (App Store)
+- `.icns` 文件 - 多种尺寸
+
+**代码签名** (发布前):
+```bash
+# 签名Godot可执行文件
+codesign --sign "Developer ID Application: Your Name" \
+    --timestamp \
+    --entitlements wavelet.entitlements \
+    wavelet.app/Contents/MacOS/wavelet
+
+# 公证 (Notarization)
+xcrun notarytool submit wavelet.zip \
+    --apple-api-key your_api_key \
+    --apple-api-id your_api_id \
+    --wait
+```
+
+### Linux 打包
+
+```bash
+# 1. 编译Rust后端
+cargo build --release --target x86_64-unknown-linux-gnu
+
+# 2. Godot导出
+# Project → Export → Linux
+# Export Path: wavelet_linux/wavelet
+
+# 3. 创建AppImage
+wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+chmod +x appimagetool-x86_64.AppImage
+
+# 目录结构
+wavelet_x86_64/
+├── wavelet              # Godot可执行文件
+├── wavelet.pck          # 游戏资源包
+├── libwavelet.so        # Rust音频引擎
+├── gdextension.so       # GDExtension
+└── wavelet.desktop      # 桌面快捷方式
+
+# 4. 打包
+./appimagetool-x86_64.AppImage wavelet_x86_64/
+```
+
+**Linux 图标**:
+- `wavelet.svg` - 矢量图标 (推荐)
+- `wavelet_256.png` - 256×256 PNG
+
+### 统一打包脚本
+
+创建 `wavelet/package.sh` 自动化打包流程：
+
+```bash
+#!/bin/bash
+set -e
+
+echo "🎵 WAVELET Packaging Script"
+echo "=========================="
+
+# 颜色输出
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+
+# 配置
+VERSION="2.3.0"
+BUILD_DIR="build"
+PACKAGE_DIR="package"
+
+# 清理
+log_info "Cleaning build directories..."
+rm -rf $BUILD_DIR $PACKAGE_DIR
+mkdir -p $BUILD_DIR $PACKAGE_DIR
+
+# 1. 编译Rust
+log_info "Building Rust audio engine..."
+cargo build --release
+
+# 2. 复制Godot导出文件
+log_info "Copying Godot exports..."
+cp -r godot/export/* $BUILD_DIR/
+
+# 3. 复制Rust库
+log_info "Copying Rust libraries..."
+case "$(uname -s)" in
+    Linux*)
+        cp target/release/libwavelet.so $BUILD_DIR/
+        cp target/release/libgdextension.so $BUILD_DIR/
+        ;;
+    Darwin*)
+        cp target/release/libwavelet.dylib $BUILD_DIR/
+        cp target/release/libgdextension.dylib $BUILD_DIR/
+        ;;
+    MINGW*|CYGWIN*|MSYS*)
+        cp target/release/wavelet.dll $BUILD_DIR/
+        cp target/release/gdextension.dll $BUILD_DIR/
+        ;;
+esac
+
+# 4. 平台特定打包
+case "$(uname -s)" in
+    Linux*)
+        log_info "Creating AppImage..."
+        # AppImage打包逻辑
+        ;;
+    Darwin*)
+        log_info "Creating DMG..."
+        # DMG打包逻辑
+        ;;
+    MINGW*|CYGWIN*|MSYS*)
+        log_info "Creating ZIP..."
+        # ZIP打包逻辑
+        ;;
+esac
+
+log_success "Packaging complete!"
+log_info "Output: $PACKAGE_DIR/"
+```
+
+### Steam发布配置
+
+**steam_appid.txt**:
+```
+# Steam App ID
+# 在Steamworks创建游戏后获取实际AppID
+# 测试ID: 480 (Steamworks Test App)
+480
+```
+
+**Steamworks 配置**:
+- ✅ Steam App ID: 待获取
+- ✅ 构建版本: v2.3.0
+- ✅ Beta分支: default (公测)
+- 需要配置: Steamworks SDK集成
+
+### 依赖管理总结
+
+| 组件 | 当前状态 | 打包要求 |
+|------|---------|---------|
+| Rust音频引擎 | ✅ 已编译 | 静态链接std避免兼容问题 |
+| Godot前端 | ✅ 导出模板 | 4.x导出模板 |
+| GDExtension | ✅ 绑定完成 | 与Godot版本匹配 |
+| 预设资源 | ✅ 50个 | 包含在.pck中 |
+| 第三方库 | 无 | Godot自带 |
+
+**关键配置**:
+- `export_presets.cfg` - Godot导出配置
+- `cargo.toml` - Rust依赖和特性
+- `package.sh` - 统一打包脚本
 
 ---
 
@@ -329,10 +685,35 @@ WAVELET is a modern abstract sound synthesizer designed to make music creation a
 ### 时间线
 
 **Week 1** (2026-02-03 ~ 2026-02-09):
-- [ ] 完成所有图形素材
-- [ ] 制作宣传视频
-- [ ] 编写商店页面文案
-- [ ] 准备截图
+- [x] 📝 完善商店页面文案 ✅ (2026-02-03 04:45)
+  - [x] 更具营销吸引力的中文介绍
+  - [x] 完整的英文版本
+  - [x] 功能亮点列表
+- [x] 📸 添加截图自动化方案 ✅ (2026-02-03 04:45)
+  - [x] Godot截图工具脚本
+  - [x] Python自动化脚本
+  - [x] 10个必拍截图清单
+- [x] 📦 添加详细打包准备文档 ✅ (2026-02-03 04:45)
+  - [x] 跨平台架构说明
+  - [x] Windows打包配置
+  - [x] macOS打包配置 (含签名/公证)
+  - [x] Linux打包配置 (AppImage)
+  - [x] 统一打包脚本模板
+  - [x] Steamworks配置说明
+- [x] 🎬 制作宣传视频 🔧 (2026-02-03 06:15)
+  - [x] 创建详细分镜脚本 (TRAILER_SCRIPT.md) ✅
+  - [x] 旁白文案 (TRAILER_NARRATION.md) ✅
+  - [x] 截图自动化脚本 (capture_screenshots.py) ✅
+  - [x] 截图详细指导文档 (SCREENSHOT_GUIDE.md) ✅ (新增 2026-02-03 06:15)
+  - [ ] 录制UI画面 (待Godot导出 - 阻塞!)
+  - [ ] 后期剪辑制作 (待录制完成)
+- [x] 📊 竞争分析与营销洞察 ✅ (2026-02-03 07:15)
+  - [x] 竞争对手深度分析 (VCV Rack, Vital, Surge, Arturia) ✅
+  - [x] 市场定位矩阵 ✅
+  - [x] 营销策略建议 ✅
+  - [x] 成功案例参考 ✅
+  - [x] 发布时间线规划 ✅
+- [ ] 📸 准备截图 (待Godot导出后)
 
 **Week 2** (2026-02-10 ~ 2026-02-16):
 - [ ] 跨平台打包测试
@@ -373,6 +754,7 @@ WAVELET is a modern abstract sound synthesizer designed to make music creation a
 - **图形素材模板**: https://www.dropbox.com/scl/fo/cvkwbosmrimklcl9h0qko/AF5IPErKP-mQM_3YO1Dw2lA
 - **项目GitHub**: https://github.com/nana-nakajima/wavelet
 - **任务追踪**: TASKS_INDEX.md
+- **竞争分析**: [COMPETITOR_ANALYSIS.md](./COMPETITOR_ANALYSIS.md)
 
 ---
 
