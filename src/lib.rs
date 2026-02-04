@@ -54,15 +54,21 @@ pub mod synth;
 pub mod time_stretch;
 
 pub use arpeggiator::{ArpConfig, ArpNoteValue, ArpPattern, Arpeggiator};
+pub use audio_analysis::{
+    measure_cross_correlation, measure_peak, measure_peak_db, measure_rms, measure_rms_db,
+    measure_stereo_correlation, AudioAssertions, HarmonicDistortionAnalyzer, LatencyMeasurer,
+    SpectrumAnalyzer,
+};
 pub use chord_generator::{
     Chord, ChordGenerator, ChordStyle, ChordType, Key, ProgressionPattern, Scale,
 };
-pub use audio_analysis::{
-    AudioAssertions, HarmonicDistortionAnalyzer, LatencyMeasurer, SpectrumAnalyzer,
-    measure_cross_correlation, measure_peak, measure_peak_db, measure_rms, measure_rms_db,
-    measure_stereo_correlation,
+pub use effects::{
+    BitCrusher, BitCrusherConfig, Chorus, DecimationMode, Effect, EffectType, FilterBandConfig,
+    FilterBank, FilterBankConfig, FilterBankType, Flanger, FlangerConfig, Freeze, FreezeConfig,
+    FreezeType, Phaser, PhaserConfig, RingModulator, RingModulatorConfig, RingModulatorMode,
+    RingModulatorWave, Saturation, SimpleEq, StereoBitCrusher, StereoFlanger, StereoPhaser,
+    StereoRingModulator, StereoWarp, Warp, WarpConfig, WarpMode,
 };
-pub use effects::{BitCrusher, BitCrusherConfig, Chorus, DecimationMode, Effect, EffectType, FilterBank, FilterBankConfig, FilterBankType, FilterBandConfig, Flanger, FlangerConfig, Freeze, FreezeConfig, FreezeType, Phaser, PhaserConfig, RingModulator, RingModulatorConfig, RingModulatorMode, RingModulatorWave, Saturation, SimpleEq, StereoBitCrusher, StereoFlanger, StereoPhaser, StereoRingModulator, Warp, WarpConfig, WarpMode, StereoWarp};
 pub use envelope::{Envelope, EnvelopeStage};
 pub use filter::{Filter, FilterType, ZdfFilter, ZdfFilterMode};
 pub use melody_generator::{Melody, MelodyGenerator, MelodyNote, MelodyStyle};
@@ -74,38 +80,36 @@ pub use modulation::{
 
 #[cfg(feature = "midi_cc")]
 pub use modulation::midi_cc::{
-    AssignableCC, CCParameterTarget, MidiCCError, MidiCCManager, StandardCC, cc_to_cutoff,
-    cc_to_resonance, cc_to_time, cc_to_pitch, MAX_CC_COUNT,
+    cc_to_cutoff, cc_to_pitch, cc_to_resonance, cc_to_time, AssignableCC, CCParameterTarget,
+    MidiCCError, MidiCCManager, StandardCC, MAX_CC_COUNT,
 };
 pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
 pub use piano_roll::{EditMode, NoteEvent, PianoRoll, PianoRollConfig, Resolution};
-pub use presets::{
-    Preset, PresetCategory, PresetCollection, PresetManager, PresetParameters,
-};
+pub use presets::{Preset, PresetCategory, PresetCollection, PresetManager, PresetParameters};
 pub use project::{
     DrumPatternState, DrumTrackState, EffectSlotState, EnvelopeState, GlobalSettings,
-    InsertEffectChain, LfoState, ModulationRouting, OscillatorState, PatternState,
-    PianoRollNote, Project, ProjectError, ProjectManager, ProjectMetadata, SendTrackState,
-    TrackState, MAX_PROJECT_NAME_LENGTH,
+    InsertEffectChain, LfoState, ModulationRouting, OscillatorState, PatternState, PianoRollNote,
+    Project, ProjectError, ProjectManager, ProjectMetadata, SendTrackState, TrackState,
+    MAX_PROJECT_NAME_LENGTH,
 };
 pub use rhythm_generator::{
     Complexity, DrumNote, DrumPattern, DrumSound, RhythmGenerator, RhythmStyle,
 };
 pub use sampler::{
-    AutoSlicer, LoopInfo, LoopMode, Sample, SampleFormat, SampleInfo, SampleLibrary,
-    Sampler, SlicingMode, SlicePoint,
-};
-pub use song::{
-    PatternChain, Song, SongError, SongLine, SongManager, SongPlaybackState, MAX_SONG_LINES,
-    MAX_SONGS,
+    AutoSlicer, LoopInfo, LoopMode, Sample, SampleFormat, SampleInfo, SampleLibrary, Sampler,
+    SlicePoint, SlicingMode,
 };
 pub use send_fx::{
     PrePost, SendConnection, SendEffectSlot, SendFxError, SendFxManager, SendTrack,
     NUM_SEND_TRACKS, SEND_EFFECT_SLOTS,
 };
+pub use song::{
+    PatternChain, Song, SongError, SongLine, SongManager, SongPlaybackState, MAX_SONGS,
+    MAX_SONG_LINES,
+};
 pub use step_sequencer::{
-    DrumStyle, NUM_STEPS, NUM_TRACKS, ParamLocks, Scale as SeqScale, Step, StepSequencer, Track,
-    TrigCondition,
+    DrumStyle, ParamLocks, Scale as SeqScale, Step, StepSequencer, Track, TrigCondition, NUM_STEPS,
+    NUM_TRACKS,
 };
 pub use synth::Synth;
 pub use time_stretch::{StretchAlgorithm, StretchAnalysis, TimeStretch, TimeStretchConfig};

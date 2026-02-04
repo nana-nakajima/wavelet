@@ -128,7 +128,8 @@ impl Tremolo {
 
         self.lfo_right.set_rate_hz(self.config.rate as f32);
         self.lfo_right.set_waveform(self.config.waveform.into());
-        self.lfo_right.reset_phase((self.config.stereo_width * PI as f64) as f32);
+        self.lfo_right
+            .reset_phase((self.config.stereo_width * PI as f64) as f32);
     }
 
     /// Set LFO rate
@@ -153,7 +154,8 @@ impl Tremolo {
     /// Set stereo width
     pub fn set_stereo_width(&mut self, width: f64) {
         self.config.stereo_width = width.clamp(0.0, 1.0);
-        self.lfo_right.reset_phase((self.config.stereo_width * PI as f64) as f32);
+        self.lfo_right
+            .reset_phase((self.config.stereo_width * PI as f64) as f32);
     }
 
     /// Set mix ratio
@@ -218,7 +220,8 @@ impl Tremolo {
     pub fn reset(&mut self) {
         self.lfo_left.reset();
         self.lfo_right.reset();
-        self.lfo_right.reset_phase((self.config.stereo_width * PI as f64) as f32);
+        self.lfo_right
+            .reset_phase((self.config.stereo_width * PI as f64) as f32);
     }
 
     /// Get current LFO values for both channels

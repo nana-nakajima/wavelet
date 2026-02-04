@@ -102,8 +102,16 @@ impl Default for SendTrack {
             id: 0,
             name: String::from("Send A"),
             slots: [
-                SendEffectSlot { effect_type: None, parameters: Vec::new(), enabled: false },
-                SendEffectSlot { effect_type: None, parameters: Vec::new(), enabled: false },
+                SendEffectSlot {
+                    effect_type: None,
+                    parameters: Vec::new(),
+                    enabled: false,
+                },
+                SendEffectSlot {
+                    effect_type: None,
+                    parameters: Vec::new(),
+                    enabled: false,
+                },
             ],
             connection: SendConnection::Serial,
             pre_post: PrePost::PostFx,
@@ -123,15 +131,27 @@ impl SendTrack {
             id,
             name: names[id as usize].to_string(),
             slots: [
-                SendEffectSlot { effect_type: None, parameters: Vec::new(), enabled: false },
-                SendEffectSlot { effect_type: None, parameters: Vec::new(), enabled: false },
+                SendEffectSlot {
+                    effect_type: None,
+                    parameters: Vec::new(),
+                    enabled: false,
+                },
+                SendEffectSlot {
+                    effect_type: None,
+                    parameters: Vec::new(),
+                    enabled: false,
+                },
             ],
             ..Default::default()
         }
     }
 
     /// Add an effect to a slot
-    pub fn add_effect(&mut self, slot_index: usize, effect_type: &'static str) -> Result<(), SendFxError> {
+    pub fn add_effect(
+        &mut self,
+        slot_index: usize,
+        effect_type: &'static str,
+    ) -> Result<(), SendFxError> {
         if slot_index >= SEND_EFFECT_SLOTS {
             return Err(SendFxError::InvalidSlot);
         }
@@ -216,7 +236,12 @@ impl SendFxManager {
     }
 
     /// Add an effect to a send track
-    pub fn add_effect(&mut self, send_id: u8, slot_index: usize, effect_type: &'static str) -> Result<(), SendFxError> {
+    pub fn add_effect(
+        &mut self,
+        send_id: u8,
+        slot_index: usize,
+        effect_type: &'static str,
+    ) -> Result<(), SendFxError> {
         if send_id >= NUM_SEND_TRACKS as u8 {
             return Err(SendFxError::InvalidSendId);
         }
@@ -259,7 +284,11 @@ impl SendFxManager {
     }
 
     /// Set connection type for a send track
-    pub fn set_connection(&mut self, send_id: u8, connection: SendConnection) -> Result<(), SendFxError> {
+    pub fn set_connection(
+        &mut self,
+        send_id: u8,
+        connection: SendConnection,
+    ) -> Result<(), SendFxError> {
         if send_id >= NUM_SEND_TRACKS as u8 {
             return Err(SendFxError::InvalidSendId);
         }
@@ -295,8 +324,16 @@ impl SendFxManager {
     pub fn clear_all(&mut self) {
         for track in &mut self.tracks {
             track.slots = [
-                SendEffectSlot { effect_type: None, parameters: Vec::new(), enabled: false },
-                SendEffectSlot { effect_type: None, parameters: Vec::new(), enabled: false },
+                SendEffectSlot {
+                    effect_type: None,
+                    parameters: Vec::new(),
+                    enabled: false,
+                },
+                SendEffectSlot {
+                    effect_type: None,
+                    parameters: Vec::new(),
+                    enabled: false,
+                },
             ];
             track.active = false;
         }
@@ -372,7 +409,7 @@ mod tests {
         track.set_send_level(0.75);
         track.set_return_level(0.8);
         track.set_return_pan(-0.5);
-        
+
         assert!((track.send_level - 0.75).abs() < 0.001);
         assert!((track.return_level - 0.8).abs() < 0.001);
         assert!((track.return_pan - (-0.5)).abs() < 0.001);
@@ -382,11 +419,11 @@ mod tests {
     fn test_send_fx_manager() {
         let mut manager = SendFxManager::new();
         assert_eq!(manager.active_track_count(), 0);
-        
+
         // Add an effect
         assert!(manager.add_effect(0, 0, "Reverb").is_ok());
         assert_eq!(manager.active_track_count(), 1);
-        
+
         // Set levels
         assert!(manager.set_send_level(0, 0.7).is_ok());
         assert!(manager.set_return_level(0, 0.9).is_ok());
@@ -398,7 +435,7 @@ mod tests {
         let mut track = SendTrack::new(0, "Test");
         track.connection = SendConnection::Serial;
         assert_eq!(track.connection, SendConnection::Serial);
-        
+
         track.connection = SendConnection::Parallel;
         assert_eq!(track.connection, SendConnection::Parallel);
     }
@@ -407,7 +444,7 @@ mod tests {
     fn test_pre_post() {
         let mut track = SendTrack::new(0, "Test");
         assert_eq!(track.pre_post, PrePost::PostFx);
-        
+
         track.pre_post = PrePost::PreFx;
         assert_eq!(track.pre_post, PrePost::PreFx);
     }
@@ -417,9 +454,9 @@ mod tests {
         let mut manager = SendFxManager::new();
         manager.add_effect(0, 0, "Reverb").unwrap();
         manager.add_effect(1, 0, "Delay").unwrap();
-        
+
         assert_eq!(manager.active_track_count(), 2);
-        
+
         manager.clear_all();
         assert_eq!(manager.active_track_count(), 0);
     }
@@ -429,7 +466,7 @@ mod tests {
         let mut track = SendTrack::new(0, "Test");
         track.add_effect(0, "Reverb").unwrap();
         track.add_effect(1, "Delay").unwrap();
-        
+
         assert_eq!(track.active_slot_count(), 2);
     }
 
@@ -439,7 +476,7 @@ mod tests {
         track.set_send_level(1.5); // Should clamp to 1.0
         track.set_return_level(-0.5); // Should clamp to 0.0
         track.set_return_pan(2.0); // Should clamp to 1.0
-        
+
         assert!((track.send_level - 1.0).abs() < 0.001);
         assert!((track.return_level - 0.0).abs() < 0.001);
         assert!((track.return_pan - 1.0).abs() < 0.001);

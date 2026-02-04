@@ -30,9 +30,9 @@ use std::collections::HashMap;
 /// Grid resolution for piano roll
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Resolution {
-    Quarter = 4,      // 1 note per quarter note
-    Eighth = 8,       // 2 notes per quarter
-    Sixteenth = 16,   // 4 notes per quarter
+    Quarter = 4,       // 1 note per quarter note
+    Eighth = 8,        // 2 notes per quarter
+    Sixteenth = 16,    // 4 notes per quarter
     ThirtySecond = 32, // 8 notes per quarter
 }
 
@@ -587,7 +587,9 @@ impl PianoRoll {
 
     /// Get note name (e.g., "C4", "F#3")
     pub fn note_name(note: u8) -> String {
-        let note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        let note_names = [
+            "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+        ];
         let octave = (note / 12) as i8 - 1;
         let note_name = note_names[(note % 12) as usize];
         format!("{}{}", note_name, octave)
@@ -780,13 +782,9 @@ impl PianoRoll {
         for &index in &self.selected {
             if let Some(note) = self.notes.get_mut(index) {
                 // Simple linear fade based on position in selection
-                let fade = (end_vel as f64 - start_vel as f64)
-                    / (self.selected.len().max(1) as f64);
-                let pos = self
-                    .selected
-                    .iter()
-                    .position(|&i| i == index)
-                    .unwrap_or(0) as f64;
+                let fade =
+                    (end_vel as f64 - start_vel as f64) / (self.selected.len().max(1) as f64);
+                let pos = self.selected.iter().position(|&i| i == index).unwrap_or(0) as f64;
                 note.velocity = (start_vel as f64 + fade * pos) as u8;
                 count += 1;
             }

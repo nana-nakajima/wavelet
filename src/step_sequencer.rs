@@ -323,7 +323,7 @@ impl Default for StepSequencer {
         for _ in 0..NUM_TRACKS {
             tracks.push(Track::default());
         }
-        
+
         Self {
             tracks,
             bpm: 120.0,
@@ -347,7 +347,10 @@ impl StepSequencer {
 
     /// Create with specific BPM
     pub fn with_bpm(bpm: f64) -> Self {
-        Self { bpm, ..Default::default() }
+        Self {
+            bpm,
+            ..Default::default()
+        }
     }
 
     /// Get track by index
@@ -363,7 +366,7 @@ impl StepSequencer {
     /// Get all non-muted tracks (respecting solo)
     pub fn active_tracks(&self) -> Vec<usize> {
         let has_solo = self.tracks.iter().any(|t| t.solo);
-        
+
         self.tracks
             .iter()
             .enumerate()
@@ -421,7 +424,9 @@ impl StepSequencer {
 
     /// Simple LCG random number generator
     fn random(&mut self) -> f64 {
-        self.random_state = self.random_state.wrapping_mul(6364136223846793005)
+        self.random_state = self
+            .random_state
+            .wrapping_mul(6364136223846793005)
             .wrapping_add(1);
         ((self.random_state >> 33) as u32) as f64 / u32::MAX as f64
     }
@@ -449,20 +454,18 @@ impl StepSequencer {
         for (track_idx, track) in self.tracks.iter_mut().enumerate() {
             let current_beat = self.beat_position * 4.0; // Convert to 16th notes
             let step_float = current_beat.floor() as usize % track.length;
-            
+
             if step_float != track.current_step {
                 track.current_step = step_float;
                 let step = &track.steps[track.current_step];
-                
+
                 // Check if step should trigger
                 let should_trigger = if track.muted {
                     false
                 } else {
                     match step.condition {
                         TrigCondition::Normal => true,
-                        TrigCondition::Probability => {
-                            rng_values[track_idx] < step.probability
-                        }
+                        TrigCondition::Probability => rng_values[track_idx] < step.probability,
                         TrigCondition::Mute => false,
                         TrigCondition::Solo => false,
                     }
@@ -481,12 +484,12 @@ impl StepSequencer {
     /// Returns (note, velocity, gate_length, track_index) or None
     pub fn get_next_note(&mut self, sample_rate: f64) -> Option<(u8, u8, f64, usize, ParamLocks)> {
         let triggers = self.process(sample_rate);
-        
+
         for (trigger, track_idx, step_idx) in triggers {
             if trigger {
                 let track = &self.tracks[track_idx];
                 let step = &track.steps[step_idx];
-                
+
                 if step.active {
                     return Some((
                         step.note,
@@ -498,7 +501,7 @@ impl StepSequencer {
                 }
             }
         }
-        
+
         None
     }
 
@@ -510,7 +513,7 @@ impl StepSequencer {
         if let Some(resonance) = locks.filter_resonance {
             synth.set_filter_resonance(resonance as f32);
         }
-        // Note: Synth doesn't have set_waveform/set_detune, 
+        // Note: Synth doesn't have set_waveform/set_detune,
         // parameter locks for pitch/waveform would need UI handling
     }
 
@@ -532,13 +535,13 @@ impl StepSequencer {
         for _ in 0..rng_values.capacity() {
             rng_values.push(self.random());
         }
-        
+
         let mut rng_idx = 0;
         for track in &mut self.tracks {
             for step in &mut track.steps {
                 let active = rng_values[rng_idx] > 0.5;
                 rng_idx += 1;
-                
+
                 if active {
                     step.active = true;
                     step.note = (36.0 + rng_values[rng_idx] * 60.0) as u8;
@@ -563,7 +566,7 @@ impl StepSequencer {
         }
 
         let track = &mut self.tracks[track_idx];
-        
+
         match style {
             DrumStyle::FourOnTheFloor => {
                 for step in 0..16 {
@@ -597,12 +600,12 @@ impl StepSequencer {
             }
         }
     }
-    
+
     /// Simple random helper methods
     fn bool(&mut self) -> bool {
         self.random() > 0.5
     }
-    
+
     fn next_u8(&mut self, range: std::ops::Range<u8>) -> u8 {
         let r = self.random();
         (range.start as f64 + r * (range.end - range.start) as f64) as u8
@@ -668,10 +671,10 @@ mod tests {
     fn test_track_advance() {
         let mut track = Track::new();
         assert_eq!(track.current_step, 0);
-        
+
         track.advance();
         assert_eq!(track.current_step, 1);
-        
+
         track.set_length(4);
         // Advance from step 1: 1->2->3->0 (3 steps to wrap)
         for _ in 0..3 {
@@ -685,7 +688,7 @@ mod tests {
         let mut track = Track::new();
         track.set_length(8);
         assert_eq!(track.length, 8);
-        
+
         track.set_length(20);
         assert_eq!(track.length, 16);
     }
@@ -694,7 +697,7 @@ mod tests {
     fn test_scale_quantize() {
         let quantized = quantize_to_scale(61, 0, Scale::Major);
         assert_eq!(quantized, 60);
-        
+
         let quantized = quantize_to_scale(62, 0, Scale::Major);
         assert_eq!(quantized, 62);
     }
@@ -703,7 +706,7 @@ mod tests {
     fn test_drum_pattern() {
         let mut seq = StepSequencer::new();
         seq.generate_drum_pattern(0, DrumStyle::FourOnTheFloor);
-        
+
         let track = &seq.tracks[0];
         for i in 0..16 {
             if i % 4 == 0 {
@@ -719,10 +722,10 @@ mod tests {
         let mut track = Track::new();
         assert!(!track.muted);
         assert!(!track.solo);
-        
+
         track.toggle_mute();
         assert!(track.muted);
-        
+
         track.toggle_solo();
         assert!(track.solo);
     }
@@ -732,7 +735,7 @@ mod tests {
         let mut seq = StepSequencer::new();
         seq.set_bpm(140.0);
         assert_eq!(seq.bpm, 140.0);
-        
+
         seq.set_bpm(500.0);
         assert_eq!(seq.bpm, 300.0);
     }
@@ -741,16 +744,16 @@ mod tests {
     fn test_step_sequencer_playback() {
         let mut seq = StepSequencer::new();
         seq.bpm = 120.0;
-        
+
         seq.tracks[0].steps[0].active = true;
         seq.tracks[0].steps[0].note = 60;
-        
+
         seq.play();
-        
+
         for _ in 0..1000 {
             seq.process(44100.0);
         }
-        
+
         assert!(seq.playing);
     }
 }

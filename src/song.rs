@@ -252,7 +252,7 @@ impl SongManager {
         // Get current song directly without borrowing
         let song_id = self.current_song_id;
         let song = self.songs.get(song_id as usize)?;
-        
+
         if song.lines.is_empty() {
             return None;
         }
@@ -328,14 +328,14 @@ impl SongManager {
     /// Export song as pattern chain
     pub fn song_to_pattern_chain(&self, song_id: u8) -> Result<PatternChain, SongError> {
         let song = self.get_song(song_id).ok_or(SongError::InvalidSongId)?;
-        
+
         let mut chain = PatternChain::new();
         for line in &song.lines {
             for _ in 0..line.repeats {
                 chain.add_pattern(line.pattern_id);
             }
         }
-        
+
         Ok(chain)
     }
 }
@@ -462,14 +462,14 @@ mod tests {
     fn test_song_manager() {
         let mut manager = SongManager::new();
         assert_eq!(manager.playback_state(), SongPlaybackState::Stopped);
-        
+
         // Add a line to current song
         assert!(manager.add_line_to_current(SongLine::new(1, 2)).is_ok());
-        
+
         // Test playback
         manager.play();
         assert_eq!(manager.playback_state(), SongPlaybackState::Playing);
-        
+
         // Get next pattern
         let next = manager.next_pattern();
         assert!(next.is_some());
@@ -483,7 +483,7 @@ mod tests {
         chain.add_pattern(1);
         chain.add_pattern(2);
         chain.add_pattern(3);
-        
+
         assert_eq!(chain.len(), 3);
         assert_eq!(chain.get_pattern(0), Some(1));
         assert_eq!(chain.get_pattern(2), Some(3));
@@ -495,7 +495,7 @@ mod tests {
         let mut manager = SongManager::new();
         manager.add_line_to_current(SongLine::new(1, 2)).unwrap();
         manager.add_line_to_current(SongLine::new(2, 1)).unwrap();
-        
+
         let chain = manager.song_to_pattern_chain(0).unwrap();
         assert_eq!(chain.len(), 3); // 2 + 1 = 3
         assert_eq!(chain.get_pattern(0), Some(1));
@@ -508,7 +508,7 @@ mod tests {
         let line = SongLine::new(1, 1)
             .with_length_mod(3.0) // Should be clamped to 2.0
             .with_tempo_mod(0.1); // Should be clamped to 0.5
-        
+
         assert!((line.length_mod - 2.0).abs() < 0.001);
         assert!((line.tempo_mod - 0.5).abs() < 0.001);
     }

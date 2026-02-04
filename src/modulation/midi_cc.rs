@@ -477,8 +477,7 @@ impl MidiCCManager {
         if self.cc_learn_mode {
             if let Some(target_index) = self.cc_learn_target {
                 self.assignable_ccs[target_index].cc_number = cc_number;
-                self.assignable_ccs[target_index].name =
-                    format!("CC{:02}", cc_number);
+                self.assignable_ccs[target_index].name = format!("CC{:02}", cc_number);
                 self.cc_learn_mode = false;
                 self.cc_learn_target = None;
                 self.cc_learn_time = None;
@@ -780,12 +779,7 @@ mod tests {
     fn test_assignable_cc() {
         let mut manager = MidiCCManager::new();
         manager
-            .set_assignable_cc(
-                0,
-                74,
-                "Filter Cutoff",
-                CCParameterTarget::FilterCutoff,
-            )
+            .set_assignable_cc(0, 74, "Filter Cutoff", CCParameterTarget::FilterCutoff)
             .unwrap();
 
         let cc = manager.get_assignable_cc(0).unwrap();

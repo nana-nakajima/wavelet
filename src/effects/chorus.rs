@@ -4,7 +4,7 @@
 //! and widening effect by modulating delay times with an LFO.
 //!
 //! The chorus works by:
- //! 1. Creating a copy of the input signal
+//! 1. Creating a copy of the input signal
 //! 2. Varying the delay time with a low-frequency oscillator
 //! 3. Mixing the delayed signal with the original for a "doubled" sound
 //!
@@ -108,11 +108,11 @@ impl Chorus {
             right_phase: 0.0,
             base_delay_samples,
             max_delay_samples,
-            rate_hz: 0.5, // 0.5 Hz LFO
+            rate_hz: 0.5,          // 0.5 Hz LFO
             right_rate_mult: 1.02, // Slight detune for stereo width
-            depth: 0.5, // 50% depth
-            mix: 0.4, // 40% wet
-            feedback: 0.2, // 20% feedback
+            depth: 0.5,            // 50% depth
+            mix: 0.4,              // 40% wet
+            feedback: 0.2,         // 20% feedback
             sample_rate,
             enabled: true,
         }
@@ -255,16 +255,8 @@ impl super::Effect for Chorus {
         // Calculate current delay times
         let max_modulation = self.depth * (self.max_delay_samples - self.base_delay_samples) as f32;
 
-        let left_delay = Self::calculate_delay(
-            self.base_delay_samples,
-            max_modulation,
-            left_lfo,
-        );
-        let right_delay = Self::calculate_delay(
-            self.base_delay_samples,
-            max_modulation,
-            right_lfo,
-        );
+        let left_delay = Self::calculate_delay(self.base_delay_samples, max_modulation, left_lfo);
+        let right_delay = Self::calculate_delay(self.base_delay_samples, max_modulation, right_lfo);
 
         // Calculate read positions
         let left_read_pos = self.left_write_pos as f32 - left_delay;
@@ -367,7 +359,8 @@ impl Chorus {
             let max_modulation =
                 self.depth * (self.max_delay_samples - self.base_delay_samples) as f32;
 
-            let left_delay = Self::calculate_delay(self.base_delay_samples, max_modulation, left_lfo);
+            let left_delay =
+                Self::calculate_delay(self.base_delay_samples, max_modulation, left_lfo);
             let right_delay =
                 Self::calculate_delay(self.base_delay_samples, max_modulation, right_lfo);
 
@@ -590,7 +583,7 @@ mod tests {
         assert_eq!(chorus.feedback(), 0.9);
 
         chorus.set_stereo_width(2.0); // Should clamp to 1.2
-        // Verify via behavior
+                                      // Verify via behavior
         let output = chorus.process(0.5);
         assert!(output.abs() <= 1.0);
     }

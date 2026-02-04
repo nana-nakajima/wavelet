@@ -669,7 +669,15 @@ mod tests {
         }
 
         // Should contain C4 (60) and C5 (72)
-        assert!(all_notes.contains(&60), "Should contain C4 (60), got: {:?}", all_notes);
-        assert!(all_notes.contains(&72), "Should contain C5 (72), got: {:?}", all_notes);
+        assert!(
+            all_notes.contains(&60),
+            "Should contain C4 (60), got: {:?}",
+            all_notes
+        );
+        assert!(
+            all_notes.contains(&72),
+            "Should contain C5 (72), got: {:?}",
+            all_notes
+        );
     }
 }

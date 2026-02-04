@@ -895,7 +895,6 @@ impl RhythmGenerator {
     pub fn export_midi(&mut self, _path: &str) -> Result<(), Box<dyn std::error::Error>> {
         #[allow(unused_variables)]
         #[cfg(feature = "midi_cc")]
-
         {
             use std::fs::File;
             use std::io::Write;

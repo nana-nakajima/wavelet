@@ -32,7 +32,7 @@ pub struct SimpleEq {
     low_coeff: f32,
     mid_coeff: f32,
     high_coeff: f32,
-    
+
     // Effect state
     enabled: bool,
     mix: f32,
@@ -100,7 +100,8 @@ impl SimpleEq {
         let high_out = self.high_gain * input;
 
         // Mid: input - low - high
-        let mid_out = self.mid_gain * (input - low_out / self.low_gain.max(0.001) - high_out / self.high_gain.max(0.001));
+        let mid_out = self.mid_gain
+            * (input - low_out / self.low_gain.max(0.001) - high_out / self.high_gain.max(0.001));
 
         // Mix bands (simplified)
         low_out + mid_out + high_out
@@ -173,7 +174,11 @@ mod tests {
         let input = 0.5;
         let output = eq.process(input);
         // Should be approximately the same
-        assert!((output - input).abs() < 0.5, "Flat EQ should pass through, got {}", output);
+        assert!(
+            (output - input).abs() < 0.5,
+            "Flat EQ should pass through, got {}",
+            output
+        );
     }
 
     #[test]
@@ -182,7 +187,11 @@ mod tests {
         let mut samples = [0.5; 100];
         eq.process_buffer(&mut samples);
         for &sample in &samples {
-            assert!(sample.is_finite(), "Sample should be finite, got {}", sample);
+            assert!(
+                sample.is_finite(),
+                "Sample should be finite, got {}",
+                sample
+            );
         }
     }
 
@@ -191,7 +200,10 @@ mod tests {
         let mut eq = SimpleEq::new(44100.0);
         eq.set_low_gain(6.0);
         let output = eq.process(0.5);
-        assert!(output.abs() <= 1.0 && output.is_finite(), "Should not clip or be NaN");
+        assert!(
+            output.abs() <= 1.0 && output.is_finite(),
+            "Should not clip or be NaN"
+        );
     }
 
     #[test]
@@ -199,7 +211,10 @@ mod tests {
         let mut eq = SimpleEq::new(44100.0);
         eq.set_high_gain(6.0);
         let output = eq.process(0.5);
-        assert!(output.abs() <= 1.0 && output.is_finite(), "Should not clip or be NaN");
+        assert!(
+            output.abs() <= 1.0 && output.is_finite(),
+            "Should not clip or be NaN"
+        );
     }
 
     #[test]
@@ -207,7 +222,10 @@ mod tests {
         let mut eq = SimpleEq::new(44100.0);
         eq.set_mid_gain(-6.0);
         let output = eq.process(0.5);
-        assert!(output.abs() <= 1.0 && output.is_finite(), "Should not clip or be NaN");
+        assert!(
+            output.abs() <= 1.0 && output.is_finite(),
+            "Should not clip or be NaN"
+        );
     }
 
     #[test]
@@ -217,7 +235,10 @@ mod tests {
         eq.set_mid_gain(3.0);
         eq.set_high_gain(6.0);
         let output = eq.process(0.5);
-        assert!(output.abs() <= 2.0 && output.is_finite(), "Should not be NaN");
+        assert!(
+            output.abs() <= 2.0 && output.is_finite(),
+            "Should not be NaN"
+        );
     }
 
     #[test]

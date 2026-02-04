@@ -35,7 +35,10 @@ pub struct ProjectMetadata {
 
 impl Default for ProjectMetadata {
     fn default() -> Self {
-        let now = std::time::UNIX_EPOCH.elapsed().unwrap_or_default().as_secs();
+        let now = std::time::UNIX_EPOCH
+            .elapsed()
+            .unwrap_or_default()
+            .as_secs();
         Self {
             name: String::from("Untitled Project"),
             description: String::new(),
@@ -676,9 +679,8 @@ impl ProjectManager {
 
     /// Load project from JSON string
     pub fn from_json(json: &str) -> Result<Project, ProjectError> {
-        serde_json::from_str(json).map_err(|e| {
-            ProjectError::DeserializationError(format!("Failed to parse JSON: {}", e))
-        })
+        serde_json::from_str(json)
+            .map_err(|e| ProjectError::DeserializationError(format!("Failed to parse JSON: {}", e)))
     }
 
     /// Convert project to JSON string
@@ -701,8 +703,10 @@ impl ProjectManager {
     /// Save project to file
     pub fn save_to_file(&mut self, path: &str) -> Result<(), ProjectError> {
         // Update modified timestamp
-        self.current_project.metadata.modified_at =
-            std::time::UNIX_EPOCH.elapsed().unwrap_or_default().as_secs();
+        self.current_project.metadata.modified_at = std::time::UNIX_EPOCH
+            .elapsed()
+            .unwrap_or_default()
+            .as_secs();
 
         let json = Self::to_json(&self.current_project)?;
         std::fs::write(path, json)

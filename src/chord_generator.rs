@@ -812,7 +812,11 @@ mod tests {
         // Just verify we got valid chords
         for chord in &progression {
             match chord.chord_type {
-                ChordType::Major | ChordType::Minor | ChordType::Major7 | ChordType::Minor7 | ChordType::Dominant7 => {}
+                ChordType::Major
+                | ChordType::Minor
+                | ChordType::Major7
+                | ChordType::Minor7
+                | ChordType::Dominant7 => {}
                 _ => panic!("Unexpected chord type: {:?}", chord.chord_type),
             }
         }

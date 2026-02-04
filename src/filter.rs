@@ -114,10 +114,10 @@ pub struct BiquadFilter {
 
     /// Sample rate for coefficient updates
     sample_rate: f32,
-    
+
     /// Whether the filter is enabled
     enabled: bool,
-    
+
     /// Wet/dry mix
     mix: f32,
 }

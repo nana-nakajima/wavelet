@@ -216,7 +216,9 @@ impl PresetCollection {
             .filter(|p| {
                 p.name.to_lowercase().contains(&query_lower)
                     || p.description.to_lowercase().contains(&query_lower)
-                    || p.tags.iter().any(|t| t.to_lowercase().contains(&query_lower))
+                    || p.tags
+                        .iter()
+                        .any(|t| t.to_lowercase().contains(&query_lower))
             })
             .collect()
     }
@@ -242,8 +244,16 @@ impl PresetCollection {
     /// 获取最常用的预设
     pub fn get_most_used(&self, limit: usize) -> Vec<&Preset> {
         let mut indices: Vec<usize> = (0..self.presets.len()).collect();
-        indices.sort_by(|&a, &b| self.presets[b].usage_count.cmp(&self.presets[a].usage_count));
-        indices.into_iter().take(limit).filter_map(|idx| self.presets.get(idx)).collect()
+        indices.sort_by(|&a, &b| {
+            self.presets[b]
+                .usage_count
+                .cmp(&self.presets[a].usage_count)
+        });
+        indices
+            .into_iter()
+            .take(limit)
+            .filter_map(|idx| self.presets.get(idx))
+            .collect()
     }
 
     /// 获取预设数量
@@ -325,7 +335,8 @@ impl PresetManager {
 
     /// 获取当前选中的预设
     pub fn get_current_preset(&self) -> Option<&Preset> {
-        self.current_preset.and_then(|idx| self.collection.get_preset(idx))
+        self.current_preset
+            .and_then(|idx| self.collection.get_preset(idx))
     }
 
     /// 获取当前预设索引

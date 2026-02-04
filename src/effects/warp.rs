@@ -20,9 +20,9 @@
 //! For pitch shifting, we use a simple delay-line modulation approach
 //! which provides real-time processing with minimal latency.
 
-use std::f32::consts::PI;
-use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
+use std::f32::consts::PI;
 
 /// Warp effect configuration
 #[derive(Debug, Clone, Copy)]
@@ -310,13 +310,15 @@ impl Warp {
                 let ring_output = input * modulated * warp_amount;
                 let feedback_idx = (self.write_pos + self.output_buffer.len() - self.grain_size)
                     % self.output_buffer.len();
-                self.output_buffer[feedback_idx] = ring_output + self.output_buffer[feedback_idx] * self.config.feedback;
+                self.output_buffer[feedback_idx] =
+                    ring_output + self.output_buffer[feedback_idx] * self.config.feedback;
                 (ring_output, ring_output)
             }
             WarpMode::Granular => {
                 // Granular: random grain selection
                 let grain_offset = self.rng.gen::<usize>() % self.grain_size;
-                let read_pos = (self.write_pos + self.input_buffer.len() - grain_offset) % self.input_buffer.len();
+                let read_pos = (self.write_pos + self.input_buffer.len() - grain_offset)
+                    % self.input_buffer.len();
                 let delayed_val = self.input_buffer[read_pos];
                 (delayed_val, delayed_val)
             }
@@ -361,10 +363,7 @@ impl StereoWarp {
         let mid = (left_output + right_output) * 0.5;
         let side = (left_output - right_output) * 0.5 * self.stereo_width;
 
-        (
-            mid + side,
-            mid - side,
-        )
+        (mid + side, mid - side)
     }
 }
 

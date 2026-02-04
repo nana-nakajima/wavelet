@@ -53,17 +53,19 @@ pub mod warp;
 // Track effects module is temporarily disabled for compilation
 // pub mod track_effects;
 
-pub use saturation::{saturate, Saturation, SaturationConfig};
-pub use chorus::Chorus;
-pub use phaser::{Phaser, PhaserConfig, StereoPhaser};
-pub use flanger::{Flanger, FlangerConfig, StereoFlanger};
-pub use ring_modulator::{RingModulator, RingModulatorConfig, RingModulatorMode, RingModulatorWave, StereoRingModulator};
 pub use bit_crusher::{BitCrusher, BitCrusherConfig, DecimationMode, StereoBitCrusher};
-pub use filter_bank::{FilterBank, FilterBankConfig, FilterBankType, FilterBandConfig};
+pub use chorus::Chorus;
+pub use filter_bank::{FilterBandConfig, FilterBank, FilterBankConfig, FilterBankType};
+pub use flanger::{Flanger, FlangerConfig, StereoFlanger};
 pub use freeze::{Freeze, FreezeConfig, FreezeType};
-pub use tremolo::{Tremolo, TremoloConfig, TremoloWaveform};
+pub use phaser::{Phaser, PhaserConfig, StereoPhaser};
+pub use ring_modulator::{
+    RingModulator, RingModulatorConfig, RingModulatorMode, RingModulatorWave, StereoRingModulator,
+};
+pub use saturation::{saturate, Saturation, SaturationConfig};
 pub use simple_eq::SimpleEq;
-pub use warp::{Warp, WarpConfig, WarpMode, StereoWarp};
+pub use tremolo::{Tremolo, TremoloConfig, TremoloWaveform};
+pub use warp::{StereoWarp, Warp, WarpConfig, WarpMode};
 // pub use track_effects::{
 //     TrackEffectSlot,
 //     TrackEffectSlotConfig,
@@ -788,7 +790,7 @@ impl EffectProcessor {
             gain: 0.0,
             sample_rate,
         };
-        
+
         Self {
             effect_type: EffectType::Delay,
             delay: Delay::new(sample_rate),

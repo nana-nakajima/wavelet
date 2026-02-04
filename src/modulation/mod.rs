@@ -25,16 +25,9 @@
 pub mod mod_matrix;
 
 pub use mod_matrix::{
-    ModulationMatrix,
-    ModulationConnection,
-    ModulationSource,
-    ModulationTarget,
-    ModulationSourceType,
-    ModulationTargetType,
-    ModulationConnectionConfig,
-    ModulationMatrixError,
-    MAX_CONNECTIONS,
-    MAX_SOURCES_PER_TRACK,
+    ModulationConnection, ModulationConnectionConfig, ModulationMatrix, ModulationMatrixError,
+    ModulationSource, ModulationSourceType, ModulationTarget, ModulationTargetType,
+    MAX_CONNECTIONS, MAX_SOURCES_PER_TRACK,
 };
 
 #[cfg(feature = "midi_cc")]
@@ -42,14 +35,6 @@ pub mod midi_cc;
 
 #[cfg(feature = "midi_cc")]
 pub use midi_cc::{
-    MidiCCManager,
-    MidiCCError,
-    AssignableCC,
-    CCParameterTarget,
-    StandardCC,
-    cc_to_cutoff,
-    cc_to_resonance,
-    cc_to_time,
-    cc_to_pitch,
-    MAX_CC_COUNT,
+    cc_to_cutoff, cc_to_pitch, cc_to_resonance, cc_to_time, AssignableCC, CCParameterTarget,
+    MidiCCError, MidiCCManager, StandardCC, MAX_CC_COUNT,
 };
