@@ -554,7 +554,7 @@ mod tests {
         let dc_input = 0.5;
 
         let output: Vec<f32> = (0..100).map(|_| crusher.process(dc_input)).collect();
-        let output_rms = measure_rms(&output);
+        let _output_rms = measure_rms(&output);
 
         // DC输入的量化应该稳定
         let all_same = output.iter().all(|&x| (x - output[0]).abs() < 0.001);

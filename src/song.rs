@@ -473,7 +473,7 @@ mod tests {
         // Get next pattern
         let next = manager.next_pattern();
         assert!(next.is_some());
-        let (pattern_id, length, tempo) = next.unwrap();
+        let (pattern_id, _length, _tempo) = next.unwrap();
         assert_eq!(pattern_id, 1);
     }
 

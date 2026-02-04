@@ -96,8 +96,8 @@ pub use rhythm_generator::{
     Complexity, DrumNote, DrumPattern, DrumSound, RhythmGenerator, RhythmStyle,
 };
 pub use sampler::{
-    AutoSlicer, LoopInfo, LoopMode, Sample, SampleFormat, SampleInfo, SampleLibrary, Sampler,
-    SlicePoint, SlicingMode,
+    AutoSlicer, KeyZone, LoopInfo, LoopMode, MultiSampleInstrument, MultiSampler, Sample,
+    SampleFormat, SampleInfo, SampleLibrary, Sampler, SlicePoint, SlicingMode,
 };
 pub use send_fx::{
     PrePost, SendConnection, SendEffectSlot, SendFxError, SendFxManager, SendTrack,

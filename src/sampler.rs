@@ -25,7 +25,7 @@ pub enum SampleFormat {
 }
 
 /// 采样信息元数据
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SampleInfo {
     /// 采样名称
     pub name: String,
@@ -59,7 +59,7 @@ pub struct SampleInfo {
 }
 
 /// 循环设置
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LoopInfo {
     /// 循环开始点 (sample index)
     pub start: usize,
@@ -88,7 +88,7 @@ pub enum LoopMode {
 }
 
 /// 单个采样
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Sample {
     /// 元数据
     pub info: SampleInfo,
@@ -848,4 +848,490 @@ mod tests {
         assert!(sample.is_stereo());
         assert_eq!(sample.info.channels, 2);
     }
+
+    // 多采样测试
+    #[test]
+    fn test_key_zone_creation() {
+        let sample = Sample::new("Piano Low", vec![0.5; 44100], 44100);
+        let zone = KeyZone::new(sample, 21, 60, 36);
+
+        assert_eq!(zone.low_note, 21);
+        assert_eq!(zone.high_note, 60);
+        assert_eq!(zone.root_note, 36);
+        assert!(zone.contains(40));
+        assert!(!zone.contains(80));
+    }
+
+    #[test]
+    fn test_key_zone_contains() {
+        let sample = Sample::new("Test", vec![0.0; 1000], 44100);
+        let zone = KeyZone::new(sample, 48, 72, 60);
+
+        assert!(zone.contains(48));
+        assert!(zone.contains(60));
+        assert!(zone.contains(72));
+        assert!(!zone.contains(47));
+        assert!(!zone.contains(73));
+    }
+
+    #[test]
+    fn test_key_zone_note_offset() {
+        let sample = Sample::new("Test", vec![0.0; 1000], 44100);
+        let zone = KeyZone::new(sample, 48, 72, 60);
+
+        assert_eq!(zone.note_offset(60), 0);
+        assert_eq!(zone.note_offset(64), 4);
+        assert_eq!(zone.note_offset(56), -4);
+    }
+
+    #[test]
+    fn test_multi_sample_instrument_creation() {
+        let instrument = MultiSampleInstrument::new("Grand Piano");
+
+        assert_eq!(instrument.name, "Grand Piano");
+        assert!(instrument.is_empty());
+        assert_eq!(instrument.zone_count(), 0);
+    }
+
+    #[test]
+    fn test_multi_sample_instrument_add_zone() {
+        let mut instrument = MultiSampleInstrument::new("Piano");
+        let sample1 = Sample::new("Low", vec![0.5; 1000], 44100);
+        let sample2 = Sample::new("High", vec![0.3; 1000], 44100);
+
+        let zone1 = KeyZone::new(sample1, 21, 48, 36);
+        let zone2 = KeyZone::new(sample2, 49, 72, 60);
+
+        instrument.add_zone(zone2);
+        instrument.add_zone(zone1);
+
+        // 验证排序
+        assert_eq!(instrument.zones[0].low_note, 21);
+        assert_eq!(instrument.zones[1].low_note, 49);
+        assert_eq!(instrument.zone_count(), 2);
+    }
+
+    #[test]
+    fn test_multi_sample_instrument_find_zone() {
+        let mut instrument = MultiSampleInstrument::new("Piano");
+        let sample = Sample::new("Test", vec![0.0; 1000], 44100);
+
+        let zone1 = KeyZone::new(sample.clone(), 21, 48, 36);
+        let zone2 = KeyZone::new(sample.clone(), 49, 72, 60);
+        let zone3 = KeyZone::new(sample, 73, 96, 84);
+
+        instrument.add_zone(zone1);
+        instrument.add_zone(zone2);
+        instrument.add_zone(zone3);
+
+        // 测试精确匹配
+        let zone = instrument.find_zone(50).unwrap();
+        assert_eq!(zone.low_note, 49);
+
+        let zone = instrument.find_zone(72).unwrap();
+        assert_eq!(zone.low_note, 49);
+
+        // 测试边界
+        let zone = instrument.find_zone(48).unwrap();
+        assert_eq!(zone.low_note, 21);
+
+        let zone = instrument.find_zone(73).unwrap();
+        assert_eq!(zone.low_note, 73);
+    }
+
+    #[test]
+    fn test_multi_sample_instrument_merge_zones() {
+        let mut instrument = MultiSampleInstrument::new("Test");
+        let sample = Sample::new("Test", vec![0.0; 1000], 44100);
+
+        // 添加重叠的键区
+        let zone1 = KeyZone::new(sample.clone(), 21, 48, 36);
+        let zone2 = KeyZone::new(sample.clone(), 45, 60, 48);
+        let zone3 = KeyZone::new(sample, 61, 96, 72);
+
+        instrument.add_zone(zone1);
+        instrument.add_zone(zone2);
+        instrument.add_zone(zone3);
+
+        instrument.merge_overlapping_zones();
+
+        // zone1和zone2应该合并
+        assert_eq!(instrument.zones.len(), 2);
+        assert_eq!(instrument.zones[0].high_note, 60);
+        assert_eq!(instrument.zones[1].low_note, 61);
+    }
+
+    #[test]
+    fn test_multi_sampler_note_on_off() {
+        let mut sampler = MultiSampler::new();
+        let sample = Sample::new("Test", vec![0.5; 44100], 44100);
+        let zone = KeyZone::new(sample, 0, 127, 60);
+
+        let mut instrument = MultiSampleInstrument::new("Test");
+        instrument.add_zone(zone);
+
+        sampler.load_instrument(instrument);
+
+        // 触发音符
+        let result = sampler.note_on(60, 100);
+        assert!(result);
+        assert!(sampler.is_playing());
+
+        // 释放音符
+        let result = sampler.note_off(60);
+        assert!(result);
+    }
+
+    #[test]
+    fn test_multi_sampler_max_polyphony() {
+        let mut sampler = MultiSampler::new();
+        sampler.set_max_polyphony(4);
+
+        let sample = Sample::new("Test", vec![0.5; 44100], 44100);
+        let zone = KeyZone::new(sample, 0, 127, 60);
+
+        let mut instrument = MultiSampleInstrument::new("Test");
+        instrument.add_zone(zone);
+        sampler.load_instrument(instrument);
+
+        // 触发多个音符（不超过最大复音数）
+        for i in 0..4 {
+            sampler.note_on(60 + i, 100);
+        }
+
+        assert_eq!(sampler.active_samplers.len(), 4);
+    }
+
+    #[test]
+    fn test_key_zone_auto_sort() {
+        let mut instrument = MultiSampleInstrument::new("Sorted Test");
+        let sample = Sample::new("Test", vec![0.0; 1000], 44100);
+
+        // 乱序添加
+        instrument.add_zone(KeyZone::new(sample.clone(), 73, 96, 84));
+        instrument.add_zone(KeyZone::new(sample.clone(), 21, 48, 36));
+        instrument.add_zone(KeyZone::new(sample, 49, 72, 60));
+
+        // 验证自动排序
+        assert_eq!(instrument.zones[0].low_note, 21);
+        assert_eq!(instrument.zones[1].low_note, 49);
+        assert_eq!(instrument.zones[2].low_note, 73);
+    }
 }
+
+// ============================================================================
+// 多采样乐器 (Multi-Sampling) - 参考 Tonverk 功能
+// ============================================================================
+
+
+/// 键区定义 - 将采样映射到特定音高范围
+#[derive(Debug, Clone, PartialEq)]
+pub struct KeyZone {
+    /// 采样
+    pub sample: Sample,
+
+    /// 最低音符 (MIDI note number)
+    pub low_note: u8,
+
+    /// 最高音符 (MIDI note number)
+    pub high_note: u8,
+
+    /// 根音 (原始采样对应的MIDI音符)
+    pub root_note: u8,
+
+    /// 交叉淡入淡出长度 (samples)
+    pub crossfade_samples: usize,
+
+    /// 音量补偿 (dB)
+    pub volume补偿: f32,
+}
+
+impl KeyZone {
+    /// 创建新的键区
+    pub fn new(sample: Sample, low_note: u8, high_note: u8, root_note: u8) -> Self {
+        Self {
+            sample,
+            low_note: low_note.min(high_note),
+            high_note: high_note.max(low_note),
+            root_note,
+            crossfade_samples: 64,
+            volume补偿: 0.0,
+        }
+    }
+
+    /// 检查音符是否在此键区内
+    pub fn contains(&self, note: u8) -> bool {
+        note >= self.low_note && note <= self.high_note
+    }
+
+    /// 计算音符相对于根音的偏移
+    pub fn note_offset(&self, note: u8) -> i8 {
+        note as i8 - self.root_note as i8
+    }
+}
+
+/// 多采样乐器 - 管理多个键区
+#[derive(Debug, Clone, PartialEq)]
+pub struct MultiSampleInstrument {
+    /// 乐器名称
+    pub name: String,
+
+    /// 键区列表
+    pub zones: Vec<KeyZone>,
+
+    /// 全局音高偏移 (semitones)
+    pub global_pitch_offset: i8,
+
+    /// 全局音量 (dB)
+    pub global_volume: f32,
+
+    /// 全局循环模式
+    pub loop_mode: LoopMode,
+}
+
+impl Default for MultiSampleInstrument {
+    fn default() -> Self {
+        Self {
+            name: "Untitled".to_string(),
+            zones: Vec::new(),
+            global_pitch_offset: 0,
+            global_volume: 0.0,
+            loop_mode: LoopMode::Loop,
+        }
+    }
+}
+
+impl MultiSampleInstrument {
+    /// 创建新的多采样乐器
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            ..Default::default()
+        }
+    }
+
+    /// 添加键区
+    pub fn add_zone(&mut self, zone: KeyZone) {
+        self.zones.push(zone);
+        // 按low_note排序
+        self.zones.sort_by_key(|z| z.low_note);
+    }
+
+    /// 移除键区
+    pub fn remove_zone(&mut self, index: usize) -> Option<KeyZone> {
+        if index < self.zones.len() {
+            Some(self.zones.remove(index))
+        } else {
+            None
+        }
+    }
+
+    /// 根据音符查找合适的键区
+    pub fn find_zone(&self, note: u8) -> Option<&KeyZone> {
+        // 首先查找精确匹配的键区
+        for zone in &self.zones {
+            if zone.contains(note) {
+                return Some(zone);
+            }
+        }
+        // 如果没有精确匹配，返回最近的键区
+        if let Some(closest) = self.zones.iter().min_by_key(|z| {
+            let in_range = z.low_note <= note;
+            if in_range {
+                z.high_note.saturating_sub(note)
+            } else {
+                note.saturating_sub(z.low_note)
+            }
+        }) {
+            return Some(closest);
+        }
+        None
+    }
+
+    /// 获取键区数量
+    pub fn zone_count(&self) -> usize {
+        self.zones.len()
+    }
+
+    /// 检查是否为空
+    pub fn is_empty(&self) -> bool {
+        self.zones.is_empty()
+    }
+
+    /// 合并重叠的键区
+    pub fn merge_overlapping_zones(&mut self) {
+        if self.zones.is_empty() {
+            return;
+        }
+
+        let mut merged: Vec<KeyZone> = Vec::new();
+        let mut current = self.zones[0].clone();
+
+        for zone in self.zones.iter().skip(1) {
+            // 只有当zone.low_note <= current.high_note时才合并（真正的重叠）
+            if zone.low_note <= current.high_note {
+                // 键区重叠，合并
+                current.high_note = current.high_note.max(zone.high_note);
+                // 保留音量较大的采样
+                if zone.sample.info.tempo_sensitivity > current.sample.info.tempo_sensitivity {
+                    current.sample = zone.sample.clone();
+                    current.root_note = zone.root_note;
+                }
+            } else {
+                // 不重叠（zone.low_note > current.high_note），保存当前键区
+                merged.push(current);
+                current = zone.clone();
+            }
+        }
+        merged.push(current);
+        self.zones = merged;
+    }
+}
+
+/// 多采样播放器 - 播放多采样乐器
+#[derive(Debug, Clone)]
+pub struct MultiSampler {
+    /// 当前乐器
+    instrument: Option<MultiSampleInstrument>,
+
+    /// 当前活动的采样播放器
+    active_samplers: Vec<Sampler>,
+
+    /// 当前触发音符
+    active_notes: HashMap<u8, usize>, // note -> sampler index
+
+    /// 最大复音数
+    max_polyphony: u8,
+}
+
+impl Default for MultiSampler {
+    fn default() -> Self {
+        Self {
+            instrument: None,
+            active_samplers: Vec::new(),
+            active_notes: HashMap::new(),
+            max_polyphony: 16,
+        }
+    }
+}
+
+impl MultiSampler {
+    /// 创建新的多采样播放器
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// 加载乐器
+    pub fn load_instrument(&mut self, instrument: MultiSampleInstrument) {
+        self.instrument = Some(instrument);
+        self.reset();
+    }
+
+    /// 卸载乐器
+    pub fn unload_instrument(&mut self) {
+        self.instrument = None;
+        self.reset();
+    }
+
+    /// 触发音符
+    pub fn note_on(&mut self, note: u8, velocity: u8) -> bool {
+        // 先处理复音限制（如果需要）
+        let zone_sample = {
+            let instrument = match &self.instrument {
+                Some(instr) => instr,
+                None => return false,
+            };
+
+            match instrument.find_zone(note) {
+                Some(z) => z.sample.clone(),
+                None => return false,
+            }
+        };
+
+        // 检查复音限制 - 立即移除最早的采样器
+        if self.active_samplers.len() >= self.max_polyphony as usize {
+            if let Some((&oldest_note, _)) = self.active_notes.iter().next() {
+                // 找到对应的sampler并停止
+                if let Some(index) = self.active_notes.get(&oldest_note) {
+                    if *index < self.active_samplers.len() {
+                        self.active_samplers[*index].stop();
+                    }
+                }
+                self.active_notes.remove(&oldest_note);
+            }
+        }
+
+        // 获取乐器参数（第二次借用）
+        let instrument = self.instrument.as_ref().unwrap();
+        let zone = instrument.find_zone(note).unwrap();
+
+        // 创建新的采样播放器
+        let mut sampler = Sampler::new();
+        sampler.load(zone_sample);
+
+        // 设置参数
+        let pitch_offset = zone.root_note as i8 + instrument.global_pitch_offset;
+        sampler.set_pitch_offset(pitch_offset);
+        sampler.set_volume(velocity as f32 / 127.0);
+        sampler.set_loop_mode(instrument.loop_mode);
+
+        // 计算音高偏移以匹配目标音符
+        let note_offset = zone.note_offset(note);
+        sampler.set_speed(2.0f32.powi(note_offset as i32) / 2.0f32.powi((zone.root_note as i8 - note as i8) as i32));
+
+        // 开始播放
+        sampler.play();
+
+        let sampler_index = self.active_samplers.len();
+        self.active_samplers.push(sampler);
+        self.active_notes.insert(note, sampler_index);
+
+        true
+    }
+
+    /// 释放音符
+    pub fn note_off(&mut self, note: u8) -> bool {
+        if let Some(sampler_index) = self.active_notes.remove(&note) {
+            if sampler_index < self.active_samplers.len() {
+                // 停止采样器（淡出）
+                let sampler = &mut self.active_samplers[sampler_index];
+                sampler.set_loop_mode(LoopMode::NoLoop);
+                return true;
+            }
+        }
+        false
+    }
+
+    /// 处理所有采样器的音频
+    pub fn process(&mut self, output: &mut [f32]) {
+        for sampler in &mut self.active_samplers {
+            let (left, right) = sampler.process();
+
+            // 混合到输出
+            for (i, out) in output.iter_mut().enumerate() {
+                let sample = if i % 2 == 0 { left } else { right };
+                *out += sample * sampler.volume;
+            }
+        }
+
+        // 清理已停止的采样器
+        self.active_samplers.retain(|s| s.is_playing());
+    }
+
+    /// 重置
+    pub fn reset(&mut self) {
+        self.active_samplers.clear();
+        self.active_notes.clear();
+    }
+
+    /// 检查是否有采样器在播放
+    pub fn is_playing(&self) -> bool {
+        !self.active_samplers.is_empty()
+    }
+
+    /// 设置最大复音数
+    pub fn set_max_polyphony(&mut self, max: u8) {
+        self.max_polyphony = max.clamp(1, 64);
+    }
+}
+
