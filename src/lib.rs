@@ -44,6 +44,7 @@ pub mod modulation;
 pub mod oscillator;
 pub mod piano_roll;
 pub mod presets;
+pub mod project;
 pub mod rhythm_generator;
 pub mod sampler;
 pub mod send_fx;
@@ -74,6 +75,12 @@ pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
 pub use piano_roll::{EditMode, NoteEvent, PianoRoll, PianoRollConfig, Resolution};
 pub use presets::{
     Preset, PresetCategory, PresetCollection, PresetManager, PresetParameters,
+};
+pub use project::{
+    DrumPatternState, DrumTrackState, EffectSlotState, EnvelopeState, GlobalSettings,
+    InsertEffectChain, LfoState, ModulationRouting, OscillatorState, PatternState,
+    PianoRollNote, Project, ProjectError, ProjectManager, ProjectMetadata, SendTrackState,
+    TrackState, MAX_PROJECT_NAME_LENGTH,
 };
 pub use rhythm_generator::{
     Complexity, DrumNote, DrumPattern, DrumSound, RhythmGenerator, RhythmStyle,
