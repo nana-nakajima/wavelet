@@ -7,34 +7,31 @@ on:
     branches: [main, master]
 
 jobs:
-  # 格式检查（不需要加载依赖）
+  # 格式检查
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Check Rust formatting
         run: cargo fmt --check
 
   # Godot 脚本检查
-  godot-lint:
+  godot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check GDScript files exist
+      - name: Check GDScript files
         run: |
           echo "Godot scenes:"
           find godot/scenes -name "*.tscn" | head -5
           echo "Godot scripts:"
           find godot/scripts -name "*.gd" | head -5
 
-  # 构建测试（需要gdext，可能失败但不影响）
+  # 构建和测试
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -42,54 +39,10 @@ jobs:
           default: true
 
       - name: Build
-        run: cargo build --no-default-features --workspace --exclude wavelet-backend || echo "Build requires Godot SDK - skipping"
+        run: cargo build --lib --no-default-features
 
-      - name: Run unit tests (core modules only)
-        run: |
-          # Test core modules that don't require gdext or database
-          cargo test --lib --no-default-features --workspace --exclude wavelet-backend -- oscillator envelope filter synth lfo mod_matrix arpeggiator step_sequencer piano_roll effects/chorus effects/phaser effects/flanger effects/tremolo effects/warp effects/ring_modulator effects/bit_crusher effects/filter_bank effects/freeze effects/simple_eq || echo "Some tests require Godot SDK"
+      - name: Run all tests
+        run: cargo test --lib --no-default-features
 
-      # MIDI CC映射测试
-      midi-test:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
-
-          - name: Install Rust
-            uses: actions-rs/toolchain@v1
-            with:
-              toolchain: stable
-              default: true
-
-          - name: Run MIDI CC tests
-            run: cargo test --lib --no-default-features midi_cc || echo "MIDI tests completed"
-
-      # 项目保存/加载测试
-      project-test:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
-
-          - name: Install Rust
-            uses: actions-rs/toolchain@v1
-            with:
-              toolchain: stable
-              default: true
-
-          - name: Run project save/load tests
-            run: cargo test --lib --no-default-features project_save || echo "Project tests completed"
-
-      # 时间拉伸测试
-      timestretch-test:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
-
-          - name: Install Rust
-            uses: actions-rs/toolchain@v1
-            with:
-              toolchain: stable
-              default: true
-
-          - name: Run time stretch tests
-            run: cargo test --lib --no-default-features time_stretch || echo "TimeStretch tests completed"
+      - name: Run clippy
+        run: cargo clippy --lib --no-default-features -- -D warnings
