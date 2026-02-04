@@ -637,8 +637,7 @@ impl MelodyGenerator {
         }
 
         #[cfg(not(feature = "midi"))]
-        Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        Err(Box::new(std::io::Error::other(
             "MIDI export requires the 'midi' feature flag. Add `mido = \"0.5\"` to your Cargo.toml",
         )))
     }

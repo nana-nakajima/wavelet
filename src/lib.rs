@@ -46,6 +46,8 @@ pub mod piano_roll;
 pub mod presets;
 pub mod rhythm_generator;
 pub mod sampler;
+pub mod send_fx;
+pub mod song;
 pub mod step_sequencer;
 pub mod synth;
 
@@ -78,6 +80,14 @@ pub use rhythm_generator::{
 pub use sampler::{
     AutoSlicer, LoopInfo, LoopMode, Sample, SampleFormat, SampleInfo, SampleLibrary,
     Sampler, SlicingMode, SlicePoint,
+};
+pub use song::{
+    PatternChain, Song, SongError, SongLine, SongManager, SongPlaybackState, MAX_SONG_LINES,
+    MAX_SONGS,
+};
+pub use send_fx::{
+    PrePost, SendConnection, SendEffectSlot, SendFxError, SendFxManager, SendTrack,
+    NUM_SEND_TRACKS, SEND_EFFECT_SLOTS,
 };
 pub use step_sequencer::{
     DrumStyle, NUM_STEPS, NUM_TRACKS, ParamLocks, Scale as SeqScale, Step, StepSequencer, Track,
