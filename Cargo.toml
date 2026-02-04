@@ -22,7 +22,7 @@ criterion = "0.5"
 [features]
 default = []
 gdext = ["dep:godot"]
-midi = []
+midi_cc = []
 
 [[bench]]
 name = "oscillator_bench"

@@ -36,3 +36,20 @@ pub use mod_matrix::{
     MAX_CONNECTIONS,
     MAX_SOURCES_PER_TRACK,
 };
+
+#[cfg(feature = "midi_cc")]
+pub mod midi_cc;
+
+#[cfg(feature = "midi_cc")]
+pub use midi_cc::{
+    MidiCCManager,
+    MidiCCError,
+    AssignableCC,
+    CCParameterTarget,
+    StandardCC,
+    cc_to_cutoff,
+    cc_to_resonance,
+    cc_to_time,
+    cc_to_pitch,
+    MAX_CC_COUNT,
+};

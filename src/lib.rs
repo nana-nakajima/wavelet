@@ -71,6 +71,12 @@ pub use modulation::{
     ModulationSource, ModulationSourceType, ModulationTarget, ModulationTargetType,
     MAX_CONNECTIONS, MAX_SOURCES_PER_TRACK,
 };
+
+#[cfg(feature = "midi_cc")]
+pub use modulation::midi_cc::{
+    AssignableCC, CCParameterTarget, MidiCCError, MidiCCManager, StandardCC, cc_to_cutoff,
+    cc_to_resonance, cc_to_time, cc_to_pitch, MAX_CC_COUNT,
+};
 pub use oscillator::{Oscillator, OscillatorType, OversampleFactor, Waveform};
 pub use piano_roll::{EditMode, NoteEvent, PianoRoll, PianoRollConfig, Resolution};
 pub use presets::{
