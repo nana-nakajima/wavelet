@@ -50,6 +50,7 @@ pub mod send_fx;
 pub mod song;
 pub mod step_sequencer;
 pub mod synth;
+pub mod time_stretch;
 
 pub use arpeggiator::{ArpConfig, ArpNoteValue, ArpPattern, Arpeggiator};
 pub use chord_generator::{
@@ -94,6 +95,7 @@ pub use step_sequencer::{
     TrigCondition,
 };
 pub use synth::Synth;
+pub use time_stretch::{StretchAlgorithm, StretchAnalysis, TimeStretch, TimeStretchConfig};
 
 // Re-export commonly used types for convenience
 pub use crate::envelope::AdsrEnvelope;
