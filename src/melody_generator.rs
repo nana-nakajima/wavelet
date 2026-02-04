@@ -572,7 +572,7 @@ impl MelodyGenerator {
     ///
     /// This requires the `mido` crate to be available. If not available,
     /// the function will return an error.
-    pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
+    pub fn export_midi(&mut self, _path: &str) -> Result<(), Box<dyn Error>> {
         // Try to use mido if available, otherwise return helpful error
         #[cfg(feature = "midi")]
         {
@@ -583,7 +583,7 @@ impl MelodyGenerator {
             let melody = self.generate();
             let notes = &melody.notes;
 
-            let mut file = File::create(path)?;
+            let mut file = File::create(_path)?;
 
             // Write MIDI header
             // MThd + 6 bytes header length + format type + num tracks + ticks per beat

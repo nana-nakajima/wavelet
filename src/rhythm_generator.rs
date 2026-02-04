@@ -892,7 +892,7 @@ impl RhythmGenerator {
     /// # Returns
     ///
     /// Ok(()) on success, or an error message on failure.
-    pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn export_midi(&mut self, _path: &str) -> Result<(), Box<dyn std::error::Error>> {
         #[allow(unused_variables)]
         #[cfg(feature = "midi")]
 
@@ -904,7 +904,7 @@ impl RhythmGenerator {
             let pattern = self.generate();
             let notes = &pattern.notes;
 
-            let mut file = File::create(path)?;
+            let mut file = File::create(_path)?;
 
             // MIDI drum map - standard General MIDI drum notes
             let drum_map: [(DrumSound, u8); 17] = [
