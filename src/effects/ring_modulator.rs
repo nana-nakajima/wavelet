@@ -336,7 +336,7 @@ impl StereoRingModulator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::audio_analysis::{measure_rms, measure_rms_db};
+    use crate::audio_analysis::measure_rms;
     
     // ============ 理论验证测试 ============
     
@@ -575,7 +575,7 @@ mod tests {
         assert!(rms_lfo > 0.01, "LFO mode should produce valid output");
         
         // LFO模式由于调制应该产生不同的RMS (可能比纯振荡器模式有更多变化)
-        let diff = (rms_osc - rms_lfo).abs();
+        let _diff = (rms_osc - rms_lfo).abs();
         // 注意: RMS可能相似，但我们验证两种模式都能工作
         assert!(rms_osc > 0.0 && rms_lfo > 0.0, "Both modes should produce output");
     }

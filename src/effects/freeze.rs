@@ -326,7 +326,7 @@ impl Freeze {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::audio_analysis::{measure_rms, measure_peak};
+    use crate::audio_analysis::measure_rms;
     use std::f32::consts::PI;
     
     // ============ 理论验证测试 ============

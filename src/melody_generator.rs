@@ -1126,7 +1126,7 @@ mod tests {
         assert_eq!(melody.notes.len(), melody.durations.len());
 
         // Notes should have valid timing
-        for (i, note) in melody.notes.iter().enumerate() {
+        for (_, note) in melody.notes.iter().enumerate() {
             assert!(note.start_beat >= 0.0);
             assert!(note.duration > 0.0);
             assert!(note.velocity >= 0.0 && note.velocity <= 1.0);

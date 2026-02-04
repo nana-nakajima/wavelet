@@ -438,7 +438,6 @@ mod tests {
     }
 
     #[test]
-    #[test]
     fn test_saturation_bypass() {
         let mut sat = Saturation::new();
         sat.set_drive(10.0);

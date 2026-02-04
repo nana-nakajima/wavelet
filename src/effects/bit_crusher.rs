@@ -308,7 +308,7 @@ impl StereoBitCrusher {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::audio_analysis::{measure_rms, measure_peak, measure_rms_db, measure_stereo_correlation};
+    use crate::audio_analysis::measure_rms;
     use std::f32::consts::PI;
     
     // ============ 理论验证测试 ============
@@ -324,7 +324,7 @@ mod tests {
             })
             .collect();
         
-        let input_rms = measure_rms(&input);
+        let _input_rms = measure_rms(&input);
         
         // 测试不同位深度
         for &bits in &[24.0, 16.0, 8.0, 4.0, 2.0, 1.0] {
@@ -382,7 +382,7 @@ mod tests {
             })
             .collect();
         
-        let input_rms = measure_rms(&input);
+        let _input_rms = measure_rms(&input);
         
         let mut crusher = BitCrusher::new_with_sample_rate(44100.0);
         crusher.set_bit_depth(1.0);
@@ -427,7 +427,7 @@ mod tests {
         let output_rms = measure_rms(&output);
         
         // 降采样应该改变RMS (产生aliasing)
-        let rms_diff = (input_rms - output_rms).abs();
+        let _rms_diff = (input_rms - output_rms).abs();
         assert!(
             output_rms > 0.0,
             "Decimated output should have energy, RMS = {}",
@@ -719,7 +719,7 @@ mod tests {
 
     #[test]
     fn test_stereo_bit_crusher_creation() {
-        let crusher = StereoBitCrusher::new();
+        let _crusher = StereoBitCrusher::new();
     }
 
     #[test]
