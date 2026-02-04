@@ -469,14 +469,20 @@ pub struct Distortion {
     enabled: bool,
 }
 
-impl Distortion {
-    /// Creates a new distortion effect.
-    pub fn new() -> Self {
+impl Default for Distortion {
+    fn default() -> Self {
         Self {
             amount: 0.5,
             mix: 0.5,
             enabled: true,
         }
+    }
+}
+
+impl Distortion {
+    /// Creates a new distortion effect.
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Applies waveshaping curve to input sample.
@@ -621,25 +627,26 @@ impl Compressor {
 
         let effective_input_db = if self.knee_db > 0.0 {
             if input_db < knee_start {
+                // Below knee start
                 input_db
             } else if input_db > knee_end {
+                // Above knee end
                 input_db
                     + (self.threshold_db - knee_end)
                     + (input_db - knee_end) * (1.0 - 1.0 / self.ratio)
-            } else {
-                // Within knee - smooth transition
-                let t = (input_db - knee_start) / self.knee_db;
-                let knee_db = t * self.knee_db;
-                let knee_threshold = self.threshold_db - self.knee_db / 2.0 + knee_db;
-                let overshoot = input_db - knee_threshold;
-                knee_threshold + overshoot / self.ratio
-            }
-        } else {
-            if input_db > self.threshold_db {
+            } else if input_db > self.threshold_db {
+                // Within knee, above threshold
                 self.threshold_db + (input_db - self.threshold_db) / self.ratio
             } else {
+                // Within knee, below threshold
                 input_db
             }
+        } else if input_db > self.threshold_db {
+            // No knee, above threshold
+            self.threshold_db + (input_db - self.threshold_db) / self.ratio
+        } else {
+            // No knee, below threshold
+            input_db
         };
 
         // Calculate gain reduction

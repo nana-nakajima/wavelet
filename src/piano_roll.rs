@@ -158,9 +158,8 @@ impl Default for PianoRollConfig {
     }
 }
 
-impl PianoRoll {
-    /// Create a new piano roll editor
-    pub fn new() -> Self {
+impl Default for PianoRoll {
+    fn default() -> Self {
         Self {
             resolution: Resolution::Sixteenth,
             total_beats: 16.0,
@@ -181,6 +180,13 @@ impl PianoRoll {
             note_height: 12.0,
             beat_width: 40.0,
         }
+    }
+}
+
+impl PianoRoll {
+    /// Create a new piano roll editor
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Create with configuration
@@ -758,7 +764,7 @@ impl PianoRoll {
         for &index in &self.selected {
             if let Some(note) = self.notes.get_mut(index) {
                 let new_note = note.note as i16 + semitones as i16;
-                if new_note >= 0 && new_note <= 127 {
+                if (0..=127).contains(&new_note) {
                     note.note = new_note as u8;
                     count += 1;
                 }

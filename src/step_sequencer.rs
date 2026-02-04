@@ -234,9 +234,9 @@ pub fn scale_offset(scale: Scale, degree: i8) -> i8 {
     // Returns semitone offset for a given scale degree
     // Chromatic scale has 12 notes, others have 7
     if scale == Scale::Chromatic {
-        return ((degree % 12) + 12) % 12;
+        return degree.rem_euclid(12);
     }
-    
+
     let scale_pattern: [i8; 7] = match scale {
         Scale::Major => [0, 2, 4, 5, 7, 9, 11],
         Scale::Minor => [0, 2, 3, 5, 7, 8, 10],
@@ -252,7 +252,7 @@ pub fn scale_offset(scale: Scale, degree: i8) -> i8 {
         Scale::Chromatic => [0, 1, 2, 3, 4, 5, 6], // Won't be used
     };
 
-    let normalized = ((degree % 7) + 7) % 7; // Handle negative degrees
+    let normalized = degree.rem_euclid(7); // Handle negative degrees
     scale_pattern[normalized as usize]
 }
 
@@ -347,9 +347,7 @@ impl StepSequencer {
 
     /// Create with specific BPM
     pub fn with_bpm(bpm: f64) -> Self {
-        let mut seq = Self::default();
-        seq.bpm = bpm;
-        seq
+        Self { bpm, ..Default::default() }
     }
 
     /// Get track by index

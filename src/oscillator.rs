@@ -51,9 +51,10 @@ pub enum Waveform {
 }
 
 /// Oversampling factor for anti-aliasing.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OversampleFactor {
     /// No oversampling (1x)
+    #[default]
     None = 1,
 
     /// 2x oversampling
@@ -70,12 +71,6 @@ impl OversampleFactor {
     /// Gets the oversampling factor as u32.
     pub fn as_u32(&self) -> u32 {
         *self as u32
-    }
-}
-
-impl Default for OversampleFactor {
-    fn default() -> Self {
-        OversampleFactor::None
     }
 }
 
@@ -241,11 +236,19 @@ impl Oscillator {
             oversample_pos: 0,
         }
     }
+}
 
+impl Default for Oscillator {
+    fn default() -> Self {
+        Self::new(OscillatorConfig::default())
+    }
+}
+
+impl Oscillator {
     /// Creates a new oscillator with default configuration.
     /// Uses A4 (440 Hz) as default frequency, sine wave, and 0.5 amplitude.
-    pub fn default() -> Self {
-        Self::new(OscillatorConfig::default())
+    pub fn new_default() -> Self {
+        Self::default()
     }
 
     /// Sets the oscillator frequency.
@@ -284,7 +287,7 @@ impl Oscillator {
     pub fn set_sample_rate(&mut self, sample_rate: f32) {
         self.sample_rate = sample_rate;
         // Recalculate phase increment with new sample rate
-        self.phase_increment = self.phase_increment * (self.sample_rate / sample_rate);
+        self.phase_increment *= self.sample_rate / sample_rate;
     }
 
     /// Sets the oversampling factor for anti-aliasing.

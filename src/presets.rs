@@ -14,9 +14,10 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// 预设分类
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum PresetCategory {
     /// 基础预设
+    #[default]
     Basic,
     /// 贝斯音色
     Bass,
@@ -38,12 +39,6 @@ pub enum PresetCategory {
     Ambient,
     /// 其它
     Other,
-}
-
-impl Default for PresetCategory {
-    fn default() -> Self {
-        PresetCategory::Basic
-    }
 }
 
 impl PresetCategory {

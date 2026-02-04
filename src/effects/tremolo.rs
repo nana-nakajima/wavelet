@@ -92,9 +92,11 @@ impl Tremolo {
     /// Create with custom configuration
     pub fn with_config(config: TremoloConfig, _sample_rate: f64) -> Self {
         // Set LFO parameters
-        let mut lfo_config = LfoConfig::default();
-        lfo_config.rate = LfoRate::Hertz(config.rate as f32);
-        lfo_config.waveform = config.waveform.into();
+        let lfo_config = LfoConfig {
+            rate: LfoRate::Hertz(config.rate as f32),
+            waveform: config.waveform.into(),
+            ..Default::default()
+        };
         let mut lfo_left = Lfo::with_config(lfo_config);
         let mut lfo_right = Lfo::with_config(lfo_config);
 
@@ -102,8 +104,7 @@ impl Tremolo {
         lfo_right.set_depth(1.0);
 
         // Set stereo phase offset
-        let stereo_width = config.stereo_width;
-        lfo_right.reset_phase((stereo_width * PI as f64) as f32);
+        lfo_right.reset_phase((config.stereo_width * PI as f64) as f32);
 
         Self {
             config,

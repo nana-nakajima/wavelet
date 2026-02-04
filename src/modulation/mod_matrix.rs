@@ -496,8 +496,8 @@ impl ModulationMatrix {
         let source_key = (conn.source_type(), conn.source_id());
         let target_key = (conn.target_type(), conn.target_id());
         
-        self.source_map.entry(source_key).or_insert_with(Vec::new).push(index);
-        self.target_map.entry(target_key).or_insert_with(Vec::new).push(index);
+        self.source_map.entry(source_key).or_default().push(index);
+        self.target_map.entry(target_key).or_default().push(index);
         
         Ok(index)
     }

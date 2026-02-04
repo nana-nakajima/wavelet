@@ -894,8 +894,8 @@ impl RhythmGenerator {
     /// Ok(()) on success, or an error message on failure.
     pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         #[allow(unused_variables)]
-        let path = path;
         #[cfg(feature = "midi")]
+
         {
             use std::fs::File;
             use std::io::Write;

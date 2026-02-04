@@ -103,9 +103,7 @@ impl SimpleEq {
         let mid_out = self.mid_gain * (input - low_out / self.low_gain.max(0.001) - high_out / self.high_gain.max(0.001));
 
         // Mix bands (simplified)
-        let output = low_out + mid_out + high_out;
-
-        output
+        low_out + mid_out + high_out
     }
 
     /// Processes a buffer of audio samples.

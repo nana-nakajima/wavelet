@@ -226,15 +226,15 @@ impl ChordGenerator {
     ///
     /// Uses familiar, radio-friendly progressions like I-V-vi-IV.
     fn generate_pop(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // I - V - vi - IV
-            vec![1, 5, 6, 4],
+            [1, 5, 6, 4],
             // I - IV - V - V
-            vec![1, 4, 5, 5],
+            [1, 4, 5, 5],
             // vi - IV - I - V
-            vec![6, 4, 1, 5],
+            [6, 4, 1, 5],
             // I - vi - IV - V
-            vec![1, 6, 4, 5],
+            [1, 6, 4, 5],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -245,15 +245,15 @@ impl ChordGenerator {
     ///
     /// Uses ii-V-I progressions, extended chords, and substitutions.
     fn generate_jazz(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // ii - V - I - I
-            vec![2, 5, 1, 1],
+            [2, 5, 1, 1],
             // ii - V - I - vi
-            vec![2, 5, 1, 6],
-            // I - iii - vi - ii - V
-            vec![1, 3, 6, 2, 5],
+            [2, 5, 1, 6],
+            // I - iii - vi - ii - V (use first 4)
+            [1, 3, 6, 2],
             // iii - VI - ii - V
-            vec![3, 6, 2, 5],
+            [3, 6, 2, 5],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -264,15 +264,15 @@ impl ChordGenerator {
     ///
     /// Uses minor keys, suspended chords, and slow, evolving progressions.
     fn generate_lofi(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // i - VI - iv - V
-            vec![1, 6, 4, 5],
+            [1, 6, 4, 5],
             // i - iv - VII - III
-            vec![1, 4, 7, 3],
+            [1, 4, 7, 3],
             // i - VII - VI - V
-            vec![1, 7, 6, 5],
+            [1, 7, 6, 5],
             // i - iv - i - V
-            vec![1, 4, 1, 5],
+            [1, 4, 1, 5],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -283,15 +283,15 @@ impl ChordGenerator {
     ///
     /// Uses big, dramatic progressions with minor to major transitions.
     fn generate_edm(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // vi - IV - I - V (build up)
-            vec![6, 4, 1, 5],
+            [6, 4, 1, 5],
             // i - VI - III - V (build up minor)
-            vec![1, 6, 3, 5],
+            [1, 6, 3, 5],
             // I - V - vi - IV (big room)
-            vec![1, 5, 6, 4],
+            [1, 5, 6, 4],
             // IV - I - V - I (anthem)
-            vec![4, 1, 5, 1],
+            [4, 1, 5, 1],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -302,15 +302,15 @@ impl ChordGenerator {
     ///
     /// Uses slow, evolving progressions with rich extended chords.
     fn generate_ambient(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // I - iii - IV - V
-            vec![1, 3, 4, 5],
+            [1, 3, 4, 5],
             // I - IV - vii° - iii
-            vec![1, 4, 7, 3],
+            [1, 4, 7, 3],
             // i - iv - VII - III
-            vec![1, 4, 7, 3],
+            [1, 4, 7, 3],
             // I - V - vi - IV
-            vec![1, 5, 6, 4],
+            [1, 5, 6, 4],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -321,15 +321,15 @@ impl ChordGenerator {
     ///
     /// Uses traditional progressions with good voice leading.
     fn generate_classical(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // I - IV - V - I
-            vec![1, 4, 5, 1],
+            [1, 4, 5, 1],
             // I - ii - V - I
-            vec![1, 2, 5, 1],
+            [1, 2, 5, 1],
             // I - iii - IV - V
-            vec![1, 3, 4, 5],
+            [1, 3, 4, 5],
             // i - iv - V - i
-            vec![1, 4, 5, 1],
+            [1, 4, 5, 1],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -340,15 +340,15 @@ impl ChordGenerator {
     ///
     /// Uses driving progressions with power chord feel.
     fn generate_rock(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // I - IV - V - IV
-            vec![1, 4, 5, 4],
+            [1, 4, 5, 4],
             // I - V - IV - V
-            vec![1, 5, 4, 5],
+            [1, 5, 4, 5],
             // I - IV - I - V
-            vec![1, 4, 1, 5],
+            [1, 4, 1, 5],
             // vi - IV - I - V
-            vec![6, 4, 1, 5],
+            [6, 4, 1, 5],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -359,15 +359,15 @@ impl ChordGenerator {
     ///
     /// Uses soulful progressions with 7th and 9th chords.
     fn generate_rnb(&mut self) -> Vec<Chord> {
-        let patterns = vec![
+        let patterns = [
             // I - IV - V - I
-            vec![1, 4, 5, 1],
+            [1, 4, 5, 1],
             // i - VI - iii - V
-            vec![1, 6, 3, 5],
+            [1, 6, 3, 5],
             // I - iii - IV - V
-            vec![1, 3, 4, 5],
+            [1, 3, 4, 5],
             // I - V - vi - IV
-            vec![1, 5, 6, 4],
+            [1, 5, 6, 4],
         ];
 
         let pattern = &patterns[self.rng.gen_range(0..patterns.len())];
@@ -649,7 +649,7 @@ impl ChordGenerator {
             }
 
             let root = self.get_root_for_degree(degree);
-            let duration = if i == 0 { 4.0 } else { 4.0 };
+            let duration = 4.0;
 
             progression.push(Chord {
                 root,

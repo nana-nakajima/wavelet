@@ -222,11 +222,7 @@ impl AdsrEnvelope {
 
                 if self.current_level <= self.sustain {
                     self.current_level = self.sustain;
-                    if self.sustain_hold > 0.0 {
-                        self.stage = EnvelopeStage::Sustain;
-                    } else {
-                        self.stage = EnvelopeStage::Sustain;
-                    }
+                    self.stage = EnvelopeStage::Sustain;
                     self.stage_time = 0.0;
                 }
             }

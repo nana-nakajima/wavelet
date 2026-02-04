@@ -479,7 +479,7 @@ impl MelodyGenerator {
             for &interval in &intervals {
                 let octave_offset = (octave * 12) as i16;
                 let note = self.key.root as i16 + octave_offset + interval as i16;
-                if note >= 24 && note <= 108 {
+                if (24..=108).contains(&note) {
                     notes.push(note as u8);
                 }
             }
@@ -573,8 +573,6 @@ impl MelodyGenerator {
     /// This requires the `mido` crate to be available. If not available,
     /// the function will return an error.
     pub fn export_midi(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
-        #[allow(unused_variables)]
-        let path = path;
         // Try to use mido if available, otherwise return helpful error
         #[cfg(feature = "midi")]
         {
@@ -669,7 +667,7 @@ impl MelodyGenerator {
 
     /// Generates a random note duration based on complexity and randomness.
     fn generate_note_duration<R: Rng>(&self, rng: &mut R, max_duration: f64) -> f64 {
-        let base_durations = vec![0.25, 0.5, 1.0, 2.0]; // 16th, 8th, quarter, half
+        let base_durations = [0.25, 0.5, 1.0, 2.0]; // 16th, 8th, quarter, half
 
         // Higher complexity = more varied rhythms
         // Higher randomness = more chance of unusual durations
@@ -677,7 +675,7 @@ impl MelodyGenerator {
             .iter()
             .map(|&d| {
                 let base_weight = if d <= 1.0 { 2.0 } else { 1.0 };
-                base_weight as f64 * (1.0 - self.complexity as f64) * (1.0 - self.randomness as f64)
+                base_weight * (1.0 - self.complexity as f64) * (1.0 - self.randomness as f64)
             })
             .collect();
 
@@ -748,7 +746,7 @@ impl MelodyGenerator {
             if let Some(&closest) = scale_notes
                 .iter()
                 .filter(|&&n| (n as i16 - tonic as i16).abs() <= 12)
-                .min_by_key(|&&n| (n as i16 - tonic as i16).abs() as u16)
+                .min_by_key(|&&n| (n as i16 - tonic as i16).unsigned_abs())
             {
                 return closest;
             }
@@ -757,7 +755,7 @@ impl MelodyGenerator {
         // Return a note from the scale, preferring middle range
         let middle_notes: Vec<&u8> = scale_notes
             .iter()
-            .filter(|&&n| n >= 48 && n <= 84)
+            .filter(|&&n| (48..=84).contains(&n))
             .collect();
 
         if !middle_notes.is_empty() && rng.gen::<f32>() < 0.7 {

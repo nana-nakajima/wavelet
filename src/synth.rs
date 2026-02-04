@@ -222,7 +222,7 @@ impl Synth {
     }
 
     /// Creates a new synthesizer with default sample rate (44100 Hz).
-    pub fn default() -> Self {
+    pub fn new_default() -> Self {
         Self::new(44100.0)
     }
 
@@ -635,7 +635,7 @@ impl Synth {
 
 impl Default for Synth {
     fn default() -> Self {
-        Self::default()
+        Self::new(44100.0)
     }
 }
 

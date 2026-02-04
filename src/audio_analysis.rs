@@ -188,22 +188,31 @@ impl SpectrumAnalyzer {
         
         if self.bins > 2 {
             // 简化的频率箱计算
+            #[allow(clippy::needless_range_loop)]
             for i in 1..(self.bins - 1) {
                 let freq_low = i as f32 * self.sample_rate / (2.0 * self.bins as f32);
                 let freq_high = (i + 1) as f32 * self.sample_rate / (2.0 * self.bins as f32);
-                
+
                 // 计算该频段的RMS
-                let mut sum_sq = 0.0;
-                let mut count = 0;
-                
-                for (j, &s) in windowed.iter().enumerate() {
-                    let freq = j as f32 * self.sample_rate / (2.0 * len as f32);
-                    if freq >= freq_low && freq < freq_high {
-                        sum_sq += s * s;
-                        count += 1;
-                    }
-                }
-                
+                let sum_sq: f32 = windowed
+                    .iter()
+                    .enumerate()
+                    .filter(|&(j, _)| {
+                        let freq = j as f32 * self.sample_rate / (2.0 * len as f32);
+                        freq >= freq_low && freq < freq_high
+                    })
+                    .map(|(_, &s)| s * s)
+                    .sum();
+
+                let count = windowed
+                    .iter()
+                    .enumerate()
+                    .filter(|&(j, _)| {
+                        let freq = j as f32 * self.sample_rate / (2.0 * len as f32);
+                        freq >= freq_low && freq < freq_high
+                    })
+                    .count();
+
                 if count > 0 {
                     spectrum[i] = gain_db((sum_sq / count as f32).sqrt());
                 }

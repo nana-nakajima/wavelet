@@ -470,7 +470,7 @@ impl Sampler {
 }
 
 /// 采样库管理器
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SampleLibrary {
     /// 采样映射 (MIDI note -> Sample)
     samples: HashMap<u8, Vec<Sample>>,
@@ -480,16 +480,6 @@ pub struct SampleLibrary {
     
     /// 当前选择的采样
     selected_sample: Option<usize>,
-}
-
-impl Default for SampleLibrary {
-    fn default() -> Self {
-        Self {
-            samples: HashMap::new(),
-            all_samples: Vec::new(),
-            selected_sample: None,
-        }
-    }
 }
 
 impl SampleLibrary {
@@ -505,7 +495,7 @@ impl SampleLibrary {
         
         // 按根音索引
         let root = sample.info.root_note;
-        self.samples.entry(root).or_insert_with(Vec::new).push(sample);
+        self.samples.entry(root).or_default().push(sample);
         
         idx
     }
@@ -631,7 +621,7 @@ impl AutoSlicer {
             // 根据位置估算MIDI note
             let progress = end as f32 / sample.info.length as f32;
             let note = (sample.info.root_note as i8 + (progress * 12.0) as i8).clamp(0, 127) as u8;
-            let note = note.clamp(0, 127) as u8;
+            let note = note.clamp(0, 127);
             
             slices.push(SlicePoint {
                 start,
@@ -648,7 +638,7 @@ impl AutoSlicer {
         let end = sample.info.length;
         let progress = end as f32 / sample.info.length as f32;
         let note = (sample.info.root_note as i8 + (progress * 12.0) as i8).clamp(0, 127) as u8;
-        let note = note.clamp(0, 127) as u8;
+        let note = note.clamp(0, 127);
         
         slices.push(SlicePoint {
             start,

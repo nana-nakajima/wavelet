@@ -37,6 +37,7 @@ pub struct WaveletSynth {
 #[godot_api]
 impl WaveletSynth {
     /// Initializes the WAVELET synthesizer node.
+    #[allow(dead_code)]
     fn init(base: Base<Node>) -> Self {
         godot_print!("WAVELET Synthesizer initialized!");
         Self {
@@ -47,6 +48,7 @@ impl WaveletSynth {
     }
 
     /// Called when the node enters the scene tree.
+    #[allow(dead_code)]
     fn ready(&mut self) {
         godot_print!("WAVELET Synthesizer ready!");
     }
