@@ -894,7 +894,7 @@ impl RhythmGenerator {
     /// Ok(()) on success, or an error message on failure.
     pub fn export_midi(&mut self, _path: &str) -> Result<(), Box<dyn std::error::Error>> {
         #[allow(unused_variables)]
-        #[cfg(feature = "midi")]
+        #[cfg(feature = "midi_cc")]
 
         {
             use std::fs::File;
@@ -983,7 +983,7 @@ impl RhythmGenerator {
             Ok(())
         }
 
-        #[cfg(not(feature = "midi"))]
+        #[cfg(not(feature = "midi_cc"))]
         Err(Box::new(std::io::Error::other(
             "MIDI export requires the 'midi' feature flag",
         )))

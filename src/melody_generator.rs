@@ -574,7 +574,7 @@ impl MelodyGenerator {
     /// the function will return an error.
     pub fn export_midi(&mut self, _path: &str) -> Result<(), Box<dyn Error>> {
         // Try to use mido if available, otherwise return helpful error
-        #[cfg(feature = "midi")]
+        #[cfg(feature = "midi_cc")]
         {
             use std::fs::File;
             use std::io::Write;
@@ -636,7 +636,7 @@ impl MelodyGenerator {
             Ok(())
         }
 
-        #[cfg(not(feature = "midi"))]
+        #[cfg(not(feature = "midi_cc"))]
         Err(Box::new(std::io::Error::other(
             "MIDI export requires the 'midi' feature flag. Add `mido = \"0.5\"` to your Cargo.toml",
         )))
