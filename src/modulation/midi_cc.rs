@@ -33,7 +33,6 @@
 //! | CC123 | Note Off | All notes off |
 
 use std::collections::HashMap;
-use std::fmt;
 
 /// Maximum number of assignable CCs
 pub const MAX_CC_COUNT: usize = 16;
@@ -382,7 +381,7 @@ impl CCParameterTarget {
             CCParameterTarget::ReverbSend => 200,
             CCParameterTarget::ChorusSend => 201,
             CCParameterTarget::DelayMix => 202,
-            CCParameterTarget::Custom(n) => 1000u16 + *n as u16,
+            CCParameterTarget::Custom(n) => 1000u16 + *n,
         }
     }
 }
@@ -608,7 +607,7 @@ impl MidiCCManager {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_millis()
-                - start_time as u128;
+                - start_time;
 
             if elapsed > CC_LEARN_TIMEOUT_MS as u128 {
                 self.disable_cc_learn();
