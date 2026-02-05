@@ -176,7 +176,7 @@ text = "Keys"
 layout_mode=2
 text = "Strings"
 
-[node name="PresetButton" parent="Bell" type="MainContainer/PresetsGrid"]
+[node name="PresetBell" type="Button" parent="MainContainer/PresetsGrid"]
 layout_mode=2
 text = "Bell"
 
