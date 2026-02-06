@@ -82,12 +82,14 @@ impl Default for FilterConfig {
 /// Biquad filter state structure for IIR filter implementation.
 ///
 /// A biquad filter uses 5 coefficients (a0, a1, a2, b0, b1, b2) and
-/// maintains 2 delay samples (z-1) for the feedback path.
+/// maintains 2 delay samples for the transposed direct form II structure.
 ///
 /// # Processing
 ///
 /// The filter processes samples using the direct form II transposed structure:
-/// y[n] = (b0*x[n] + b1*x[n-1] + b2*x[n-2] + a1*y[n-1] + a2*y[n-2]) / a0
+/// y[n] = b0*x[n] + z1
+/// z1 = b1*x[n] - a1*y[n] + z2
+/// z2 = b2*x[n] - a2*y[n]
 #[derive(Debug, Clone)]
 pub struct BiquadFilter {
     /// Filter coefficients
@@ -97,11 +99,9 @@ pub struct BiquadFilter {
     a1: f32,
     a2: f32,
 
-    /// Filter state (previous inputs and outputs)
-    x1: f32, // x[n-1]
-    x2: f32, // x[n-2]
-    y1: f32, // y[n-1]
-    y2: f32, // y[n-2]
+    /// Filter state for Direct Form II Transposed (only 2 state variables needed)
+    z1: f32, // First delay state
+    z2: f32, // Second delay state
 
     /// Current filter type
     filter_type: FilterType,
@@ -144,10 +144,8 @@ impl BiquadFilter {
             b2: 0.0,
             a1: 0.0,
             a2: 0.0,
-            x1: 0.0,
-            x2: 0.0,
-            y1: 0.0,
-            y2: 0.0,
+            z1: 0.0,
+            z2: 0.0,
             filter_type: config.filter_type,
             cutoff: config.cutoff_frequency,
             resonance: config.resonance,
@@ -162,6 +160,8 @@ impl BiquadFilter {
 
     /// Processes a single audio sample through the filter.
     ///
+    /// Uses Direct Form II Transposed structure for numerical stability.
+    ///
     /// # Arguments
     ///
     /// * `input` - Input audio sample
@@ -170,14 +170,13 @@ impl BiquadFilter {
     ///
     /// Filtered output sample
     pub fn process_sample(&mut self, input: f32) -> f32 {
-        // Direct form II transposed structure
-        let output = self.b0 * input + self.x1 + self.y1 * self.a1 + self.y2 * self.a2;
-
-        // Update state
-        self.x1 = self.b1 * input - output * self.a1 + self.x2;
-        self.x2 = self.b2 * input - output * self.a2;
-        self.y1 = output;
-        self.y2 = self.y1;
+        // Direct Form II Transposed:
+        // y[n] = b0*x[n] + z1
+        // z1 = b1*x[n] - a1*y[n] + z2
+        // z2 = b2*x[n] - a2*y[n]
+        let output = self.b0 * input + self.z1;
+        self.z1 = self.b1 * input - self.a1 * output + self.z2;
+        self.z2 = self.b2 * input - self.a2 * output;
 
         output
     }
@@ -244,10 +243,8 @@ impl BiquadFilter {
 
     /// Resets the filter state to zero.
     pub fn reset(&mut self) {
-        self.x1 = 0.0;
-        self.x2 = 0.0;
-        self.y1 = 0.0;
-        self.y2 = 0.0;
+        self.z1 = 0.0;
+        self.z2 = 0.0;
     }
 
     /// Calculates biquad filter coefficients based on current parameters.
@@ -762,10 +759,8 @@ mod tests {
         let mut filter = BiquadFilter::new();
         let _ = filter.process_sample(1.0);
         filter.reset();
-        assert_eq!(filter.x1, 0.0);
-        assert_eq!(filter.x2, 0.0);
-        assert_eq!(filter.y1, 0.0);
-        assert_eq!(filter.y2, 0.0);
+        assert_eq!(filter.z1, 0.0);
+        assert_eq!(filter.z2, 0.0);
     }
 
     #[test]

@@ -55,11 +55,14 @@ struct Voice {
 
     /// Whether this voice is active
     active: bool,
+
+    /// Voice age counter for voice stealing (higher = older)
+    age: u64,
 }
 
 impl Voice {
     /// Creates a new voice for a specific note.
-    fn new(note: u8, velocity: u8, sample_rate: f32) -> Self {
+    fn new(note: u8, velocity: u8, sample_rate: f32, age: u64) -> Self {
         let freq = midi_to_frequency(note);
 
         let osc_config = OscillatorConfig {
@@ -86,6 +89,7 @@ impl Voice {
             note,
             velocity,
             active: true,
+            age,
         }
     }
 
@@ -177,6 +181,9 @@ pub struct Synth {
 
     /// Oversampling factor for oscillators
     oversample_factor: OversampleFactor,
+
+    /// Voice age counter for voice stealing
+    voice_age_counter: u64,
 }
 
 impl Synth {
@@ -218,6 +225,7 @@ impl Synth {
             sample_rate,
             active_notes: HashMap::new(),
             oversample_factor: OversampleFactor::None,
+            voice_age_counter: 0,
         }
     }
 
@@ -245,21 +253,24 @@ impl Synth {
         // Sum all active voices
         let mut output = 0.0f32;
 
-        // Process voices and collect output
-        let mut voices_to_remove = Vec::new();
+        // Collect indices of voices to process (avoid borrowing issues)
+        let voice_indices: Vec<usize> = self.active_notes.values().copied().collect();
 
-        for (note, voice_idx) in &self.active_notes.clone() {
-            if let Some(voice) = self.voices.get_mut(*voice_idx) {
+        // Process voices and track which notes to remove
+        let mut notes_to_remove = Vec::new();
+
+        for &voice_idx in &voice_indices {
+            if let Some(voice) = self.voices.get_mut(voice_idx) {
                 if voice.is_active() {
                     output += voice.process();
                 } else {
-                    voices_to_remove.push(*note);
+                    notes_to_remove.push(voice.note);
                 }
             }
         }
 
         // Remove finished voices
-        for note in voices_to_remove {
+        for note in notes_to_remove {
             self.active_notes.remove(&note);
         }
 
@@ -321,35 +332,30 @@ impl Synth {
             self.note_off_specific(note);
         }
 
+        // Increment voice age counter
+        self.voice_age_counter += 1;
+
         // Find available voice (oldest first for voice stealing)
         let voice_idx = if self.voices.len() < MAX_VOICES {
             self.voices
-                .push(Voice::new(note, velocity, self.sample_rate));
+                .push(Voice::new(note, velocity, self.sample_rate, self.voice_age_counter));
             self.voices.len() - 1
         } else {
-            // Voice stealing: steal oldest voice
-            let oldest_note = self.active_notes.keys().min().copied();
-            if let Some(old_note) = oldest_note {
-                if let Some(&voice_idx) = self.active_notes.get(&old_note) {
-                    // Reuse this voice
-                    self.active_notes.remove(&old_note);
+            // Voice stealing: find the oldest voice by age
+            let oldest_voice_idx = self
+                .active_notes
+                .iter()
+                .filter_map(|(n, &idx)| self.voices.get(idx).map(|v| (*n, idx, v.age)))
+                .min_by_key(|(_, _, age)| *age)
+                .map(|(n, idx, _)| (n, idx));
 
-                    // Reinitialize voice
-                    let freq = midi_to_frequency(note);
-                    let _osc_config = OscillatorConfig {
-                        waveform: Waveform::Sawtooth,
-                        frequency: freq,
-                        amplitude: velocity as f32 / 127.0,
-                        phase_offset: 0.0,
-                        sample_rate: self.sample_rate,
-                        oversample_factor: OversampleFactor::None,
-                    };
+            if let Some((old_note, voice_idx)) = oldest_voice_idx {
+                // Reuse this voice
+                self.active_notes.remove(&old_note);
 
-                    self.voices[voice_idx] = Voice::new(note, velocity, self.sample_rate);
-                    voice_idx
-                } else {
-                    return;
-                }
+                // Reinitialize voice with new age
+                self.voices[voice_idx] = Voice::new(note, velocity, self.sample_rate, self.voice_age_counter);
+                voice_idx
             } else {
                 return;
             }

@@ -285,9 +285,12 @@ impl Oscillator {
     ///
     /// * `sample_rate` - New sample rate in Hz
     pub fn set_sample_rate(&mut self, sample_rate: f32) {
+        // Calculate current frequency from old sample rate
+        let current_freq = self.phase_increment * self.sample_rate;
+        // Update sample rate
         self.sample_rate = sample_rate;
         // Recalculate phase increment with new sample rate
-        self.phase_increment *= self.sample_rate / sample_rate;
+        self.phase_increment = current_freq / sample_rate;
     }
 
     /// Sets the oversampling factor for anti-aliasing.
