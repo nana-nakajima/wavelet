@@ -1,195 +1,470 @@
-[gd_scene load_steps=4 format=3 uid="uid://wavelet_main"]
+[gd_scene load_steps=6 format=3 uid="uid://wavelet_main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/theme_manager.gd" id="2_theme"]
 [ext_resource type="Script" path="res://scripts/visualizer.gd" id="3_viz"]
+[ext_resource type="Script" path="res://scripts/http_client.gd" id="4_http"]
+[ext_resource type="PackedScene" path="res://scenes/community_panel.tscn" id="5_community"]
 
 [node name="Main" type="Control"]
-layout_mode=3
-anchors_preset=15
-anchor_right=1.0
-anchor_bottom=1.0
-grow_horizontal=2
-grow_vertical=2
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
 
 [node name="ThemeManager" type="Node" parent="."]
 script = ExtResource("2_theme")
 
+[node name="HTTPClient" type="Node" parent="."]
+script = ExtResource("4_http")
+
 [node name="Background" type="ColorRect" parent="."]
-layout_mode=1
-anchors_preset=15
-anchor_right=1.0
-anchor_bottom=1.0
-color = Color(0.1, 0.1, 0.15, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.08, 0.12, 1)
 
-[node name="WaveformVisualizer" type="Control" parent="."]
-layout_mode=1
-anchors_preset=15
-anchor_right=1.0
-anchor_bottom=1.0
-offset_top=250.0
-offset_bottom=-150.0
-script = ExtResource("3_viz")
+[node name="MainHSplit" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+split_offset = -350
 
-[node name="MainContainer" type="VBoxContainer" parent="."]
-layout_mode=1
-anchors_preset=15
-anchor_right=1.0
-anchor_bottom=1.0
-offset_left=20.0
-offset_top=20.0
-offset_right=-20.0
-offset_bottom=-20.0
-theme_override_constants/separation = 10
+[node name="LeftPanel" type="VBoxContainer" parent="MainHSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
 
-[node name="TopBar" type="HBoxContainer" parent="MainContainer"]
-layout_mode=2
-theme_override_constants/separation = 20
+[node name="Header" type="HBoxContainer" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 15
 
-[node name="Title" type="Label" parent="MainContainer/TopBar"]
-layout_mode=2
-text = "🎮 WAVELET"
-horizontal_alignment=1
+[node name="TitleLabel" type="Label" parent="MainHSplit/LeftPanel/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "WAVELET"
 
-[node name="ThemeButtons" type="HBoxContainer" parent="MainContainer/TopBar"]
-layout_mode=2
-size_flags_horizontal=10
-theme_override_constants/separation = 10
+[node name="Spacer" type="Control" parent="MainHSplit/LeftPanel/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="ThemeDark" type="Button" parent="MainContainer/TopBar/ThemeButtons"]
-layout_mode=2
-text = "Dark"
-
-[node name="ThemeRetro" type="Button" parent="MainContainer/TopBar/ThemeButtons"]
-layout_mode=2
-text = "Retro"
-
-[node name="ThemeCyber" type="Button" parent="MainContainer/TopBar/ThemeButtons"]
-layout_mode=2
-text = "Cyber"
-
-[node name="StatusLabel" type="Label" parent="MainContainer"]
-layout_mode=2
-text = "Abstract Sound Synthesizer - Press keys A-L to play, W,E,T,Y,U,O,P for black keys"
-horizontal_alignment=1
-
-[node name="HSeparator" type="HSeparator" parent="MainContainer"]
-layout_mode=2
-
-[node name="ControlsPanel" type="PanelContainer" parent="MainContainer"]
-layout_mode=2
-
-[node name="ControlsGrid" type="GridContainer" parent="MainContainer/ControlsPanel"]
-layout_mode=2
-columns = 4
-theme_override_constants/separation = 20
-
-[node name="VolumeLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-text = "🔊 Volume"
-
-[node name="VolumeSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-size_flags_horizontal=3
-min_value=0.0
-max_value=1.0
-step=0.01
-value=0.7
-
-[node name="FilterLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-text = "🎛️ Cutoff"
-
-[node name="FilterSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-min_value=20.0
-max_value=10000.0
-step=10.0
-value=2000.0
-
-[node name="ResonanceLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-text = "📊 Resonance"
-
-[node name="ResonanceSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-min_value=0.1
-max_value=10.0
-step=0.1
-value=1.0
-
-[node name="AttackLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-text = "⚡ Attack"
-
-[node name="AttackSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-min_value=0.001
-max_value=2.0
-step=0.001
-value=0.01
-
-[node name="ReleaseLabel" type="Label" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-text = "🌊 Release"
-
-[node name="ReleaseSlider" type="HSlider" parent="MainContainer/ControlsPanel/ControlsGrid"]
-layout_mode=2
-min_value=0.01
-max_value=4.0
-step=0.01
-value=0.5
-
-[node name="HSeparator2" type="HSeparator" parent="MainContainer"]
-layout_mode=2
-
-[node name="PresetsLabel" type="Label" parent="MainContainer"]
-layout_mode=2
-text = "🎹 Presets:"
-
-[node name="PresetsGrid" type="GridContainer" parent="MainContainer"]
-layout_mode=2
-columns = 8
+[node name="ThemeButtons" type="HBoxContainer" parent="MainHSplit/LeftPanel/Header"]
+layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="PresetInit" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="ThemeDark" type="Button" parent="MainHSplit/LeftPanel/Header/ThemeButtons"]
+layout_mode = 2
+text = "Dark"
+
+[node name="ThemeRetro" type="Button" parent="MainHSplit/LeftPanel/Header/ThemeButtons"]
+layout_mode = 2
+text = "Retro"
+
+[node name="ThemeCyber" type="Button" parent="MainHSplit/LeftPanel/Header/ThemeButtons"]
+layout_mode = 2
+text = "Cyber"
+
+[node name="ShareButtons" type="HBoxContainer" parent="MainHSplit/LeftPanel/Header"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="ExportButton" type="Button" parent="MainHSplit/LeftPanel/Header/ShareButtons"]
+layout_mode = 2
+text = "Export"
+
+[node name="ImportButton" type="Button" parent="MainHSplit/LeftPanel/Header/ShareButtons"]
+layout_mode = 2
+text = "Import"
+
+[node name="ShareCommunityButton" type="Button" parent="MainHSplit/LeftPanel/Header/ShareButtons"]
+layout_mode = 2
+text = "Share"
+
+[node name="StatusLabel" type="Label" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
+theme_override_font_sizes/font_size = 12
+text = "Abstract Sound Synthesizer"
+
+[node name="HSeparator" type="HSeparator" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+
+[node name="WaveformVisualizer" type="Control" parent="MainHSplit/LeftPanel"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_viz")
+
+[node name="HSeparator2" type="HSeparator" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+
+[node name="ControlsSection" type="VBoxContainer" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ControlsLabel" type="Label" parent="MainHSplit/LeftPanel/ControlsSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Synthesizer Controls"
+
+[node name="ControlsPanel" type="PanelContainer" parent="MainHSplit/LeftPanel/ControlsSection"]
+layout_mode = 2
+
+[node name="ControlsGrid" type="GridContainer" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel"]
+layout_mode = 2
+theme_override_constants/h_separation = 15
+theme_override_constants/v_separation = 10
+columns = 4
+
+[node name="VolumeLabel" type="Label" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+layout_mode = 2
+text = "Volume"
+
+[node name="VolumeSlider" type="HSlider" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.7
+
+[node name="FilterLabel" type="Label" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+layout_mode = 2
+text = "Cutoff"
+
+[node name="FilterSlider" type="HSlider" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 20.0
+max_value = 10000.0
+step = 10.0
+value = 2000.0
+
+[node name="ResonanceLabel" type="Label" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+layout_mode = 2
+text = "Resonance"
+
+[node name="ResonanceSlider" type="HSlider" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.1
+max_value = 10.0
+step = 0.1
+value = 1.0
+
+[node name="AttackLabel" type="Label" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+layout_mode = 2
+text = "Attack"
+
+[node name="AttackSlider" type="HSlider" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.001
+max_value = 2.0
+step = 0.001
+value = 0.01
+
+[node name="ReleaseLabel" type="Label" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+layout_mode = 2
+text = "Release"
+
+[node name="ReleaseSlider" type="HSlider" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.01
+max_value = 4.0
+step = 0.01
+value = 0.5
+
+[node name="WaveformLabel" type="Label" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+layout_mode = 2
+text = "Waveform"
+
+[node name="WaveformOption" type="OptionButton" parent="MainHSplit/LeftPanel/ControlsSection/ControlsPanel/ControlsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+selected = 0
+
+[node name="HSeparator3" type="HSeparator" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+
+[node name="PresetsSection" type="VBoxContainer" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PresetsHeader" type="HBoxContainer" parent="MainHSplit/LeftPanel/PresetsSection"]
+layout_mode = 2
+
+[node name="PresetsLabel" type="Label" parent="MainHSplit/LeftPanel/PresetsSection/PresetsHeader"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Presets"
+
+[node name="Spacer" type="Control" parent="MainHSplit/LeftPanel/PresetsSection/PresetsHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CategoryFilter" type="OptionButton" parent="MainHSplit/LeftPanel/PresetsSection/PresetsHeader"]
+layout_mode = 2
+
+[node name="PresetsScroll" type="ScrollContainer" parent="MainHSplit/LeftPanel/PresetsSection"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="PresetsGrid" type="GridContainer" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 5
+theme_override_constants/v_separation = 5
+columns = 6
+
+[node name="PresetInit" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "Init"
 
-[node name="PresetBass" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="PresetBass" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "Bass"
 
-[node name="PresetPad" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="PresetPad" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "Pad"
 
-[node name="PresetLead" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="PresetLead" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "Lead"
 
-[node name="PresetKeys" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="PresetKeys" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "Keys"
 
-[node name="PresetStrings" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="PresetStrings" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "Strings"
 
-[node name="PresetBell" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="PresetBell" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "Bell"
 
-[node name="PresetEffect" type="Button" parent="MainContainer/PresetsGrid"]
-layout_mode=2
+[node name="PresetEffect" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
 text = "FX"
 
-[node name="HSeparator3" type="HSeparator" parent="MainContainer"]
-layout_mode=2
+[node name="PresetAcid" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
+text = "Acid"
 
-[node name="HelpLabel" type="Label" parent="MainContainer"]
-layout_mode=2
-text = "🎮 Controls: A-G(white keys) W,E,T,Y,U,O,P(black keys) | Space: Sustain | Click sliders to adjust"
-autowrap_mode=2
+[node name="PresetPluck" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
+text = "Pluck"
+
+[node name="PresetBrass" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
+text = "Brass"
+
+[node name="PresetSub" type="Button" parent="MainHSplit/LeftPanel/PresetsSection/PresetsScroll/PresetsGrid"]
+custom_minimum_size = Vector2(70, 30)
+layout_mode = 2
+text = "Sub"
+
+[node name="HSeparator4" type="HSeparator" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+
+[node name="KeyboardSection" type="VBoxContainer" parent="MainHSplit/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+
+[node name="KeyboardLabel" type="Label" parent="MainHSplit/LeftPanel/KeyboardSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Virtual Keyboard"
+
+[node name="KeyboardHelp" type="Label" parent="MainHSplit/LeftPanel/KeyboardSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.55, 1)
+theme_override_font_sizes/font_size = 11
+text = "White keys: A S D F G H J K L ;  |  Black keys: W E T Y U O P"
+
+[node name="KeyboardContainer" type="HBoxContainer" parent="MainHSplit/LeftPanel/KeyboardSection"]
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 2
+
+[node name="KeyC" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "C
+A"
+
+[node name="KeyCS" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(30, 50)
+layout_mode = 2
+size_flags_vertical = 0
+text = "C#
+W"
+
+[node name="KeyD" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "D
+S"
+
+[node name="KeyDS" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(30, 50)
+layout_mode = 2
+size_flags_vertical = 0
+text = "D#
+E"
+
+[node name="KeyE" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "E
+D"
+
+[node name="KeyF" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "F
+F"
+
+[node name="KeyFS" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(30, 50)
+layout_mode = 2
+size_flags_vertical = 0
+text = "F#
+T"
+
+[node name="KeyG" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "G
+G"
+
+[node name="KeyGS" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(30, 50)
+layout_mode = 2
+size_flags_vertical = 0
+text = "G#
+Y"
+
+[node name="KeyA" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "A
+H"
+
+[node name="KeyAS" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(30, 50)
+layout_mode = 2
+size_flags_vertical = 0
+text = "A#
+U"
+
+[node name="KeyB" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "B
+J"
+
+[node name="KeyC2" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "C
+K"
+
+[node name="KeyCS2" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(30, 50)
+layout_mode = 2
+size_flags_vertical = 0
+text = "C#
+O"
+
+[node name="KeyD2" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "D
+L"
+
+[node name="KeyDS2" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(30, 50)
+layout_mode = 2
+size_flags_vertical = 0
+text = "D#
+P"
+
+[node name="KeyE2" type="Button" parent="MainHSplit/LeftPanel/KeyboardSection/KeyboardContainer"]
+custom_minimum_size = Vector2(40, 80)
+layout_mode = 2
+size_flags_vertical = 3
+text = "E
+;"
+
+[node name="RightPanel" type="PanelContainer" parent="MainHSplit"]
+custom_minimum_size = Vector2(350, 0)
+layout_mode = 2
+
+[node name="CommunityPanel" parent="MainHSplit/RightPanel" instance=ExtResource("5_community")]
+layout_mode = 2
+
+[node name="NotificationPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -80.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="NotificationLabel" type="Label" parent="NotificationPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+text = "Notification message"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]

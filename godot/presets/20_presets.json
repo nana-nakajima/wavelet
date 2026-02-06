@@ -56,29 +56,31 @@
       }
     },
     {
-      "name": " Reese_bass",
+      "name": "reese_bass",
       "category": "Bass",
       "description": "Classic Reese bass drop",
       "parameters": {
         "volume": 0.8,
         "filter_cutoff": 250.0,
         "filter_resonance": 4.0,
+        "attack": 0.01,
+        "release": 0.2,
         "waveform": "square"
       }
     },
     {
-      "name": " rubber_bass",
+      "name": "rubber_bass",
       "category": "Bass",
       "description": "Rubber-like bounce bass",
       "parameters": {
         "volume": 0.7,
         "filter_cutoff": 500.0,
         "filter_resonance": 5.5,
+        "attack": 0.01,
+        "release": 0.25,
         "waveform": "triangle"
       }
     },
-    
-    // More Pads
     {
       "name": "ambient_pad",
       "category": "Pad",
@@ -134,8 +136,6 @@
         "waveform": "triangle"
       }
     },
-    
-    // More Leads
     {
       "name": "retro_lead",
       "category": "Lead",
@@ -191,8 +191,6 @@
         "waveform": "square"
       }
     },
-    
-    // Special Effects & Textures
     {
       "name": "laser",
       "category": "Effect",
@@ -248,8 +246,6 @@
         "waveform": "noise"
       }
     },
-    
-    // Keys & Electric
     {
       "name": "synth_clav",
       "category": "Keys",
@@ -294,8 +290,6 @@
         "waveform": "sawtooth"
       }
     },
-    
-    // Strings & Orchestra
     {
       "name": "synth_strings",
       "category": "Strings",
@@ -329,8 +323,6 @@
         "waveform": "triangle"
       }
     },
-    
-    // Bells & Percussion
     {
       "name": "music_box",
       "category": "Bell",
