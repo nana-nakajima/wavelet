@@ -1,8 +1,8 @@
 # Stories: Per-track Effects
 
-**版本**: v1.0  
-**日期**: 2026-02-03  
-**关联**: 
+**Version**: v1.0
+**Date**: 2026-02-03
+**Related**: 
 - PRODUCT_BRIEF_PER_TRACK_EFFECTS.md
 - ARCHITECTURE_PER_TRACK_EFFECTS.md
 

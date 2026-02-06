@@ -1,15 +1,15 @@
 // WAVELET - Song Mode Module
-// 参考: Elektron Tonverk 歌曲系统
+// Reference: Elektron Tonverk song system
 //
-// 功能:
-// - 16首歌曲容量
-// - 每首最多99行
-// - 每行独立设置：模式选择、重复次数、长度修正、速度修正
-// - 模式链播放
+// Features:
+// - 16 song capacity
+// - Up to 99 lines per song
+// - Per-line settings: pattern selection, repeat count, length modifier, tempo modifier
+// - Pattern chain playback
 //
-// 与Tonverk对比:
-// Tonverk: 16首歌曲, 每首最多99行
-// WAVELET: 16首歌曲, 每首最多99行 (对齐!)
+// Comparison with Tonverk:
+// Tonverk: 16 songs, up to 99 lines each
+// WAVELET: 16 songs, up to 99 lines each (aligned!)
 
 use serde::{Deserialize, Serialize};
 use std::fmt;

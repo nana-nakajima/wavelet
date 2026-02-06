@@ -1,19 +1,19 @@
 // WAVELET - Sampler Module
-// 参考: Elektron Tonverk 采样播放功能
+// Reference: Elektron Tonverk sample playback functionality
 //
-// 功能:
-// - WAV/AIFF采样导入和播放
-// - 切片播放 (Slicing)
-// - 反向播放
-// - 时间拉伸 (Time Stretching)
-// - 与音序器集成
-// - 速度同步
+// Features:
+// - WAV/AIFF sample import and playback
+// - Slice playback (Slicing)
+// - Reverse playback
+// - Time stretching
+// - Sequencer integration
+// - Tempo sync
 
 #![allow(dead_code)] // Reserve sampler fields for future sample editing features
 
 use std::collections::HashMap;
 
-/// 采样格式
+/// Sample format
 #[derive(Debug, Clone, PartialEq)]
 pub enum SampleFormat {
     /// 16-bit PCM
@@ -24,79 +24,79 @@ pub enum SampleFormat {
     Float32,
 }
 
-/// 采样信息元数据
+/// Sample info metadata
 #[derive(Debug, Clone, PartialEq)]
 pub struct SampleInfo {
-    /// 采样名称
+    /// Sample name
     pub name: String,
 
-    /// 文件路径
+    /// File path
     pub path: String,
 
-    /// 采样率
+    /// Sample rate
     pub sample_rate: u32,
 
-    /// 通道数 (1=单声道, 2=立体声)
+    /// Channel count (1=mono, 2=stereo)
     pub channels: u16,
 
-    /// 采样数量
+    /// Sample count
     pub length: usize,
 
-    /// 格式
+    /// Format
     pub format: SampleFormat,
 
-    /// 循环信息
+    /// Loop info
     pub loop_info: Option<LoopInfo>,
 
-    /// 根音 (MIDI note number)
+    /// Root note (MIDI note number)
     pub root_note: u8,
 
-    /// 调性偏移 (semitones)
+    /// Tuning offset (semitones)
     pub semitone_offset: i8,
 
-    /// 速度敏感度 (0.0 - 2.0)
+    /// Tempo sensitivity (0.0 - 2.0)
     pub tempo_sensitivity: f32,
 }
 
-/// 循环设置
+/// Loop settings
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LoopInfo {
-    /// 循环开始点 (sample index)
+    /// Loop start point (sample index)
     pub start: usize,
 
-    /// 循环结束点 (sample index)
+    /// Loop end point (sample index)
     pub end: usize,
 
-    /// 循环模式
+    /// Loop mode
     pub mode: LoopMode,
 
-    /// 交叉淡入淡出长度 (samples)
+    /// Crossfade length (samples)
     pub crossfade: usize,
 }
 
-/// 循环模式
+/// Loop mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LoopMode {
-    /// 不循环
+    /// No loop
     NoLoop,
-    /// 循环
+    /// Loop
     Loop,
-    /// 往返循环
+    /// Ping-pong loop
     PingPong,
-    /// 单次触发后释放
+    /// One-shot then release
     OneShot,
 }
 
-/// 单个采样
+/// Single sample
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sample {
-    /// 元数据
+    /// Metadata
     pub info: SampleInfo,
 
-    /// 音频数据 (归一化到 -1.0 到 1.0)
+    /// Audio data (normalized to -1.0 to 1.0)
     pub data: Vec<f32>,
 
-    /// 立体声数据 (如果适用)
+    /// Stereo data (if applicable)
     pub data_stereo: Option<Vec<f32>>,
 }
 
@@ -122,7 +122,7 @@ impl Default for Sample {
 }
 
 impl Sample {
-    /// 从数据创建采样
+    /// Create sample from data
     pub fn new(name: &str, data: Vec<f32>, sample_rate: u32) -> Self {
         let length = data.len();
         Self {
@@ -143,7 +143,7 @@ impl Sample {
         }
     }
 
-    /// 从立体声数据创建采样
+    /// Create sample from stereo data
     pub fn new_stereo(name: &str, left: Vec<f32>, right: Vec<f32>, sample_rate: u32) -> Self {
         let length = left.len();
         Self {
@@ -164,12 +164,12 @@ impl Sample {
         }
     }
 
-    /// 检查是否是立体声
+    /// Check if stereo
     pub fn is_stereo(&self) -> bool {
         self.data_stereo.is_some()
     }
 
-    /// 获取循环状态
+    /// Get loop state
     pub fn is_looping(&self) -> bool {
         self.info
             .loop_info
@@ -178,87 +178,87 @@ impl Sample {
             .unwrap_or(false)
     }
 
-    /// 获取采样时长(秒)
+    /// Get sample duration (seconds)
     pub fn duration(&self) -> f64 {
         self.info.length as f64 / self.info.sample_rate as f64
     }
 
-    /// 获取MIDI频率
+    /// Get MIDI frequency
     pub fn frequency(&self) -> f32 {
         440.0 * 2.0f32.powf((self.info.root_note as f32 - 69.0) / 12.0)
     }
 }
 
-/// 切片点
+/// Slice point
 #[derive(Debug, Clone, PartialEq)]
 pub struct SlicePoint {
-    /// 切片开始点
+    /// Slice start point
     pub start: usize,
 
-    /// 切片结束点
+    /// Slice end point
     pub end: usize,
 
-    /// MIDI音符
+    /// MIDI note
     pub note: u8,
 
-    /// 名称
+    /// Name
     pub name: String,
 }
 
-/// 切片模式
+/// Slicing mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SlicingMode {
-    /// 自动检测瞬态
+    /// Auto-detect transients
     Transient,
-    /// 等分切片
+    /// Equal division slicing
     Equal,
-    /// 网格切片
+    /// Grid slicing
     Grid,
-    /// 手动切片
+    /// Manual slicing
     Manual,
 }
 
-/// 采样播放器
+/// Sample player
 #[derive(Debug, Clone)]
 pub struct Sampler {
-    /// 当前采样
+    /// Current sample
     sample: Option<Sample>,
 
-    /// 播放位置 (sample index)
+    /// Playback position (sample index)
     position: f64,
 
-    /// 播放速度 (1.0 = 正常)
+    /// Playback speed (1.0 = normal)
     speed: f32,
 
-    /// 是否反向播放
+    /// Whether to play in reverse
     reverse: bool,
 
-    /// 音量 (0.0 - 1.0)
+    /// Volume (0.0 - 1.0)
     volume: f32,
 
-    /// 音高偏移 (semitones)
+    /// Pitch offset (semitones)
     pitch_offset: i8,
 
-    /// 时间拉伸 (1.0 = 正常)
+    /// Time stretch (1.0 = normal)
     time_stretch: f32,
 
-    /// 循环模式
+    /// Loop mode
     loop_mode: LoopMode,
 
-    /// 循环点
+    /// Loop points
     loop_start: usize,
     loop_end: usize,
 
-    /// 播放状态
+    /// Playback state
     playing: bool,
 
-    /// 触发位置 (用于切片播放)
+    /// Trigger position (for slice playback)
     trigger_position: f64,
 
-    /// 增益 (用于切片淡入淡出)
+    /// Gain (for slice fade in/out)
     fade_gain: f32,
 
-    /// 交叉淡入淡出长度 (samples)
+    /// Crossfade length (samples)
     crossfade: usize,
 }
 
@@ -284,34 +284,34 @@ impl Default for Sampler {
 }
 
 impl Sampler {
-    /// 创建新的采样播放器
+    /// Create a new sample player
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// 加载采样
+    /// Load sample
     pub fn load(&mut self, sample: Sample) {
         self.sample = Some(sample);
         self.reset();
     }
 
-    /// 卸载采样
+    /// Unload sample
     pub fn unload(&mut self) {
         self.sample = None;
         self.reset();
     }
 
-    /// 设置速度
+    /// Set speed
     pub fn set_speed(&mut self, speed: f32) {
         self.speed = speed.clamp(0.25, 4.0);
     }
 
-    /// 设置反向播放
+    /// Set reverse playback
     pub fn set_reverse(&mut self, reverse: bool) {
         self.reverse = reverse;
     }
 
-    /// 设置音高偏移
+    /// Set pitch offset
     pub fn set_pitch_offset(&mut self, offset: i8) {
         self.pitch_offset = offset.clamp(-24, 24);
     }

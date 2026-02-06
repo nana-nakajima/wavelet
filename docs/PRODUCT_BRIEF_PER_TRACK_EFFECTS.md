@@ -1,116 +1,116 @@
 # Product Brief: Per-track Effects
 
-**版本**: v1.0  
-**日期**: 2026-02-03  
-**状态**: Phase 1 - 产品定义
+**Version**: v1.0
+**Date**: 2026-02-03
+**Status**: Phase 1 - Product Definition
 
 ---
 
-## 概述
+## Overview
 
-为 WAVELET 添加 **Per-track Effects (每轨效果器)** 功能，允许用户为音序器的每个音轨独立添加效果器链，使每条轨道有独特的音色处理能力。
+Add **Per-track Effects** functionality to WAVELET, allowing users to independently add effect chains to each track of the sequencer, giving each track unique sound processing capabilities.
 
-## 问题陈述
+## Problem Statement
 
-当前 WAVELET 的音序器 (Step Sequencer) 所有轨道共享一个效果器链，无法为不同乐器/音色设置独立的效果处理。这限制了音色的丰富度和音乐制作的灵活性。
+Currently, all tracks in WAVELET's Step Sequencer share a single effect chain, making it impossible to set up independent effect processing for different instruments/timbres. This limits tonal richness and music production flexibility.
 
-**参考设备**: Elektron Digitakt / OctatrACK - 每个轨道有独立的滤波器、效果和参数锁
+**Reference Devices**: Elektron Digitakt / OctatrACK - Each track has independent filters, effects, and parameter locks
 
-## 用户故事
+## User Stories
 
-1. **作为** 音乐制作者，**我希望** 为鼓轨添加压缩效果，**以便** 获得更有力的打击感
+1. **As a** music producer, **I want to** add compression to the drum track, **so that** I get a more powerful punch
 
-2. **作为** 音乐制作者，**我希望** 为贝斯轨添加失真效果，**以便** 增加低频的冲击力
+2. **As a** music producer, **I want to** add distortion to the bass track, **so that** I increase the low-frequency impact
 
-3. **作为** 音乐制作者，**我希望** 为旋律轨添加合唱效果，**以便** 让声音更加宽广立体
+3. **As a** music producer, **I want to** add chorus to the melody track, **so that** the sound becomes wider and more spacious
 
-4. **作为** 音乐制作者，**我希望** 每轨效果可以独立开关，**以便** 快速对比有无效果的区别
+4. **As a** music producer, **I want to** independently toggle effects per track, **so that** I can quickly compare the sound with and without effects
 
-## 核心需求
+## Core Requirements
 
-### P0 (必须)
-1. 每个轨道 (Track) 独立的效果器槽位
-2. 支持基础效果器类型:
-   - **滤波器** (Filter) - 截止频率 + 共振
-   - **失真** (Distortion/Saturation)
-   - **压缩** (Compressor)
-   - **均衡** (EQ - SimpleEQ)
-3. 效果器开/关控制
-4. Mix/Wet 参数控制
+### P0 (Must Have)
+1. Independent effect slots for each Track
+2. Support for basic effect types:
+   - **Filter** - Cutoff frequency + Resonance
+   - **Distortion** (Distortion/Saturation)
+   - **Compressor**
+   - **Equalizer** (EQ - SimpleEQ)
+3. Effect on/off control
+4. Mix/Wet parameter control
 
-### P1 (应该)
-1. 效果器参数锁 (与音序器参数锁系统集成)
-2. 效果器预设保存
-3. 效果器旁路 (Bypass)
-4. 效果器链顺序调整
+### P1 (Should Have)
+1. Effect parameter locks (integration with sequencer parameter lock system)
+2. Effect preset saving
+3. Effect bypass
+4. Effect chain order adjustment
 
-### P2 (可选)
-1. 高级效果器 (Reverb, Delay, Chorus)
-2. 效果器并行/串行模式切换
-3. 效果器可视化 (频谱分析)
+### P2 (Nice to Have)
+1. Advanced effects (Reverb, Delay, Chorus)
+2. Effect parallel/serial mode switching
+3. Effect visualization (spectrum analysis)
 
-## 成功标准
+## Success Criteria
 
-- [ ] 每个音轨可以独立添加/配置/开关效果器
-- [ ] 效果处理不增加额外延迟 (< 1ms)
-- [ ] CPU 使用率在可接受范围内 (单轨效果 < 5%)
-- [ ] 至少通过 20+ 单元测试
-- [ ] 与现有音序器系统无缝集成
+- [ ] Each track can independently add/configure/toggle effects
+- [ ] Effect processing adds no extra latency (< 1ms)
+- [ ] CPU usage within acceptable range (single track effects < 5%)
+- [ ] At least 20+ unit tests passing
+- [ ] Seamless integration with existing sequencer system
 
-## 约束条件
+## Constraints
 
-### 技术约束
-1. Rust 音频引擎，无运行时内存分配
-2. 与现有 Effect trait 系统兼容
-3. 保持实时音频性能 (无锁设计)
-4. Godot UI 可视化支持
+### Technical Constraints
+1. Rust audio engine, no runtime memory allocation
+2. Compatible with existing Effect trait system
+3. Maintain real-time audio performance (lock-free design)
+4. Godot UI visualization support
 
-### 时间约束
-- 开发周期: 1周
-- 里程碑:
-  - Day 1-2: 核心架构和数据结构
-  - Day 3-4: 效果器集成
-  - Day 5: UI 集成和测试
+### Time Constraints
+- Development cycle: 1 week
+- Milestones:
+  - Day 1-2: Core architecture and data structures
+  - Day 3-4: Effect integration
+  - Day 5: UI integration and testing
 
-## 风险
+## Risks
 
-| 风险 | 影响 | 概率 | 缓解措施 |
-|------|------|------|----------|
-| CPU 性能问题 | 高 | 中 | 优化效果器算法，使用 SIMD |
-| 与现有系统集成复杂 | 中 | 高 | 遵循现有 Effect trait 设计 |
-| UI 实现复杂度 | 中 | 中 | 简化 UI 设计，分阶段实现 |
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| CPU performance issues | High | Medium | Optimize effect algorithms, use SIMD |
+| Complex integration with existing system | Medium | High | Follow existing Effect trait design |
+| UI implementation complexity | Medium | Medium | Simplify UI design, implement in phases |
 
-## 验收标准
+## Acceptance Criteria
 
-### 功能验收
-- [ ] 音序器可以创建带效果器的轨道
-- [ ] 可以为轨道添加/移除效果器
-- [ ] 效果器参数可以实时调整
-- [ ] 效果器开关控制正常工作
-- [ ] 效果器与参数锁系统集成
+### Functional Acceptance
+- [ ] Sequencer can create tracks with effects
+- [ ] Effects can be added/removed from tracks
+- [ ] Effect parameters can be adjusted in real-time
+- [ ] Effect on/off control works correctly
+- [ ] Effects integrate with parameter lock system
 
-### 性能验收
-- [ ] 效果处理延迟 < 1ms
-- [ ] 单轨效果器 CPU < 5%
-- [ ] 8轨效果器总 CPU < 30%
+### Performance Acceptance
+- [ ] Effect processing latency < 1ms
+- [ ] Single track effects CPU < 5%
+- [ ] 8-track effects total CPU < 30%
 
-### 测试验收
-- [ ] 单元测试覆盖 > 80%
-- [ ] 集成测试覆盖核心功能
-- [ ] 无内存泄漏
+### Test Acceptance
+- [ ] Unit test coverage > 80%
+- [ ] Integration tests cover core functionality
+- [ ] No memory leaks
 
-## 相关文档
+## Related Documents
 
 - **Architecture**: `docs/ARCHITECTURE_PER_TRACK_EFFECTS.md`
 - **PRD**: `docs/PRD_PER_TRACK_EFFECTS.md`
 - **Stories**: `docs/STORIES_PER_TRACK_EFFECTS.md`
 
-## 参考资源
+## References
 
-- **Elektron Digitakt**: 每轨独立滤波器 + 效果器
-- **VCV Rack**: 模块化效果器链系统
-- **Bitwig Studio**: 容器式效果器链
+- **Elektron Digitakt**: Independent per-track filters + effects
+- **VCV Rack**: Modular effect chain system
+- **Bitwig Studio**: Container-based effect chains
 
 ---
 
-*本文档基于 WAVELET 开发工作流 (BMAD-METHOD) 创建*
+*This document was created based on the WAVELET development workflow (BMAD-METHOD)*

@@ -1,23 +1,23 @@
 # Architecture: Per-track Effects
 
-**版本**: v1.0  
-**日期**: 2026-02-03  
-**关联**: PRODUCT_BRIEF_PER_TRACK_EFFECTS.md
+**Version**: v1.0
+**Date**: 2026-02-03
+**Related**: PRODUCT_BRIEF_PER_TRACK_EFFECTS.md
 
 ---
 
-## 1. 概述
+## 1. Overview
 
-Per-track Effects 模块为 WAVELET 音序器的每个轨道提供独立的效果器链支持。
+The Per-track Effects module provides independent effect chain support for each track of the WAVELET sequencer.
 
-### 1.1 设计目标
+### 1.1 Design Goals
 
-1. **轻量级**: 每个轨道效果器占用 < 5% CPU
-2. **可扩展**: 易于添加新效果器类型
-3. **高性能**: 实时音频处理，无锁设计
-4. **兼容**: 与现有 Effect trait 系统无缝集成
+1. **Lightweight**: Each track's effects use < 5% CPU
+2. **Extensible**: Easy to add new effect types
+3. **High Performance**: Real-time audio processing, lock-free design
+4. **Compatible**: Seamless integration with existing Effect trait system
 
-### 1.2 架构原则
+### 1.2 Architecture Principles
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -35,107 +35,107 @@ Per-track Effects 模块为 WAVELET 音序器的每个轨道提供独立的效�
 
 ---
 
-## 2. 系统架构
+## 2. System Architecture
 
-### 2.1 核心组件
+### 2.1 Core Components
 
 ```
 src/
 ├── effects/
-│   ├── mod.rs           # Effect trait 定义
-│   ├── track_effects.rs # Per-track effects 核心 (NEW)
-│   ├── filter.rs        # 滤波器效果器
-│   ├── distortion.rs    # 失真效果器
-│   ├── compressor.rs    # 压缩效果器
-│   └── simple_eq.rs     # 均衡效果器
-├── step_sequencer.rs    # 音序器 (集成 TrackEffects)
-└── lib.rs               # 模块导出
+│   ├── mod.rs           # Effect trait definition
+│   ├── track_effects.rs # Per-track effects core (NEW)
+│   ├── filter.rs        # Filter effect
+│   ├── distortion.rs    # Distortion effect
+│   ├── compressor.rs    # Compressor effect
+│   └── simple_eq.rs     # Equalizer effect
+├── step_sequencer.rs    # Sequencer (integrates TrackEffects)
+└── lib.rs               # Module exports
 ```
 
-### 2.2 数据结构
+### 2.2 Data Structures
 
-#### TrackEffectSlot (效果器槽位)
+#### TrackEffectSlot (Effect Slot)
 
 ```rust
-/// 单个效果器槽位
+/// Single effect slot
 pub struct TrackEffectSlot {
-    /// 效果器类型
+    /// Effect type
     effect_type: Option<EffectType>,
-    
-    /// 效果器实例
+
+    /// Effect instance
     effect: Option<Box<dyn Effect>>,
-    
-    /// 是否启用
+
+    /// Whether enabled
     enabled: bool,
-    
-    /// Mix 比例 (0.0 = dry, 1.0 = wet)
+
+    /// Mix ratio (0.0 = dry, 1.0 = wet)
     mix: f32,
-    
-    /// 参数锁映射
+
+    /// Parameter lock mapping
     param_locks: HashMap<ParameterId, f32>,
 }
 ```
 
-#### TrackEffects (效果器链)
+#### TrackEffects (Effect Chain)
 
 ```rust
-/// 单个轨道的效果器链
+/// Single track's effect chain
 pub struct TrackEffects {
-    /// 效果器槽位 (最多4个)
+    /// Effect slots (up to 4)
     slots: [Option<TrackEffectSlot>; 4],
-    
-    /// 轨道 ID
+
+    /// Track ID
     track_id: u8,
-    
-    /// 启用状态
+
+    /// Enabled state
     enabled: bool,
-    
-    /// 旁路状态
+
+    /// Bypass state
     bypass: bool,
 }
 ```
 
-#### PerTrackEffectsManager (管理器)
+#### PerTrackEffectsManager (Manager)
 
 ```rust
-/// 全局效果器管理器
+/// Global effects manager
 pub struct PerTrackEffectsManager {
-    /// 所有轨道效果器 (8轨道)
+    /// All track effects (8 tracks)
     track_effects: [TrackEffects; 8],
-    
-    /// 共享效果器工厂
+
+    /// Shared effect factory
     effect_factory: EffectFactory,
-    
-    /// 缓存的预设
+
+    /// Cached presets
     presets: Vec<EffectChainPreset>,
 }
 ```
 
 ---
 
-## 3. 效果器工厂模式
+## 3. Effect Factory Pattern
 
 ### 3.1 EffectFactory
 
 ```rust
-/// 效果器工厂 - 创建和管理效果器实例
+/// Effect factory - creates and manages effect instances
 pub struct EffectFactory {
-    /// 样本率
+    /// Sample rate
     sample_rate: f32,
-    
-    /// 效果器类型注册表
+
+    /// Effect type registry
     registered_types: HashMap<EffectType, EffectBuilder>,
 }
 
 impl EffectFactory {
-    /// 创建指定类型的效果器
+    /// Create an effect of the specified type
     pub fn create_effect(&self, effect_type: EffectType) -> Option<Box<dyn Effect>> {
         self.registered_types
             .get(&effect_type)
             .and_then(|builder| builder(self.sample_rate))
     }
-    
-    /// 注册新的效果器类型
+
+    /// Register a new effect type
     pub fn register<E: Effect + Default + 'static>(
         &mut self,
         effect_type: EffectType,
@@ -148,22 +148,22 @@ impl EffectFactory {
 }
 ```
 
-### 3.2 支持的效果器类型
+### 3.2 Supported Effect Types
 
-| EffectType | 实现类 | CPU 估算 | 用途 |
-|------------|--------|----------|------|
-| Filter | BiquadFilter | ~1% | 音色塑形 |
-| Saturation | Saturation | ~1% | 失真/温暖感 |
-| Compressor | Compressor | ~2% | 动态控制 |
-| SimpleEQ | SimpleEq | ~1% | 频率调节 |
-| Chorus | Chorus | ~2% | 立体声宽度 |
-| Delay | Delay | ~2% | 空间感 |
+| EffectType | Implementation | CPU Estimate | Purpose |
+|------------|---------------|-------------|---------|
+| Filter | BiquadFilter | ~1% | Tone shaping |
+| Saturation | Saturation | ~1% | Distortion/warmth |
+| Compressor | Compressor | ~2% | Dynamic control |
+| SimpleEQ | SimpleEq | ~1% | Frequency adjustment |
+| Chorus | Chorus | ~2% | Stereo width |
+| Delay | Delay | ~2% | Spatial depth |
 
 ---
 
-## 4. 数据流
+## 4. Data Flow
 
-### 4.1 音频处理流程
+### 4.1 Audio Processing Flow
 
 ```
 Input Sample
@@ -172,15 +172,15 @@ Input Sample
 ┌───────────────────┐
 │  TrackEffects     │
 │  ┌─────────────┐  │
-│  │ Slot 0      │  │ ← 如果 enabled
+│  │ Slot 0      │  │ ← if enabled
 │  │ (Filter)    │──┤
 │  └─────────────┘  │
 │  ┌─────────────┐  │
-│  │ Slot 1      │  │ ← 如果 enabled
+│  │ Slot 1      │  │ ← if enabled
 │  │ (Saturation)│──┤
 │  └─────────────┘  │
 │  ┌─────────────┐  │
-│  │ Slot 2      │  │ ← 如果 enabled
+│  │ Slot 2      │  │ ← if enabled
 │  │ (Compressor)│──┤
 │  └─────────────┘  │
 └───────────────────┘
@@ -189,55 +189,55 @@ Input Sample
 Output Sample
 ```
 
-### 4.2 实时参数更新
+### 4.2 Real-time Parameter Updates
 
 ```
 Parameter Change Event
     │
-    ├───> Effect Slot (直接更新)
+    ├───> Effect Slot (direct update)
     │
-    └───> ParamLock Manager (记录映射)
+    └───> ParamLock Manager (record mapping)
              │
-             └───> Apply on Next Step (音序器同步)
+             └───> Apply on Next Step (sequencer sync)
 ```
 
 ---
 
-## 5. 与音序器集成
+## 5. Sequencer Integration
 
-### 5.1 修改 StepSequencer
+### 5.1 Modifying StepSequencer
 
 ```rust
 pub struct StepSequencer {
-    // ... 现有字段 ...
-    
-    /// 轨道效果器
+    // ... existing fields ...
+
+    /// Track effects
     track_effects: PerTrackEffectsManager,
 }
 
 impl StepSequencer {
-    /// 处理单轨道的音频输出
+    /// Process a single track's audio output
     fn process_track_output(&mut self, track_id: u8, sample: f32) -> f32 {
-        // 1. 正常音序器处理
+        // 1. Normal sequencer processing
         let mut sample = self.tracks[track_id as usize].process(sample);
-        
-        // 2. 应用效果器链
+
+        // 2. Apply effect chain
         sample = self.track_effects.process_track(track_id, sample);
-        
+
         sample
     }
 }
 ```
 
-### 5.2 与 ParameterLock 集成
+### 5.2 ParameterLock Integration
 
 ```rust
 impl TrackEffects {
-    /// 应用参数锁到效果器
+    /// Apply parameter locks to effects
     pub fn apply_param_locks(&mut self, step: u8) {
         for slot in &mut self.slots {
             if let Some(ref mut effect) = slot.effect {
-                // 查找该步骤的效果器参数锁
+                // Find effect parameter locks for this step
                 for (param_id, value) in &slot.param_locks {
                     self.apply_param_to_effect(effect.as_mut(), param_id, *value);
                 }
@@ -249,38 +249,38 @@ impl TrackEffects {
 
 ---
 
-## 6. 性能优化策略
+## 6. Performance Optimization Strategies
 
-### 6.1 CPU 优化
+### 6.1 CPU Optimization
 
-1. **效果器懒加载**: 只在效果器启用时分配内存
-2. **SIMD 优化**: 对滤波器等计算密集型效果器使用 SIMD
-3. **缓存友好**: 效果器状态使用栈分配，避免频繁内存访问
-4. **旁路优化**: 效果器关闭时跳过所有处理
+1. **Lazy loading of effects**: Only allocate memory when an effect is enabled
+2. **SIMD optimization**: Use SIMD for compute-intensive effects like filters
+3. **Cache-friendly**: Effect state uses stack allocation, avoiding frequent memory access
+4. **Bypass optimization**: Skip all processing when an effect is disabled
 
-### 6.2 内存优化
+### 6.2 Memory Optimization
 
 ```rust
-// 使用 Option 避免不必要的分配
+// Use Option to avoid unnecessary allocation
 struct TrackEffects {
-    slots: [Option<TrackEffectSlot>; 4], // 只有启用的效果器才会 Some
+    slots: [Option<TrackEffectSlot>; 4], // Only enabled effects will be Some
 }
 
-// 效果器实例使用 Box，但共享同一类型
+// Effect instances use Box, but share the same type
 effect: Option<Box<dyn Effect>>,
 ```
 
-### 6.3 延迟优化
+### 6.3 Latency Optimization
 
-- 所有效果器处理在同一音频缓冲区完成
-- 无需额外的缓冲区复制
-- 预估延迟: < 0.5ms (44.1kHz @ 22 samples)
+- All effect processing completes within the same audio buffer
+- No additional buffer copying required
+- Estimated latency: < 0.5ms (44.1kHz @ 22 samples)
 
 ---
 
-## 7. 错误处理
+## 7. Error Handling
 
-### 7.1 效果器创建失败
+### 7.1 Effect Creation Failure
 
 ```rust
 impl TrackEffects {
@@ -305,11 +305,11 @@ impl TrackEffects {
 }
 ```
 
-### 7.2 状态恢复
+### 7.2 State Recovery
 
 ```rust
 impl TrackEffects {
-    /// 从快照恢复效果器状态
+    /// Restore effect state from snapshot
     pub fn from_snapshot(snapshot: &TrackEffectsSnapshot) -> Self {
         let mut effects = Self::new(snapshot.track_id);
         
@@ -331,39 +331,39 @@ impl TrackEffects {
 
 ---
 
-## 8. 测试策略
+## 8. Testing Strategy
 
-### 8.1 单元测试
+### 8.1 Unit Tests
 
-| 测试项 | 覆盖内容 |
-|--------|----------|
-| `test_track_effects_creation` | 创建和初始化 |
-| `test_add_remove_effects` | 添加/移除效果器 |
-| `test_effect_processing` | 效果处理正确性 |
-| `test_bypass_behavior` | 旁路行为 |
-| `test_mix_parameter` | Mix 参数 |
-| `test_param_locks` | 参数锁集成 |
+| Test Item | Coverage |
+|-----------|----------|
+| `test_track_effects_creation` | Creation and initialization |
+| `test_add_remove_effects` | Adding/removing effects |
+| `test_effect_processing` | Effect processing correctness |
+| `test_bypass_behavior` | Bypass behavior |
+| `test_mix_parameter` | Mix parameter |
+| `test_param_locks` | Parameter lock integration |
 
-### 8.2 集成测试
+### 8.2 Integration Tests
 
-- 音序器 + 效果器集成
-- 8 轨道效果器性能测试
-- 效果器切换无杂音测试
+- Sequencer + effects integration
+- 8-track effects performance test
+- Effect switching without artifacts test
 
-### 8.3 性能测试
+### 8.3 Performance Tests
 
 ```rust
 #[test]
 fn test_track_effects_performance() {
     let mut effects = PerTrackEffectsManager::new(44100.0);
     
-    // 添加效果器到所有轨道
+    // Add effects to all tracks
     for track_id in 0..8 {
         effects.add_effect(track_id, 0, EffectType::Filter).unwrap();
         effects.add_effect(track_id, 1, EffectType::Saturation).unwrap();
     }
-    
-    // 性能测试: 1000次处理
+
+    // Performance test: 1000 iterations
     let start = Instant::now();
     for _ in 0..1000 {
         for track_id in 0..8 {
@@ -371,26 +371,26 @@ fn test_track_effects_performance() {
         }
     }
     let duration = start.elapsed();
-    
-    // 应该在合理时间内完成
+
+    // Should complete within a reasonable time
     assert!(duration.as_secs_f32() < 0.1);
 }
 ```
 
 ---
 
-## 9. 未来扩展
+## 9. Future Extensions
 
-### 9.1 可扩展效果器
+### 9.1 Extensible Effects
 
 ```rust
-// 注册新效果器
+// Register new effects
 effect_factory.register::<CustomEffect>(EffectType::Custom);
 
-// 效果器自动出现在 UI 选择列表中
+// Effects automatically appear in the UI selection list
 ```
 
-### 9.2 效果器预设系统
+### 9.2 Effect Preset System
 
 ```rust
 pub struct EffectChainPreset {
@@ -400,27 +400,27 @@ pub struct EffectChainPreset {
     tags: Vec<String>,
 }
 
-// 预设可以保存/分享
+// Presets can be saved/shared
 ```
 
-### 9.3 高级效果器
+### 9.3 Advanced Effects
 
-- Reverb (卷积或算法混响)
-- Delay (立体声延迟)
-- Phaser (相位效果)
-- Granular (粒子效果)
-
----
-
-## 10. 决策记录
-
-| 决策 | 选项 | 选择 | 理由 |
-|------|------|------|------|
-| 效果器槽位数 | 4 / 8 | 4 | 平衡功能和 CPU |
-| 效果器执行顺序 | 固定/可调 | 固定 (Filter→Dist→EQ→Comp) | 简化 UI，降低复杂度 |
-| 参数锁粒度 | 步骤/小节 | 步骤 | 与音序器现有系统一致 |
-| 效果器类型 | 基础/高级 | 基础 (P0优先) | 快速交付核心功能 |
+- Reverb (convolution or algorithmic reverb)
+- Delay (stereo delay)
+- Phaser (phase effect)
+- Granular (granular effect)
 
 ---
 
-*本文档基于 WAVELET 开发工作流 (BMAD-METHOD) 创建*
+## 10. Decision Log
+
+| Decision | Options | Choice | Rationale |
+|----------|---------|--------|-----------|
+| Number of effect slots | 4 / 8 | 4 | Balance between features and CPU |
+| Effect execution order | Fixed/Adjustable | Fixed (Filter->Dist->EQ->Comp) | Simplify UI, reduce complexity |
+| Parameter lock granularity | Step/Bar | Step | Consistent with existing sequencer system |
+| Effect types | Basic/Advanced | Basic (P0 priority) | Deliver core functionality quickly |
+
+---
+
+*This document was created based on the WAVELET development workflow (BMAD-METHOD)*

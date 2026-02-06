@@ -1,13 +1,13 @@
 // WAVELET - Audio Analysis Module
 //
-// 音频分析工具，用于测试和验证音频处理模块
-// 包括：RMS测量、峰值检测、频谱分析、延迟测量等
+// Audio analysis tools for testing and validating audio processing modules
+// Includes: RMS measurement, peak detection, spectrum analysis, latency measurement, etc.
 
 #![allow(dead_code)] // Analysis functions reserved for future use
 
 use std::f32::consts::PI;
 
-/// 测量RMS电平
+/// Measure RMS level
 #[inline]
 pub fn measure_rms(samples: &[f32]) -> f32 {
     if samples.is_empty() {
@@ -18,7 +18,7 @@ pub fn measure_rms(samples: &[f32]) -> f32 {
     (sum_sq / samples.len() as f32).sqrt()
 }
 
-/// 测量峰值电平 (绝对值最大)
+/// Measure peak level (maximum absolute value)
 #[inline]
 pub fn measure_peak(samples: &[f32]) -> f32 {
     let mut max_val: f32 = 0.0;
@@ -31,35 +31,35 @@ pub fn measure_peak(samples: &[f32]) -> f32 {
     max_val
 }
 
-/// 计算增益 (dB)
+/// Calculate gain (dB)
 #[inline]
 pub fn gain_db(gain: f32) -> f32 {
     if gain <= 0.0 {
-        -100.0 // 极小值表示无声
+        -100.0 // Very small value representing silence
     } else {
         20.0 * gain.log10()
     }
 }
 
-/// 计算增益比
+/// Calculate gain ratio
 #[inline]
 pub fn gain_ratio(db: f32) -> f32 {
     10.0f32.powf(db / 20.0)
 }
 
-/// 测量RMS电平 (dB)
+/// Measure RMS level (dB)
 #[inline]
 pub fn measure_rms_db(samples: &[f32]) -> f32 {
     gain_db(measure_rms(samples))
 }
 
-/// 测量峰值电平 (dB)
+/// Measure peak level (dB)
 #[inline]
 pub fn measure_peak_db(samples: &[f32]) -> f32 {
     gain_db(measure_peak(samples))
 }
 
-/// 测量动态范围 (dB)
+/// Measure dynamic range (dB)
 #[inline]
 pub fn measure_dynamic_range(peaks: &[f32]) -> f32 {
     let mut max_peak: f32 = 0.0;
@@ -75,13 +75,13 @@ pub fn measure_dynamic_range(peaks: &[f32]) -> f32 {
     }
 
     if min_peak <= 0.0 {
-        max_peak // 如果有 silence，返回最大值
+        max_peak // If there is silence, return the maximum value
     } else {
         gain_db(max_peak / min_peak)
     }
 }
 
-/// 交叉相关测量 (用于延迟检测)
+/// Cross-correlation measurement (for latency detection)
 pub fn measure_cross_correlation(signal1: &[f32], signal2: &[f32], max_lag: usize) -> f32 {
     let len = signal1.len().min(signal2.len()).saturating_sub(max_lag);
     if len == 0 {
@@ -107,7 +107,7 @@ pub fn measure_cross_correlation(signal1: &[f32], signal2: &[f32], max_lag: usiz
     max_corr
 }
 
-/// 立体声相关性系数 (-1.0 到 1.0)
+/// Stereo correlation coefficient (-1.0 to 1.0)
 pub fn measure_stereo_correlation(left: &[f32], right: &[f32]) -> f32 {
     if left.len() != right.len() || left.is_empty() {
         return 0.0;
@@ -115,11 +115,11 @@ pub fn measure_stereo_correlation(left: &[f32], right: &[f32]) -> f32 {
 
     let n = left.len() as f32;
 
-    // 计算均值
+    // Calculate mean
     let mean_l: f32 = left.iter().sum();
     let mean_r: f32 = right.iter().sum();
 
-    // 计算协方差
+    // Calculate covariance
     let mut cov = 0.0;
     let mut var_l = 0.0;
     let mut var_r = 0.0;
@@ -139,21 +139,21 @@ pub fn measure_stereo_correlation(left: &[f32], right: &[f32]) -> f32 {
     cov / (var_l.sqrt() * var_r.sqrt())
 }
 
-/// 简单的FFT分析 (返回频率箱电平)
-/// 注意：这是一个简化的实现，实际项目中应该使用专业库
+/// Simple FFT analysis (returns frequency bin levels)
+/// Note: This is a simplified implementation; production projects should use a professional library
 pub struct SpectrumAnalyzer {
-    /// 频率箱数量
+    /// Number of frequency bins
     bins: usize,
 
-    /// 采样率
+    /// Sample rate
     sample_rate: f32,
 
-    /// 汉宁窗缓存
+    /// Hanning window cache
     window: Vec<f32>,
 }
 
 impl SpectrumAnalyzer {
-    /// 创建新的频谱分析仪
+    /// Create a new spectrum analyzer
     pub fn new(bins: usize, sample_rate: f32) -> Self {
         let window: Vec<f32> = (0..bins)
             .map(|i| {
@@ -169,31 +169,31 @@ impl SpectrumAnalyzer {
         }
     }
 
-    /// 分析频谱，返回每个频率箱的电平 (dB)
+    /// Analyze spectrum, returns level (dB) for each frequency bin
     pub fn analyze(&self, samples: &[f32]) -> Vec<f32> {
         let len = samples.len().min(self.bins);
 
-        // 预处理：应用窗函数
+        // Preprocessing: apply window function
         let windowed: Vec<f32> = (0..len)
             .zip(&self.window)
             .map(|(i, &w)| samples.get(i).unwrap_or(&0.0) * w)
             .collect();
 
-        // 简化的频谱计算 (幅度谱)
+        // Simplified spectrum computation (magnitude spectrum)
         let mut spectrum = vec![-100.0; self.bins];
 
-        // 计算DC分量和Nyquist
+        // Calculate DC component and Nyquist
         let sum: f32 = windowed.iter().sum();
         spectrum[0] = gain_db(sum.abs() / len as f32);
 
         if self.bins > 2 {
-            // 简化的频率箱计算
+            // Simplified frequency bin calculation
             #[allow(clippy::needless_range_loop)]
             for i in 1..(self.bins - 1) {
                 let freq_low = i as f32 * self.sample_rate / (2.0 * self.bins as f32);
                 let freq_high = (i + 1) as f32 * self.sample_rate / (2.0 * self.bins as f32);
 
-                // 计算该频段的RMS
+                // Calculate RMS for this frequency band
                 let sum_sq: f32 = windowed
                     .iter()
                     .enumerate()
@@ -222,12 +222,12 @@ impl SpectrumAnalyzer {
         spectrum
     }
 
-    /// 获取频率分辨率 (Hz/bin)
+    /// Get frequency resolution (Hz/bin)
     pub fn frequency_resolution(&self) -> f32 {
         self.sample_rate / (2.0 * self.bins as f32)
     }
 
-    /// 获取指定频率所在的箱索引
+    /// Get the bin index for a given frequency
     pub fn frequency_to_bin(&self, frequency: f32) -> usize {
         (frequency / self.frequency_resolution()) as usize
     }
@@ -236,16 +236,16 @@ impl SpectrumAnalyzer {
 /// 延迟测量器 - reserved for future latency measurement features
 #[allow(dead_code)]
 pub struct LatencyMeasurer {
-    /// 已知延迟 (samples)
+    /// Known delay (samples)
     known_delay: usize,
 
-    /// 互相关结果
+    /// Cross-correlation results
     cross_correlation: Vec<f32>,
 }
 
 #[allow(dead_code)]
 impl LatencyMeasurer {
-    /// 创建新的延迟测量器
+    /// Create a new latency measurer
     pub fn new(known_delay: usize) -> Self {
         Self {
             known_delay,
@@ -253,12 +253,12 @@ impl LatencyMeasurer {
         }
     }
 
-    /// 测量输入和输出的延迟
-    /// 使用简单的互相关方法
+    /// Measure latency between input and output
+    /// Uses a simple cross-correlation method
     pub fn measure_latency(&mut self, input: &[f32], output: &[f32], max_lag: usize) -> usize {
         self.cross_correlation.clear();
 
-        // 计算互相关
+        // Calculate cross-correlation
         for lag in 0..=max_lag {
             let effective_len = input.len().min(output.len().saturating_sub(lag));
             if effective_len == 0 {
@@ -273,7 +273,7 @@ impl LatencyMeasurer {
             self.cross_correlation.push(sum);
         }
 
-        // 找到最大相关值的位置
+        // Find the position of the maximum correlation value
         let mut max_idx = 0;
         let mut max_val = f32::MIN;
 
@@ -287,44 +287,44 @@ impl LatencyMeasurer {
         max_idx
     }
 
-    /// 获取互相关结果
+    /// Get cross-correlation results
     pub fn get_cross_correlation(&self) -> &[f32] {
         &self.cross_correlation
     }
 }
 
-/// 谐波失真分析器 - reserved for future FFT-based analysis
+/// Harmonic distortion analyzer - reserved for future FFT-based analysis
 #[allow(dead_code)]
 pub struct HarmonicDistortionAnalyzer {
-    /// 采样率
+    /// Sample rate
     sample_rate: f32,
 
-    /// 基波频率
+    /// Fundamental frequency
     fundamental_freq: f32,
 
-    /// 分析窗口大小
+    /// Analysis window size
     window_size: usize,
 }
 
 #[allow(dead_code)]
 impl HarmonicDistortionAnalyzer {
-    /// 创建新的谐波失真分析器
+    /// Create a new harmonic distortion analyzer
     pub fn new(sample_rate: f32, fundamental_freq: f32) -> Self {
         Self {
             sample_rate,
             fundamental_freq,
-            window_size: (sample_rate / fundamental_freq * 4.0) as usize, // 至少4个周期
+            window_size: (sample_rate / fundamental_freq * 4.0) as usize, // At least 4 cycles
         }
     }
 
-    /// 测量THD+N (总谐波失真 + 噪声)
+    /// Measure THD+N (Total Harmonic Distortion + Noise)
     pub fn measure_thd_plus_n(&self, samples: &[f32]) -> f32 {
-        // 简化的THD+N计算
-        // 实际应该使用FFT分离基波和各次谐波
+        // Simplified THD+N calculation
+        // In practice, FFT should be used to separate the fundamental and harmonics
 
         let rms_total = measure_rms(samples);
 
-        // 估计基波幅度 (简化版：使用带通滤波后的RMS)
+        // Estimate fundamental amplitude (simplified: using bandpass-filtered RMS)
         let fundamental_rms = self.estimate_fundamental_rms(samples);
 
         if fundamental_rms <= 0.0 {
@@ -336,9 +336,9 @@ impl HarmonicDistortionAnalyzer {
         harmonic_noise / fundamental_rms
     }
 
-    /// 估计基波RMS
+    /// Estimate fundamental RMS
     fn estimate_fundamental_rms(&self, samples: &[f32]) -> f32 {
-        // 简化的基波估计：计算与正弦波的互相关
+        // Simplified fundamental estimation: calculate cross-correlation with sine wave
         let period = self.sample_rate / self.fundamental_freq;
         let n_periods = (samples.len() as f32 / period).floor() as usize;
 
@@ -358,14 +358,14 @@ impl HarmonicDistortionAnalyzer {
         }
 
         if count > 0 {
-            // 简化：返回平均值作为基波估计
+            // Simplified: return average as fundamental estimate
             sum / count as f32
         } else {
             measure_rms(samples)
         }
     }
 
-    /// 计算THD (dB)
+    /// Calculate THD (dB)
     pub fn measure_thd_db(&self, samples: &[f32]) -> f32 {
         let thd = self.measure_thd_plus_n(samples);
         if thd <= 0.0 {

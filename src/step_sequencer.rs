@@ -1,13 +1,13 @@
 // WAVELET - Step Sequencer Module
-// 参考: Elektron Digitakt / OctatrACK 风格
+// Reference: Elektron Digitakt / Octatrack style
 //
-// 功能:
+// Features:
 // - 8 tracks × 16 steps
 // - Per-step note + velocity
-// - Parameter Lock (每步不同参数)
-// - Probability trigger (概率触发)
+// - Parameter Lock (different parameters per step)
+// - Probability trigger
 // - Swing/Shuffle
-// - Per-track length (独立长度)
+// - Per-track length
 
 #![allow(dead_code)] // Reserve sequencer fields for future MIDI sync features
 
@@ -19,10 +19,10 @@ pub const NUM_STEPS: usize = 16;
 /// Step trigger condition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TrigCondition {
-    Normal,      // 正常触发
-    Probability, // 概率触发
-    Mute,        // 静音
-    Solo,        // 独奏
+    Normal,      // Normal trigger
+    Probability, // Probability trigger
+    Mute,        // Muted
+    Solo,        // Solo
 }
 
 /// A single step in the sequencer

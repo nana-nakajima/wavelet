@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-WAVELET 截图自动化脚本
-用于Steam商店素材捕获
+WAVELET Screenshot Automation Script
+For capturing Steam store assets
 
-使用方法:
+Usage:
     python3 capture_screenshots.py --mode all
     python3 capture_screenshots.py --mode ui
     python3 capture_screenshots.py --mode ai
 
-依赖:
+Dependencies:
     pip install pyautogui pillow opencv-python
 """
 
@@ -19,7 +19,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
-# 配置
+# Configuration
 OUTPUT_DIR = Path(__file__).parent / "screenshots"
 STEAM_REQUIREMENTS = {
     "main_capsule": (1232, 706, "main_capsule"),
@@ -29,101 +29,101 @@ STEAM_REQUIREMENTS = {
     "library_hero": (3840, 1240, "library_hero"),
 }
 
-# 截图清单 - 10个必拍场景
+# Screenshot checklist - 10 must-capture scenes
 SCREENSHOT_PLAN = [
     {
         "name": "01_main_interface",
-        "description": "主界面全貌 - 展示完整UI布局",
+        "description": "Main interface overview - showcasing the full UI layout",
         "duration": 5,
-        "highlight": "主界面"
+        "highlight": "Main interface"
     },
     {
         "name": "02_dark_theme",
-        "description": "Dark主题 - 专业沉稳风格",
+        "description": "Dark theme - professional and sleek style",
         "duration": 3,
-        "highlight": "Dark主题"
+        "highlight": "Dark theme"
     },
     {
         "name": "03_retro_theme",
-        "description": "Retro主题 - 温暖复古风格",
+        "description": "Retro theme - warm vintage style",
         "duration": 3,
-        "highlight": "Retro主题"
+        "highlight": "Retro theme"
     },
     {
         "name": "04_cyber_theme",
-        "description": "Cyber主题 - 酷炫科幻风格",
+        "description": "Cyber theme - cool sci-fi style",
         "duration": 3,
-        "highlight": "Cyber主题"
+        "highlight": "Cyber theme"
     },
     {
         "name": "05_oscillator_control",
-        "description": "振荡器控制 - 波形选择特写",
+        "description": "Oscillator controls - waveform selection close-up",
         "duration": 4,
-        "highlight": "振荡器"
+        "highlight": "Oscillator"
     },
     {
         "name": "06_filter_control",
-        "description": "滤波器调节 - 旋钮特写",
+        "description": "Filter adjustment - knob close-up",
         "duration": 4,
-        "highlight": "滤波器"
+        "highlight": "Filter"
     },
     {
         "name": "07_ai_melody_generation",
-        "description": "AI旋律生成 - 风格选择界面",
+        "description": "AI melody generation - style selection interface",
         "duration": 6,
-        "highlight": "AI旋律"
+        "highlight": "AI melody"
     },
     {
         "name": "08_ai_chord_progression",
-        "description": "AI和弦进行 - 生成结果展示",
+        "description": "AI chord progression - generated results display",
         "duration": 5,
-        "highlight": "AI和弦"
+        "highlight": "AI chords"
     },
     {
         "name": "09_ai_rhythm_generation",
-        "description": "AI节奏生成 - 鼓组界面",
+        "description": "AI rhythm generation - drum kit interface",
         "duration": 5,
-        "highlight": "AI节奏"
+        "highlight": "AI rhythm"
     },
     {
         "name": "10_visualizer",
-        "description": "实时可视化 - 波形跳动效果",
+        "description": "Real-time visualization - waveform animation effect",
         "duration": 4,
-        "highlight": "可视化"
+        "highlight": "Visualizer"
     },
     {
         "name": "11_preset_browser",
-        "description": "预设浏览器 - 50+预设展示",
+        "description": "Preset browser - 50+ presets showcase",
         "duration": 4,
-        "highlight": "预设"
+        "highlight": "Presets"
     },
     {
         "name": "12_community_panel",
-        "description": "社区面板 - 用户分享展示",
+        "description": "Community panel - user sharing showcase",
         "duration": 4,
-        "highlight": "社区"
+        "highlight": "Community"
     },
 ]
 
 
 def setup_output_dir():
-    """创建输出目录"""
+    """Create output directory"""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"📁 截图将保存到: {OUTPUT_DIR}")
+    print(f"Screenshots will be saved to: {OUTPUT_DIR}")
 
 
 def capture_screenshot(name, description, delay=3):
     """
-    捕获单张截图
-    
+    Capture a single screenshot
+
     Args:
-        name: 截图名称
-        description: 场景描述
-        delay: 等待秒数 (给UI时间加载)
+        name: Screenshot name
+        description: Scene description
+        delay: Wait time in seconds (to allow UI to load)
     """
-    print(f"\n🎬 准备捕获: {name}")
-    print(f"   描述: {description}")
-    print(f"   等待 {delay} 秒...")
+    print(f"\nPreparing to capture: {name}")
+    print(f"   Description: {description}")
+    print(f"   Waiting {delay} seconds...")
     
     time.sleep(delay)
     
@@ -134,15 +134,15 @@ def capture_screenshot(name, description, delay=3):
         filename = f"{name}_{timestamp}.png"
         filepath = OUTPUT_DIR / filename
         screenshot.save(filepath)
-        print(f"   ✅ 已保存: {filepath}")
+        print(f"   Saved: {filepath}")
         return filepath
     except ImportError:
-        print("   ⚠️ pyautogui 未安装，使用备用方法...")
+        print("   pyautogui is not installed, using fallback method...")
         return capture_with_screencapture(name, delay)
 
 
 def capture_with_screencapture(name, delay=3):
-    """使用macOS screencapture命令 (备用方案)"""
+    """Use macOS screencapture command (fallback method)"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{name}_{timestamp}.png"
     filepath = OUTPUT_DIR / filename
@@ -156,29 +156,29 @@ def capture_with_screencapture(name, delay=3):
     )
     
     if result.returncode == 0:
-        print(f"   ✅ 已保存: {filepath}")
+        print(f"   Saved: {filepath}")
         return filepath
     else:
-        print(f"   ❌ 截图失败: {result.stderr}")
+        print(f"   Screenshot failed: {result.stderr}")
         return None
 
 
 def generate_steam_assets(screenshots):
     """
-    根据截图生成Steam所需的各种尺寸素材
-    
+    Generate Steam assets in various sizes from screenshots
+
     Args:
-        screenshots: 截图文件路径列表
+        screenshots: List of screenshot file paths
     """
     try:
         from PIL import Image
     except ImportError:
-        print("⚠️ 需要安装Pillow: pip install pillow")
+        print("Pillow is required: pip install pillow")
         return
-    
-    from PIL import Image  # 确保Image可用
-    
-    print("\n🖼️ 生成Steam素材...")
+
+    from PIL import Image  # Ensure Image is available
+
+    print("\nGenerating Steam assets...")
     
     for shot in screenshots:
         if shot is None or not shot.exists():
@@ -187,13 +187,13 @@ def generate_steam_assets(screenshots):
         with Image.open(shot) as img:
             base_name = shot.stem
             
-            # 生成Steam需要的各种尺寸
+            # Generate various sizes required by Steam
             for size_name, (width, height, suffix) in STEAM_REQUIREMENTS.items():
                 if width > img.width or height > img.height:
-                    print(f"   ⏭️ 跳过 {size_name}: 原图太小")
+                    print(f"   Skipping {size_name}: source image too small")
                     continue
                 
-                # 缩放到目标尺寸 (保持比例，居中裁剪)
+                # Scale to target size (maintain aspect ratio, center crop)
                 resized = resize_and_crop(img, width, height)
                 output_path = OUTPUT_DIR / f"{base_name}_{suffix}.png"
                 resized.save(output_path, "PNG", quality=95)
@@ -201,22 +201,22 @@ def generate_steam_assets(screenshots):
 
 
 def resize_and_crop(img, target_width, target_height):
-    """调整大小并居中裁剪图片"""
+    """Resize and center-crop the image"""
     img_ratio = img.width / img.height
     target_ratio = target_width / target_height
     
     if img_ratio > target_ratio:
-        # 图片更宽，按高度缩放
+        # Image is wider, scale by height
         new_height = target_height
         new_width = int(new_height * img_ratio)
     else:
-        # 图片更高，按宽度缩放
+        # Image is taller, scale by width
         new_width = target_width
         new_height = int(new_width / img_ratio)
     
     resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
     
-    # 居中裁剪
+    # Center crop
     left = (new_width - target_width) // 2
     top = (new_height - target_height) // 2
     right = left + target_width
@@ -227,24 +227,24 @@ def resize_and_crop(img, target_width, target_height):
 
 def simulate_capture(name, description, delay=0):
     """
-    模拟捕获 (用于没有实际UI时)
-    创建一个占位图
+    Simulate capture (used when no actual UI is available)
+    Creates a placeholder image
     """
     try:
         from PIL import Image, ImageDraw, ImageFont
     except ImportError:
-        print("⚠️ 需要安装Pillow: pip install pillow")
+        print("Pillow is required: pip install pillow")
         return None
-    
-    print(f"\n🎬 模拟捕获: {name}")
-    print(f"   描述: {description}")
-    
-    # 创建占位图
+
+    print(f"\nSimulated capture: {name}")
+    print(f"   Description: {description}")
+
+    # Create placeholder image
     width, height = 1920, 1080
     img = Image.new('RGB', (width, height), color=(30, 30, 50))
     draw = ImageDraw.Draw(img)
     
-    # 绘制标题
+    # Draw title
     try:
         font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 60)
     except:
@@ -259,34 +259,34 @@ def simulate_capture(name, description, delay=0):
     filename = f"{name}_{timestamp}.png"
     filepath = OUTPUT_DIR / filename
     img.save(filepath, "PNG")
-    print(f"   ✅ 占位图已保存: {filepath}")
+    print(f"   Placeholder saved: {filepath}")
     
     return filepath
 
 
 def run_automation(godot_executable=None, headless=False):
     """
-    运行自动化截图流程
-    
+    Run the automated screenshot workflow
+
     Args:
-        godot_executable: Godot可执行文件路径
-        headless: 是否使用headless模式
+        godot_executable: Path to the Godot executable
+        headless: Whether to use headless mode
     """
     setup_output_dir()
     
     print("\n" + "="*50)
-    print("🎮 WAVELET 截图自动化")
+    print("WAVELET Screenshot Automation")
     print("="*50)
     
     if godot_executable and os.path.exists(godot_executable):
-        print(f"🚀 启动Godot: {godot_executable}")
-        # 启动Godot
+        print(f"Launching Godot: {godot_executable}")
+        # Launch Godot
         # subprocess.Popen([godot_executable, "--headless"])
         # time.sleep(5)
     
     screenshots = []
     
-    # 捕获每个场景
+    # Capture each scene
     for scene in SCREENSHOT_PLAN:
         if godot_executable:
             filepath = capture_screenshot(scene["name"], scene["description"], scene["duration"])
@@ -296,14 +296,14 @@ def run_automation(godot_executable=None, headless=False):
         if filepath:
             screenshots.append(filepath)
     
-    # 生成Steam素材
+    # Generate Steam assets
     if screenshots:
         generate_steam_assets(screenshots)
     
     print("\n" + "="*50)
-    print("✅ 截图完成!")
-    print(f"📁 输出目录: {OUTPUT_DIR}")
-    print(f"📊 捕获截图: {len(screenshots)}张")
+    print("Screenshots complete!")
+    print(f"Output directory: {OUTPUT_DIR}")
+    print(f"Screenshots captured: {len(screenshots)}")
     print("="*50)
     
     return screenshots
