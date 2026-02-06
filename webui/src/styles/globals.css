@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Dark industrial palette */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #252525;
+  --bg-tertiary: #2d2d2d;
+  --bg-module: #1e1e1e;
+  
+  /* Accent colors */
+  --accent-blue: #4a9eff;
+  --accent-green: #4ade80;
+  --accent-orange: #f97316;
+  --accent-purple: #a855f7;
+  --accent-red: #ef4444;
+  --accent-yellow: #eab308;
+  
+  /* Text colors */
+  --text-primary: #e5e5e5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  
+  /* Border colors */
+  --border-light: #404040;
+  --border-dark: #2a2a2a;
+  
+  /* Pixel art effects */
+  --pixel-border: 2px solid var(--border-light);
+  --pixel-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  image-rendering: pixelated;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Pixel art button style */
+.pixel-button {
+  background: var(--bg-tertiary);
+  border: var(--pixel-border);
+  box-shadow: var(--pixel-shadow);
+  transition: all 0.1s;
+}
+
+.pixel-button:hover {
+  background: var(--bg-secondary);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* Module panel style */
+.module-panel {
+  background: linear-gradient(180deg, var(--bg-module) 0%, #151515 100%);
+  border: 2px solid var(--border-light);
+  border-bottom-color: var(--border-dark);
+  border-right-color: var(--border-dark);
+}
+
+/* Knob style */
+.knob {
+  background: conic-gradient(
+    from 135deg,
+    var(--accent-blue) 0deg,
+    var(--bg-tertiary) 0deg,
+    var(--bg-tertiary) 270deg,
+    var(--accent-blue) 270deg
+  );
+  border: 2px solid var(--border-light);
+}
+
+/* Cable style */
+.cable {
+  stroke: var(--accent-blue);
+  stroke-width: 3;
+  fill: none;
+  filter: drop-shadow(0 0 4px var(--accent-blue));
+}
+
+/* LED indicator */
+.led {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+}
+
+.led.on {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+}
+
+.led.off {
+  background: var(--bg-tertiary);
+}
+
+/* Rack mount holes */
+.rack-hole {
+  width: 4px;
+  height: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-dark);
+  box-shadow: inset 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* Text styles */
+.pixel-text {
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
+}
+
+/* Input/Output ports */
+.port {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-light);
+  background: var(--bg-tertiary);
+  transition: all 0.1s;
+}
+
+.port:hover {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.port.input {
+  border-radius: 50%;
+}
+
+.port.output {
+  border-radius: 0;
+}
+
+/* Group color coding */
+.group-oscillator {
+  --group-color: var(--accent-blue);
+}
+
+.group-filter {
+  --group-color: var(--accent-green);
+}
+
+.group-effect {
+  --group-color: var(--accent-orange);
+}
+
+.group-modulation {
+  --group-color: var(--accent-purple);
+}
