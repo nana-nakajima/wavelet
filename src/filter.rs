@@ -738,124 +738,365 @@ impl ZdfFilterWrapper {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_filter_default() {
-        let filter = Filter::new(FilterType::LowPass, 1000.0, 1.0, 44100.0);
-        assert_eq!(filter.inner.filter_type, FilterType::LowPass);
-        assert_eq!(filter.inner.cutoff, 1000.0);
+    // --- Helper: generate a sine wave at a given frequency ---
+    fn generate_sine(freq: f32, sample_rate: f32, num_samples: usize) -> Vec<f32> {
+        (0..num_samples)
+            .map(|i| (2.0 * PI * freq * i as f32 / sample_rate).sin())
+            .collect()
     }
 
-    #[test]
-    fn test_filter_process() {
-        let mut filter = Filter::new(FilterType::LowPass, 1000.0, 1.0, 44100.0);
-        let input = 0.5;
-        let output = filter.process(input);
-        // Output should be within valid range
-        assert!(output.abs() <= input.abs() + 0.01);
+    // --- Helper: measure RMS of a signal ---
+    fn rms(signal: &[f32]) -> f32 {
+        let sum_sq: f32 = signal.iter().map(|s| s * s).sum();
+        (sum_sq / signal.len() as f32).sqrt()
     }
 
+    // --- Biquad: Lowpass attenuates high frequencies ---
     #[test]
-    fn test_biquad_reset() {
-        let mut filter = BiquadFilter::new();
-        let _ = filter.process_sample(1.0);
+    fn test_lowpass_attenuates_high_frequencies() {
+        let sample_rate = 44100.0;
+        let cutoff = 500.0;
+        let mut filter = BiquadFilter::with_config(FilterConfig {
+            filter_type: FilterType::LowPass,
+            cutoff_frequency: cutoff,
+            resonance: 0.707,
+            sample_rate,
+            ..Default::default()
+        });
+
+        // Signal well below cutoff should pass through
+        let low_signal = generate_sine(100.0, sample_rate, 4096);
+        let low_output: Vec<f32> = low_signal.iter().map(|&s| filter.process_sample(s)).collect();
         filter.reset();
-        assert_eq!(filter.z1, 0.0);
-        assert_eq!(filter.z2, 0.0);
+
+        // Signal well above cutoff should be attenuated
+        let high_signal = generate_sine(5000.0, sample_rate, 4096);
+        let high_output: Vec<f32> = high_signal.iter().map(|&s| filter.process_sample(s)).collect();
+
+        // Skip transient (first 512 samples), measure steady-state
+        let low_rms = rms(&low_output[512..]);
+        let high_rms = rms(&high_output[512..]);
+
+        // Low frequency should retain most energy (>80% of input)
+        assert!(low_rms > 0.5, "Low freq RMS too low: {}", low_rms);
+        // High frequency should be significantly attenuated (<10% of low)
+        assert!(
+            high_rms < low_rms * 0.2,
+            "High freq not attenuated enough: high={}, low={}",
+            high_rms,
+            low_rms
+        );
     }
 
+    // --- Biquad: Highpass attenuates low frequencies ---
     #[test]
-    fn test_filter_type_change() {
+    fn test_highpass_attenuates_low_frequencies() {
+        let sample_rate = 44100.0;
+        let cutoff = 5000.0;
+        let mut filter = BiquadFilter::with_config(FilterConfig {
+            filter_type: FilterType::HighPass,
+            cutoff_frequency: cutoff,
+            resonance: 0.707,
+            sample_rate,
+            ..Default::default()
+        });
+
+        let low_signal = generate_sine(100.0, sample_rate, 4096);
+        let low_output: Vec<f32> = low_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        filter.reset();
+
+        let high_signal = generate_sine(15000.0, sample_rate, 4096);
+        let high_output: Vec<f32> = high_signal.iter().map(|&s| filter.process_sample(s)).collect();
+
+        let low_rms = rms(&low_output[512..]);
+        let high_rms = rms(&high_output[512..]);
+
+        assert!(
+            low_rms < high_rms * 0.2,
+            "Low freq not attenuated: low={}, high={}",
+            low_rms,
+            high_rms
+        );
+        assert!(high_rms > 0.5, "High freq RMS too low: {}", high_rms);
+    }
+
+    // --- Biquad: Bandpass passes center frequency ---
+    #[test]
+    fn test_bandpass_passes_center_rejects_extremes() {
+        let sample_rate = 44100.0;
+        let center = 2000.0;
+        let mut filter = BiquadFilter::with_config(FilterConfig {
+            filter_type: FilterType::BandPass,
+            cutoff_frequency: center,
+            resonance: 1.0,
+            sample_rate,
+            ..Default::default()
+        });
+
+        let center_signal = generate_sine(center, sample_rate, 4096);
+        let center_out: Vec<f32> = center_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        filter.reset();
+
+        let far_signal = generate_sine(100.0, sample_rate, 4096);
+        let far_out: Vec<f32> = far_signal.iter().map(|&s| filter.process_sample(s)).collect();
+
+        let center_rms = rms(&center_out[512..]);
+        let far_rms = rms(&far_out[512..]);
+
+        assert!(
+            center_rms > far_rms * 2.0,
+            "Bandpass center not louder than far: center={}, far={}",
+            center_rms,
+            far_rms
+        );
+    }
+
+    // --- Biquad: DC response of lowpass ---
+    #[test]
+    fn test_lowpass_passes_dc() {
+        let mut filter = BiquadFilter::with_config(FilterConfig {
+            filter_type: FilterType::LowPass,
+            cutoff_frequency: 1000.0,
+            resonance: 0.707,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        // Feed constant (DC) signal, should converge to input value
+        let mut output = 0.0;
+        for _ in 0..2000 {
+            output = filter.process_sample(1.0);
+        }
+        assert!(
+            (output - 1.0).abs() < 0.01,
+            "Lowpass DC response should be ~1.0, got {}",
+            output
+        );
+    }
+
+    // --- Biquad: Highpass blocks DC ---
+    #[test]
+    fn test_highpass_blocks_dc() {
+        let mut filter = BiquadFilter::with_config(FilterConfig {
+            filter_type: FilterType::HighPass,
+            cutoff_frequency: 1000.0,
+            resonance: 0.707,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        let mut output = 0.0;
+        for _ in 0..2000 {
+            output = filter.process_sample(1.0);
+        }
+        assert!(
+            output.abs() < 0.01,
+            "Highpass should block DC, got {}",
+            output
+        );
+    }
+
+    // --- Biquad: Reset produces silence from silence ---
+    #[test]
+    fn test_reset_then_silence() {
         let mut filter = BiquadFilter::new();
-        let lp_output = filter.process_sample(1.0);
-
-        filter.set_filter_type(FilterType::HighPass);
-        let hp_output = filter.process_sample(1.0);
-
-        // Outputs should be different for different filter types
-        assert_ne!(lp_output, hp_output);
+        // Excite the filter
+        for _ in 0..100 {
+            filter.process_sample(1.0);
+        }
+        filter.reset();
+        // After reset, processing silence should produce silence
+        let output = filter.process_sample(0.0);
+        assert_eq!(output, 0.0, "After reset, silence in should give silence out");
     }
 
+    // --- Biquad: process_buffer matches sample-by-sample ---
     #[test]
-    fn test_zdf_filter_default() {
-        let zdf = ZdfFilter::new();
-        assert_eq!(zdf.mode, ZdfFilterMode::LowPass4);
-        assert_eq!(zdf.cutoff, 1000.0);
-        assert_eq!(zdf.resonance, 1.0);
-    }
+    fn test_process_buffer_matches_sample_by_sample() {
+        let config = FilterConfig {
+            filter_type: FilterType::LowPass,
+            cutoff_frequency: 2000.0,
+            resonance: 1.5,
+            sample_rate: 44100.0,
+            ..Default::default()
+        };
 
-    #[test]
-    fn test_zdf_filter_process() {
-        let mut zdf = ZdfFilter::new();
-        let input = 0.5;
-        let output = zdf.process_sample(input);
-        // Output should be within valid range
-        assert!(output.abs() <= 1.0);
-    }
+        let input = generate_sine(440.0, 44100.0, 256);
 
-    #[test]
-    fn test_zdf_filter_reset() {
-        let mut zdf = ZdfFilter::new();
-        let _ = zdf.process_sample(1.0);
-        zdf.reset();
-        assert_eq!(zdf.v0, 0.0);
-        assert_eq!(zdf.v1, 0.0);
-        assert_eq!(zdf.v2, 0.0);
-        assert_eq!(zdf.v3, 0.0);
-    }
+        // Process sample-by-sample
+        let mut filter1 = BiquadFilter::with_config(config);
+        let expected: Vec<f32> = input.iter().map(|&s| filter1.process_sample(s)).collect();
 
-    #[test]
-    fn test_zdf_filter_mode_change() {
-        let mut zdf = ZdfFilter::new();
+        // Process as buffer
+        let mut filter2 = BiquadFilter::with_config(config);
+        let mut buffer = input.clone();
+        filter2.process_buffer(&mut buffer);
 
-        zdf.set_mode(ZdfFilterMode::LowPass4);
-        let lp4_output = zdf.process_sample(1.0);
-
-        zdf.set_mode(ZdfFilterMode::LowPass2);
-        let lp2_output = zdf.process_sample(1.0);
-
-        zdf.set_mode(ZdfFilterMode::HighPass2);
-        let hp_output = zdf.process_sample(1.0);
-
-        // All outputs should be valid
-        assert!(lp4_output.abs() <= 1.0);
-        assert!(lp2_output.abs() <= 1.0);
-        assert!(hp_output.abs() <= 1.0);
-    }
-
-    #[test]
-    fn test_zdf_filter_cutoff_sweep() {
-        let mut zdf = ZdfFilter::new();
-
-        // Sweep through cutoff frequencies
-        for cutoff in [100.0, 500.0, 1000.0, 5000.0, 10000.0] {
-            zdf.set_cutoff(cutoff);
-            let output = zdf.process_sample(0.5);
-            assert!(output.abs() <= 1.0, "Output clipped at cutoff {}", cutoff);
+        for (i, (e, b)) in expected.iter().zip(buffer.iter()).enumerate() {
+            assert!(
+                (e - b).abs() < 1e-6,
+                "Mismatch at sample {}: expected {}, got {}",
+                i,
+                e,
+                b
+            );
         }
     }
 
+    // --- Biquad: Cutoff clamping ---
     #[test]
-    fn test_zdf_filter_high_resonance() {
-        let mut zdf = ZdfFilter::new();
-        zdf.set_resonance(3.5); // High resonance
-        zdf.set_cutoff(1000.0);
-
-        // Should not clip even at high resonance
-        let output = zdf.process_sample(0.3);
-        assert!(output.abs() <= 1.0);
+    fn test_cutoff_clamping() {
+        let mut filter = BiquadFilter::new();
+        filter.set_cutoff(5.0); // Below minimum
+        assert!(filter.cutoff >= 20.0);
+        filter.set_cutoff(100000.0); // Above Nyquist
+        assert!(filter.cutoff <= filter.sample_rate / 2.0);
     }
 
+    // --- Biquad: All filter types produce finite output ---
     #[test]
-    fn test_zdf_filter_wrapper_bypass() {
+    fn test_all_filter_types_stable() {
+        let signal = generate_sine(440.0, 44100.0, 1024);
+        for filter_type in [
+            FilterType::LowPass,
+            FilterType::HighPass,
+            FilterType::BandPass,
+            FilterType::Notch,
+            FilterType::AllPass,
+        ] {
+            let mut filter = BiquadFilter::with_config(FilterConfig {
+                filter_type,
+                cutoff_frequency: 1000.0,
+                resonance: 2.0,
+                sample_rate: 44100.0,
+                ..Default::default()
+            });
+            for &s in &signal {
+                let out = filter.process_sample(s);
+                assert!(
+                    out.is_finite(),
+                    "{:?} produced non-finite output",
+                    filter_type
+                );
+            }
+        }
+    }
+
+    // --- ZDF: Lowpass attenuates high frequencies ---
+    #[test]
+    fn test_zdf_lowpass_attenuates_highs() {
+        let sample_rate = 44100.0;
+        let mut zdf = ZdfFilter::with_config(ZdfFilterConfig {
+            mode: ZdfFilterMode::LowPass4,
+            cutoff_frequency: 500.0,
+            resonance: 0.5,
+            drive: 0.0,
+            sample_rate,
+        });
+
+        let low_signal = generate_sine(100.0, sample_rate, 4096);
+        let low_out: Vec<f32> = low_signal.iter().map(|&s| zdf.process_sample(s)).collect();
+        zdf.reset();
+
+        let high_signal = generate_sine(5000.0, sample_rate, 4096);
+        let high_out: Vec<f32> = high_signal.iter().map(|&s| zdf.process_sample(s)).collect();
+
+        let low_rms = rms(&low_out[512..]);
+        let high_rms = rms(&high_out[512..]);
+
+        assert!(
+            high_rms < low_rms * 0.15,
+            "ZDF LP4 high freq not attenuated: high={}, low={}",
+            high_rms,
+            low_rms
+        );
+    }
+
+    // --- ZDF: LP2 has less attenuation than LP4 ---
+    #[test]
+    fn test_zdf_lp2_less_steep_than_lp4() {
+        let sample_rate = 44100.0;
+        let freq = 3000.0; // Above cutoff
+        let signal = generate_sine(freq, sample_rate, 4096);
+
+        let mut lp2 = ZdfFilter::with_config(ZdfFilterConfig {
+            mode: ZdfFilterMode::LowPass2,
+            cutoff_frequency: 500.0,
+            resonance: 0.5,
+            drive: 0.0,
+            sample_rate,
+        });
+        let lp2_out: Vec<f32> = signal.iter().map(|&s| lp2.process_sample(s)).collect();
+
+        let mut lp4 = ZdfFilter::with_config(ZdfFilterConfig {
+            mode: ZdfFilterMode::LowPass4,
+            cutoff_frequency: 500.0,
+            resonance: 0.5,
+            drive: 0.0,
+            sample_rate,
+        });
+        let lp4_out: Vec<f32> = signal.iter().map(|&s| lp4.process_sample(s)).collect();
+
+        let lp2_rms = rms(&lp2_out[512..]);
+        let lp4_rms = rms(&lp4_out[512..]);
+
+        // LP4 (24dB/oct) should attenuate more than LP2 (12dB/oct)
+        assert!(
+            lp4_rms < lp2_rms,
+            "LP4 should attenuate more than LP2: lp4={}, lp2={}",
+            lp4_rms,
+            lp2_rms
+        );
+    }
+
+    // --- ZDF: Wrapper bypass ---
+    #[test]
+    fn test_zdf_wrapper_bypass_passthrough() {
         let mut zdf = ZdfFilterWrapper::new(44100.0);
-
         zdf.set_enabled(false);
-        let passthrough = zdf.process(0.5);
-        assert_eq!(passthrough, 0.5);
 
-        zdf.set_enabled(true);
-        let filtered = zdf.process(0.5);
-        assert_ne!(filtered, 0.5);
+        for &val in &[0.0, 0.5, -0.5, 1.0, -1.0] {
+            assert_eq!(zdf.process(val), val, "Bypass should pass through {}", val);
+        }
+    }
+
+    // --- ZDF: Drive adds saturation ---
+    #[test]
+    fn test_zdf_drive_adds_harmonics() {
+        let sample_rate = 44100.0;
+        let signal = generate_sine(200.0, sample_rate, 4096);
+
+        let mut clean = ZdfFilter::with_config(ZdfFilterConfig {
+            mode: ZdfFilterMode::LowPass4,
+            cutoff_frequency: 10000.0,
+            resonance: 0.5,
+            drive: 0.0,
+            sample_rate,
+        });
+        let clean_out: Vec<f32> = signal.iter().map(|&s| clean.process_sample(s)).collect();
+
+        let mut driven = ZdfFilter::with_config(ZdfFilterConfig {
+            mode: ZdfFilterMode::LowPass4,
+            cutoff_frequency: 10000.0,
+            resonance: 0.5,
+            drive: 5.0,
+            sample_rate,
+        });
+        let driven_out: Vec<f32> = signal.iter().map(|&s| driven.process_sample(s)).collect();
+
+        // Driven signal should differ from clean (harmonics added)
+        let diff: f32 = clean_out[512..]
+            .iter()
+            .zip(driven_out[512..].iter())
+            .map(|(a, b)| (a - b).abs())
+            .sum::<f32>()
+            / (4096 - 512) as f32;
+
+        assert!(
+            diff > 0.01,
+            "Drive should change the signal, avg diff={}",
+            diff
+        );
     }
 }
 

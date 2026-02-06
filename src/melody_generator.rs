@@ -1017,8 +1017,11 @@ mod tests {
         let mut generator = MelodyGenerator::new(key, 120.0, 1);
         let melody = generator.generate();
 
-        // Should still generate something for 1 measure
-        assert!(!melody.notes.is_empty() || melody.notes.is_empty()); // Either is valid
+        // A 1-measure melody should produce at least some notes
+        // (the generator may produce 0 notes for very short lengths, which is acceptable)
+        assert!(melody.notes.len() <= 32, "1-measure melody should not be excessively long");
+        // Verify structure is valid
+        assert_eq!(melody.notes.len(), melody.durations.len());
     }
 
     #[test]

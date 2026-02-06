@@ -756,4 +756,204 @@ mod tests {
 
         assert!(seq.playing);
     }
+
+    #[test]
+    fn test_process_returns_triggers_for_active_steps() {
+        let mut seq = StepSequencer::new();
+        seq.tracks[0].steps[0].active = true;
+        seq.tracks[0].steps[0].note = 60;
+        seq.tracks[0].steps[1].active = true;
+        seq.tracks[0].steps[1].note = 64;
+
+        seq.play();
+
+        // Collect triggers over enough samples to advance through steps
+        let mut triggered_steps: Vec<usize> = Vec::new();
+        for _ in 0..100_000 {
+            let triggers = seq.process(44100.0);
+            for (trigger, _track_idx, step_idx) in &triggers {
+                if *trigger {
+                    triggered_steps.push(*step_idx);
+                }
+            }
+        }
+
+        // Should have triggered step 0 and step 1 at minimum
+        assert!(
+            triggered_steps.contains(&0),
+            "Step 0 should have triggered"
+        );
+        assert!(
+            triggered_steps.contains(&1),
+            "Step 1 should have triggered"
+        );
+    }
+
+    #[test]
+    fn test_muted_track_produces_no_triggers() {
+        let mut seq = StepSequencer::new();
+        seq.tracks[0].steps[0].active = true;
+        seq.tracks[0].muted = true;
+
+        seq.play();
+
+        let mut any_trigger = false;
+        for _ in 0..50_000 {
+            let triggers = seq.process(44100.0);
+            for (trigger, track_idx, _) in &triggers {
+                if *trigger && *track_idx == 0 {
+                    any_trigger = true;
+                }
+            }
+        }
+
+        assert!(!any_trigger, "Muted track should not produce triggers");
+    }
+
+    #[test]
+    fn test_get_next_note_returns_correct_note() {
+        let mut seq = StepSequencer::new();
+        seq.tracks[0].steps[0].active = true;
+        seq.tracks[0].steps[0].note = 72;
+        seq.tracks[0].steps[0].velocity = 110;
+
+        seq.play();
+
+        let mut found_note = false;
+        for _ in 0..100_000 {
+            if let Some((note, vel, _gate, _track, _locks)) = seq.get_next_note(44100.0) {
+                assert_eq!(note, 72);
+                assert_eq!(vel, 110);
+                found_note = true;
+                break;
+            }
+        }
+        assert!(found_note, "Should have found the note");
+    }
+
+    #[test]
+    fn test_stop_resets_position() {
+        let mut seq = StepSequencer::new();
+        seq.tracks[0].steps[0].active = true;
+        seq.play();
+
+        for _ in 0..10_000 {
+            seq.process(44100.0);
+        }
+        assert!(seq.beat_position > 0.0);
+
+        seq.stop();
+        assert!(!seq.playing);
+        assert_eq!(seq.beat_position, 0.0);
+        assert_eq!(seq.tracks[0].current_step, 0);
+    }
+
+    #[test]
+    fn test_step_time_calculation() {
+        let seq = StepSequencer::with_bpm(120.0);
+        // At 120 BPM, one beat = 0.5s, one 16th note = 0.5/4 = 0.125s
+        let expected = 60.0 / 120.0 / 4.0;
+        assert!((seq.step_time() - expected).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_active_tracks_respects_solo() {
+        let mut seq = StepSequencer::new();
+        // Solo track 2
+        seq.tracks[2].solo = true;
+
+        let active = seq.active_tracks();
+        assert_eq!(active, vec![2], "Only soloed track should be active");
+    }
+
+    #[test]
+    fn test_active_tracks_excludes_muted() {
+        let mut seq = StepSequencer::new();
+        seq.tracks[0].muted = true;
+        seq.tracks[3].muted = true;
+
+        let active = seq.active_tracks();
+        assert!(!active.contains(&0));
+        assert!(!active.contains(&3));
+        assert_eq!(active.len(), NUM_TRACKS - 2);
+    }
+
+    #[test]
+    fn test_track_wraps_at_custom_length() {
+        let mut track = Track::new();
+        track.set_length(4);
+
+        // Advance 4 times: 0->1->2->3->0
+        for _ in 0..4 {
+            track.advance();
+        }
+        assert_eq!(track.current_step, 0, "Track should wrap at length 4");
+    }
+
+    #[test]
+    fn test_scale_quantize_chromatic_passthrough() {
+        // Chromatic scale should pass through any note unchanged
+        for note in 48..72 {
+            let q = quantize_to_scale(note, 0, Scale::Chromatic);
+            assert_eq!(q, note, "Chromatic should not alter note {}", note);
+        }
+    }
+
+    #[test]
+    fn test_scale_quantize_major_snaps_to_nearest() {
+        // C major: C D E F G A B = 0 2 4 5 7 9 11
+        // C# (1) should snap to C (0) or D (2)
+        let q = quantize_to_scale(61, 0, Scale::Major);
+        assert!(q == 60 || q == 62, "C# should snap to C or D, got {}", q);
+
+        // F# (66) should snap to F (65) or G (67)
+        let q = quantize_to_scale(66, 0, Scale::Major);
+        assert!(q == 65 || q == 67, "F# should snap to F or G, got {}", q);
+    }
+
+    #[test]
+    fn test_drum_pattern_breakbeat() {
+        let mut seq = StepSequencer::new();
+        seq.generate_drum_pattern(0, DrumStyle::Breakbeat);
+
+        let track = &seq.tracks[0];
+        let active_count = track.steps.iter().filter(|s| s.active).count();
+        assert!(active_count > 0, "Breakbeat should have active steps");
+    }
+
+    #[test]
+    fn test_clear_all_deactivates_steps() {
+        let mut seq = StepSequencer::new();
+        seq.tracks[0].steps[0].active = true;
+        seq.tracks[0].steps[4].active = true;
+        seq.tracks[1].steps[8].active = true;
+
+        seq.clear_all();
+
+        for track in &seq.tracks {
+            for step in &track.steps {
+                assert!(!step.active, "All steps should be inactive after clear");
+            }
+        }
+    }
+
+    #[test]
+    fn test_bpm_clamping() {
+        let mut seq = StepSequencer::new();
+        seq.set_bpm(10.0);
+        assert_eq!(seq.bpm, 20.0, "BPM should clamp to minimum 20");
+
+        seq.set_bpm(999.0);
+        assert_eq!(seq.bpm, 300.0, "BPM should clamp to maximum 300");
+    }
+
+    #[test]
+    fn test_not_playing_returns_no_triggers() {
+        let mut seq = StepSequencer::new();
+        seq.tracks[0].steps[0].active = true;
+        // Don't call play()
+
+        let triggers = seq.process(44100.0);
+        assert!(triggers.is_empty(), "Stopped sequencer should produce no triggers");
+    }
 }

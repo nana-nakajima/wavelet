@@ -311,46 +311,251 @@ impl LfoTrait for Lfo {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_lfo_default() {
-        let lfo = Lfo::new();
-        assert_eq!(lfo.depth, 0.5);
+    // --- Helper: count positive-going zero crossings ---
+    fn count_zero_crossings(samples: &[f32]) -> usize {
+        samples
+            .windows(2)
+            .filter(|w| w[0] <= 0.0 && w[1] > 0.0)
+            .count()
     }
 
+    // --- LFO period matches configured rate ---
     #[test]
-    fn test_lfo_process() {
-        let config = LfoConfig {
-            rate: LfoRate::Hertz(1.0),
+    fn test_lfo_period_matches_rate() {
+        let rate = 5.0; // 5 Hz
+        let sample_rate = 1000.0;
+        let duration_secs = 2.0;
+        let num_samples = (sample_rate * duration_secs) as usize;
+
+        let mut lfo = Lfo::with_config(LfoConfig {
+            rate: LfoRate::Hertz(rate),
             waveform: Waveform::Sine,
             depth: 1.0,
-            sample_rate: 100.0,
+            sample_rate,
+            ..Default::default()
+        });
+
+        let samples: Vec<f32> = (0..num_samples).map(|_| lfo.process()).collect();
+        let crossings = count_zero_crossings(&samples);
+
+        let expected = (rate * duration_secs) as usize;
+        assert!(
+            (crossings as i32 - expected as i32).unsigned_abs() <= 1,
+            "Expected ~{} cycles for {} Hz over {}s, got {}",
+            expected,
+            rate,
+            duration_secs,
+            crossings
+        );
+    }
+
+    // --- Depth scales output ---
+    #[test]
+    fn test_depth_scales_output() {
+        let sample_rate = 1000.0;
+
+        let mut lfo_full = Lfo::with_config(LfoConfig {
+            rate: LfoRate::Hertz(2.0),
+            waveform: Waveform::Sine,
+            depth: 1.0,
+            sample_rate,
+            ..Default::default()
+        });
+
+        let mut lfo_half = Lfo::with_config(LfoConfig {
+            rate: LfoRate::Hertz(2.0),
+            waveform: Waveform::Sine,
+            depth: 0.5,
+            sample_rate,
+            ..Default::default()
+        });
+
+        let full_samples: Vec<f32> = (0..1000).map(|_| lfo_full.process()).collect();
+        let half_samples: Vec<f32> = (0..1000).map(|_| lfo_half.process()).collect();
+
+        let full_peak = full_samples.iter().map(|s| s.abs()).fold(0.0f32, f32::max);
+        let half_peak = half_samples.iter().map(|s| s.abs()).fold(0.0f32, f32::max);
+
+        assert!(
+            (full_peak - 1.0).abs() < 0.05,
+            "Full depth peak should be ~1.0, got {}",
+            full_peak
+        );
+        assert!(
+            (half_peak - 0.5).abs() < 0.05,
+            "Half depth peak should be ~0.5, got {}",
+            half_peak
+        );
+    }
+
+    // --- Zero depth produces no modulation ---
+    #[test]
+    fn test_zero_depth_no_modulation() {
+        let mut lfo = Lfo::with_config(LfoConfig {
+            rate: LfoRate::Hertz(5.0),
+            waveform: Waveform::Sine,
+            depth: 0.0,
+            sample_rate: 1000.0,
+            ..Default::default()
+        });
+
+        for _ in 0..500 {
+            let val = lfo.process();
+            assert_eq!(val, 0.0, "Zero depth should produce 0.0, got {}", val);
+        }
+    }
+
+    // --- Delay suppresses output ---
+    #[test]
+    fn test_delay_suppresses_output() {
+        let sample_rate = 1000.0;
+        let delay_samples = 100;
+
+        let mut lfo = Lfo::with_config(LfoConfig {
+            rate: LfoRate::Hertz(5.0),
+            waveform: Waveform::Sine,
+            depth: 1.0,
+            delay_samples,
+            sample_rate,
+            ..Default::default()
+        });
+
+        // During delay, output should be 0
+        for i in 0..delay_samples {
+            let val = lfo.process();
+            assert_eq!(val, 0.0, "During delay (sample {}), should be 0", i);
+        }
+
+        // After delay, should produce non-zero output
+        let mut found_nonzero = false;
+        for _ in 0..100 {
+            if lfo.process().abs() > 0.01 {
+                found_nonzero = true;
+                break;
+            }
+        }
+        assert!(found_nonzero, "After delay, LFO should produce output");
+    }
+
+    // --- Different waveforms produce different shapes ---
+    #[test]
+    fn test_different_waveforms_differ() {
+        let sample_rate = 1000.0;
+        let num_samples = 500;
+
+        let waveforms = [Waveform::Sine, Waveform::Square, Waveform::Sawtooth, Waveform::Triangle];
+        let mut outputs: Vec<Vec<f32>> = Vec::new();
+
+        for wf in &waveforms {
+            let mut lfo = Lfo::with_config(LfoConfig {
+                rate: LfoRate::Hertz(2.0),
+                waveform: *wf,
+                depth: 1.0,
+                sample_rate,
+                ..Default::default()
+            });
+            let samples: Vec<f32> = (0..num_samples).map(|_| lfo.process()).collect();
+            outputs.push(samples);
+        }
+
+        // Each pair of waveforms should differ
+        for i in 0..outputs.len() {
+            for j in (i + 1)..outputs.len() {
+                let diff: f32 = outputs[i]
+                    .iter()
+                    .zip(outputs[j].iter())
+                    .map(|(a, b)| (a - b).abs())
+                    .sum::<f32>()
+                    / num_samples as f32;
+                assert!(
+                    diff > 0.01,
+                    "{:?} and {:?} should differ, avg diff={}",
+                    waveforms[i],
+                    waveforms[j],
+                    diff
+                );
+            }
+        }
+    }
+
+    // --- set_rate changes frequency ---
+    #[test]
+    fn test_set_rate_changes_frequency() {
+        let sample_rate = 1000.0;
+        let mut lfo = Lfo::with_config(LfoConfig {
+            rate: LfoRate::Hertz(2.0),
+            waveform: Waveform::Sine,
+            depth: 1.0,
+            sample_rate,
+            ..Default::default()
+        });
+
+        let samples_2hz: Vec<f32> = (0..1000).map(|_| lfo.process()).collect();
+        let crossings_2 = count_zero_crossings(&samples_2hz);
+
+        lfo.reset();
+        lfo.set_rate_hz(4.0);
+        let samples_4hz: Vec<f32> = (0..1000).map(|_| lfo.process()).collect();
+        let crossings_4 = count_zero_crossings(&samples_4hz);
+
+        assert!(
+            crossings_4 > crossings_2,
+            "4 Hz should have more crossings than 2 Hz: {} vs {}",
+            crossings_4,
+            crossings_2
+        );
+    }
+
+    // --- process_block matches individual ---
+    #[test]
+    fn test_process_block_matches_individual() {
+        let config = LfoConfig {
+            rate: LfoRate::Hertz(3.0),
+            waveform: Waveform::Sine,
+            depth: 0.8,
+            sample_rate: 1000.0,
             ..Default::default()
         };
 
-        let mut lfo = Lfo::with_config(config);
-        let value = lfo.process();
+        let mut lfo1 = Lfo::with_config(config);
+        let individual: Vec<f32> = (0..200).map(|_| lfo1.process()).collect();
 
-        // Value should be within [-1, 1]
-        assert!(value >= -1.0 && value <= 1.0);
+        let mut lfo2 = Lfo::with_config(config);
+        let block = lfo2.process_block(200);
+
+        for (i, (a, b)) in individual.iter().zip(block.iter()).enumerate() {
+            assert!(
+                (a - b).abs() < 1e-6,
+                "Mismatch at {}: {} vs {}",
+                i,
+                a,
+                b
+            );
+        }
     }
 
+    // --- LfoRate conversions ---
     #[test]
-    fn test_lfo_set_depth() {
-        let mut lfo = Lfo::new();
-        lfo.set_depth(0.3);
-        assert_eq!(lfo.depth, 0.3);
-    }
-
-    #[test]
-    fn test_lfo_rate_conversion() {
+    fn test_lfo_rate_conversions() {
         assert!((LfoRate::Hertz(440.0).to_hertz() - 440.0).abs() < 0.001);
+        // MIDI note 69 = A4 = 440 Hz
+        assert!((LfoRate::MidiNote(69).to_hertz() - 440.0).abs() < 0.1);
     }
 
+    // --- value() getter ---
     #[test]
-    fn test_lfo_reset() {
-        let mut lfo = Lfo::new();
-        let _ = lfo.process();
-        lfo.reset();
-        assert_eq!(lfo.current_value, 0.0);
+    fn test_value_getter_matches_process() {
+        let mut lfo = Lfo::with_config(LfoConfig {
+            rate: LfoRate::Hertz(5.0),
+            waveform: Waveform::Sine,
+            depth: 1.0,
+            sample_rate: 1000.0,
+            ..Default::default()
+        });
+
+        for _ in 0..50 {
+            let processed = lfo.process();
+            assert_eq!(lfo.value(), processed);
+        }
     }
 }

@@ -496,39 +496,308 @@ pub fn calculate_phase_increment(frequency: f32, sample_rate: f32) -> f32 {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_oscillator_default() {
-        let osc = Oscillator::default();
-        // frequency is stored as phase_increment = 440.0 / 44100.0
-        let expected_phase_increment = 440.0 / 44100.0;
-        assert!((osc.phase_increment - expected_phase_increment).abs() < 0.00001);
-        assert_eq!(osc.amplitude, 0.5);
-        assert_eq!(osc.waveform, Waveform::Sine);
+    // --- Helper: count zero crossings (positive-going) ---
+    fn count_zero_crossings(samples: &[f32]) -> usize {
+        samples
+            .windows(2)
+            .filter(|w| w[0] <= 0.0 && w[1] > 0.0)
+            .count()
     }
 
+    // --- Sine: frequency accuracy via zero crossings ---
     #[test]
-    fn test_midi_to_frequency() {
-        // A4 (MIDI 69) should be 440 Hz
-        assert!((midi_to_frequency(69) - 440.0).abs() < 0.001);
+    fn test_sine_frequency_accuracy() {
+        let sample_rate = 48000.0;
+        let freq = 440.0;
+        let duration_secs = 1.0;
+        let num_samples = (sample_rate * duration_secs) as usize;
 
-        // C4 (MIDI 60) should be approximately 261.63 Hz
-        assert!((midi_to_frequency(60) - 261.63).abs() < 0.1);
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Sine,
+            frequency: freq,
+            amplitude: 1.0,
+            sample_rate,
+            ..Default::default()
+        });
 
-        // C5 (MIDI 72) should be approximately 523.25 Hz
-        assert!((midi_to_frequency(72) - 523.25).abs() < 0.1);
+        let samples: Vec<f32> = (0..num_samples).map(|_| osc.next_sample()).collect();
+        let crossings = count_zero_crossings(&samples);
+
+        // Each cycle has one positive-going zero crossing
+        let expected = freq as usize;
+        let tolerance = 2; // Allow +-2 crossings for edge effects
+        assert!(
+            (crossings as i32 - expected as i32).unsigned_abs() <= tolerance as u32,
+            "Expected ~{} crossings for {} Hz, got {}",
+            expected,
+            freq,
+            crossings
+        );
     }
 
+    // --- Sine: peak amplitude matches configured amplitude ---
     #[test]
-    fn test_phase_increment() {
-        let increment = calculate_phase_increment(440.0, 44100.0);
-        assert!((increment - 0.009977).abs() < 0.0001);
+    fn test_sine_amplitude() {
+        let amplitude = 0.6;
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Sine,
+            frequency: 440.0,
+            amplitude,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        let samples: Vec<f32> = (0..4410).map(|_| osc.next_sample()).collect();
+        let peak = samples.iter().map(|s| s.abs()).fold(0.0f32, f32::max);
+
+        assert!(
+            (peak - amplitude).abs() < 0.02,
+            "Peak should be ~{}, got {}",
+            amplitude,
+            peak
+        );
     }
 
+    // --- Square: alternates between +amplitude and -amplitude ---
     #[test]
-    fn test_waveform_conversion() {
-        assert_eq!(Waveform::from(OscillatorType::Sine), Waveform::Sine);
-        assert_eq!(Waveform::from(OscillatorType::Square), Waveform::Square);
-        assert_eq!(Waveform::from(OscillatorType::Sawtooth), Waveform::Sawtooth);
-        assert_eq!(Waveform::from(OscillatorType::Triangle), Waveform::Triangle);
+    fn test_square_wave_values() {
+        let amplitude = 0.8;
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Square,
+            frequency: 100.0,
+            amplitude,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        let samples: Vec<f32> = (0..4410).map(|_| osc.next_sample()).collect();
+
+        // Every sample should be either +amplitude or -amplitude
+        for (i, &s) in samples.iter().enumerate() {
+            assert!(
+                (s - amplitude).abs() < 0.001 || (s + amplitude).abs() < 0.001,
+                "Square sample {} should be +/-{}, got {}",
+                i,
+                amplitude,
+                s
+            );
+        }
+    }
+
+    // --- Sawtooth: ramps from -1 to +1 within each cycle ---
+    #[test]
+    fn test_sawtooth_ramp() {
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Sawtooth,
+            frequency: 100.0,
+            amplitude: 1.0,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        let samples: Vec<f32> = (0..4410).map(|_| osc.next_sample()).collect();
+
+        // Check that sawtooth reaches near +1 and -1
+        let max = samples.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+        let min = samples.iter().cloned().fold(f32::INFINITY, f32::min);
+
+        assert!(max > 0.95, "Sawtooth max should be near 1.0, got {}", max);
+        assert!(min < -0.95, "Sawtooth min should be near -1.0, got {}", min);
+    }
+
+    // --- Triangle: peak amplitude and symmetry ---
+    #[test]
+    fn test_triangle_wave_shape() {
+        let amplitude = 1.0;
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Triangle,
+            frequency: 100.0,
+            amplitude,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        let samples: Vec<f32> = (0..4410).map(|_| osc.next_sample()).collect();
+
+        let max = samples.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+        let min = samples.iter().cloned().fold(f32::INFINITY, f32::min);
+
+        assert!(
+            (max - amplitude).abs() < 0.05,
+            "Triangle max should be ~{}, got {}",
+            amplitude,
+            max
+        );
+        assert!(
+            (min + amplitude).abs() < 0.05,
+            "Triangle min should be ~-{}, got {}",
+            amplitude,
+            min
+        );
+    }
+
+    // --- Noise: output is within amplitude range and has variance ---
+    #[test]
+    fn test_noise_range_and_variance() {
+        let amplitude = 0.5;
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Noise,
+            frequency: 440.0,
+            amplitude,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        let samples: Vec<f32> = (0..10000).map(|_| osc.next_sample()).collect();
+
+        // All samples within range
+        for &s in &samples {
+            assert!(
+                s.abs() <= amplitude + 0.001,
+                "Noise sample {} out of range",
+                s
+            );
+        }
+
+        // Should have variance (not all the same value)
+        let mean: f32 = samples.iter().sum::<f32>() / samples.len() as f32;
+        let variance: f32 =
+            samples.iter().map(|s| (s - mean).powi(2)).sum::<f32>() / samples.len() as f32;
+        assert!(variance > 0.01, "Noise should have variance, got {}", variance);
+    }
+
+    // --- set_frequency changes pitch ---
+    #[test]
+    fn test_set_frequency_changes_pitch() {
+        let sample_rate = 48000.0;
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Sine,
+            frequency: 200.0,
+            amplitude: 1.0,
+            sample_rate,
+            ..Default::default()
+        });
+
+        let samples_200: Vec<f32> = (0..48000).map(|_| osc.next_sample()).collect();
+        let crossings_200 = count_zero_crossings(&samples_200);
+
+        osc.reset_phase();
+        osc.set_frequency(400.0);
+        let samples_400: Vec<f32> = (0..48000).map(|_| osc.next_sample()).collect();
+        let crossings_400 = count_zero_crossings(&samples_400);
+
+        // 400 Hz should have ~2x the crossings of 200 Hz
+        let ratio = crossings_400 as f32 / crossings_200 as f32;
+        assert!(
+            (ratio - 2.0).abs() < 0.05,
+            "Frequency doubling should double crossings: ratio={}",
+            ratio
+        );
+    }
+
+    // --- set_sample_rate preserves frequency ---
+    #[test]
+    fn test_set_sample_rate_preserves_frequency() {
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Sine,
+            frequency: 440.0,
+            amplitude: 1.0,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        osc.set_sample_rate(96000.0);
+
+        // Generate 1 second at new sample rate
+        let samples: Vec<f32> = (0..96000).map(|_| osc.next_sample()).collect();
+        let crossings = count_zero_crossings(&samples);
+
+        assert!(
+            (crossings as i32 - 440).unsigned_abs() <= 2,
+            "After sample rate change, frequency should still be ~440 Hz, got {} crossings",
+            crossings
+        );
+    }
+
+    // --- Phase reset ---
+    #[test]
+    fn test_reset_phase_restarts_waveform() {
+        let mut osc = Oscillator::new(OscillatorConfig {
+            waveform: Waveform::Sine,
+            frequency: 440.0,
+            amplitude: 1.0,
+            sample_rate: 44100.0,
+            ..Default::default()
+        });
+
+        let first_sample = osc.next_sample();
+        // Advance some samples
+        for _ in 0..1000 {
+            osc.next_sample();
+        }
+        osc.reset_phase();
+        let after_reset = osc.next_sample();
+
+        assert!(
+            (first_sample - after_reset).abs() < 0.001,
+            "After reset, first sample should match: {} vs {}",
+            first_sample,
+            after_reset
+        );
+    }
+
+    // --- MIDI to frequency ---
+    #[test]
+    fn test_midi_to_frequency_known_values() {
+        assert!((midi_to_frequency(69) - 440.0).abs() < 0.01); // A4
+        assert!((midi_to_frequency(60) - 261.63).abs() < 0.1); // C4
+        assert!((midi_to_frequency(57) - 220.0).abs() < 0.1); // A3
+        assert!((midi_to_frequency(81) - 880.0).abs() < 0.1); // A5
+        // Octave relationship
+        let ratio = midi_to_frequency(72) / midi_to_frequency(60);
+        assert!((ratio - 2.0).abs() < 0.001, "Octave should be 2:1 ratio");
+    }
+
+    // --- Frequency to MIDI roundtrip ---
+    #[test]
+    fn test_frequency_midi_roundtrip() {
+        for note in [36, 48, 60, 69, 72, 84, 96] {
+            let freq = midi_to_frequency(note);
+            let back = frequency_to_midi(freq);
+            assert!(
+                (back - note as f32).abs() < 0.01,
+                "Roundtrip failed for note {}: got {}",
+                note,
+                back
+            );
+        }
+    }
+
+    // --- next_samples batch matches individual ---
+    #[test]
+    fn test_next_samples_matches_individual() {
+        let config = OscillatorConfig {
+            waveform: Waveform::Sawtooth,
+            frequency: 440.0,
+            amplitude: 0.7,
+            sample_rate: 44100.0,
+            ..Default::default()
+        };
+
+        let mut osc1 = Oscillator::new(config.clone());
+        let individual: Vec<f32> = (0..256).map(|_| osc1.next_sample()).collect();
+
+        let mut osc2 = Oscillator::new(config);
+        let batch = osc2.next_samples(256);
+
+        for (i, (a, b)) in individual.iter().zip(batch.iter()).enumerate() {
+            assert!(
+                (a - b).abs() < 1e-6,
+                "Mismatch at {}: {} vs {}",
+                i,
+                a,
+                b
+            );
+        }
     }
 }

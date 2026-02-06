@@ -649,77 +649,243 @@ impl Default for Synth {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_synth_default() {
-        let synth = Synth::default();
-        assert_eq!(synth.master_volume, 0.7);
-        assert_eq!(synth.active_voice_count(), 0);
+    // --- Helper: process N mono samples and return them ---
+    fn process_n(synth: &mut Synth, n: usize) -> Vec<f32> {
+        (0..n).map(|_| synth.process_mono()).collect()
     }
 
+    fn rms(signal: &[f32]) -> f32 {
+        let sum_sq: f32 = signal.iter().map(|s| s * s).sum();
+        (sum_sq / signal.len() as f32).sqrt()
+    }
+
+    // --- Playing a note produces non-zero audio ---
     #[test]
-    fn test_synth_note_on() {
+    fn test_note_produces_audio() {
+        let mut synth = Synth::new(48000.0);
+        synth.note_on(60, 100);
+        let samples = process_n(&mut synth, 4800);
+        let level = rms(&samples);
+        assert!(
+            level > 0.001,
+            "Playing a note should produce audio, RMS={}",
+            level
+        );
+    }
+
+    // --- Silence when no notes playing ---
+    #[test]
+    fn test_silence_when_no_notes() {
+        let mut synth = Synth::new(48000.0);
+        let samples = process_n(&mut synth, 480);
+        let level = rms(&samples);
+        assert!(
+            level < 0.001,
+            "No notes should produce silence, RMS={}",
+            level
+        );
+    }
+
+    // --- Velocity 0 triggers note_off ---
+    #[test]
+    fn test_velocity_zero_is_note_off() {
         let mut synth = Synth::new(48000.0);
         synth.note_on(60, 100);
         assert_eq!(synth.active_voice_count(), 1);
-    }
-
-    #[test]
-    fn test_synth_note_off() {
-        let mut synth = Synth::new(48000.0);
-        synth.note_on(60, 100);
-        synth.note_off_specific(60);
-        // Voice should still be active during release
-        assert!(synth.active_voice_count() <= 1);
-    }
-
-    #[test]
-    fn test_synth_process() {
-        let mut synth = Synth::new(48000.0);
-        synth.note_on(60, 100);
-
-        let sample = synth.process_mono();
-        // Should produce some output
-        assert!(sample.is_finite());
-    }
-
-    #[test]
-    fn test_synth_stereo() {
-        let mut synth = Synth::new(48000.0);
-        synth.note_on(60, 100);
-
-        let (left, right) = synth.process_stereo();
-        // Stereo output should be equal for mono source
-        assert!((left - right).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_synth_reset() {
-        let mut synth = Synth::new(48000.0);
-        synth.note_on(60, 100);
-        synth.note_on(64, 100);
-        synth.reset();
+        synth.note_on(60, 0); // velocity 0 = note off
         assert_eq!(synth.active_voice_count(), 0);
     }
 
+    // --- Polyphony: multiple notes produce louder output ---
     #[test]
-    fn test_synth_polyphony() {
+    fn test_polyphony_sums_voices() {
+        let mut synth1 = Synth::new(48000.0);
+        synth1.note_on(60, 100);
+        let mono_samples = process_n(&mut synth1, 4800);
+        let mono_rms = rms(&mono_samples);
+
+        let mut synth3 = Synth::new(48000.0);
+        synth3.note_on(60, 100);
+        synth3.note_on(64, 100);
+        synth3.note_on(67, 100);
+        let poly_samples = process_n(&mut synth3, 4800);
+        let poly_rms = rms(&poly_samples);
+
+        assert!(
+            poly_rms > mono_rms * 1.2,
+            "3 voices should be louder than 1: poly={}, mono={}",
+            poly_rms,
+            mono_rms
+        );
+    }
+
+    // --- Voice stealing steals oldest voice ---
+    #[test]
+    fn test_voice_stealing_steals_oldest() {
         let mut synth = Synth::new(48000.0);
 
-        // Play multiple notes
+        // Fill all 16 voices
+        for note in 60..76 {
+            synth.note_on(note, 100);
+        }
+        assert_eq!(synth.active_voice_count(), 16);
+
+        // Play one more note - should steal the oldest (note 60)
+        synth.note_on(80, 100);
+        assert_eq!(synth.active_voice_count(), 16);
+
+        // Note 60 should no longer be active, note 80 should be
+        assert!(
+            !synth.active_notes.contains_key(&60),
+            "Oldest note (60) should have been stolen"
+        );
+        assert!(
+            synth.active_notes.contains_key(&80),
+            "New note (80) should be active"
+        );
+    }
+
+    // --- Re-triggering same note ---
+    #[test]
+    fn test_retrigger_same_note() {
+        let mut synth = Synth::new(48000.0);
+        synth.note_on(60, 100);
+        assert_eq!(synth.active_voice_count(), 1);
+
+        // Re-trigger same note
+        synth.note_on(60, 127);
+        assert_eq!(synth.active_voice_count(), 1);
+
+        // Should still produce audio
+        let samples = process_n(&mut synth, 480);
+        let level = rms(&samples);
+        assert!(level > 0.001, "Re-triggered note should produce audio");
+    }
+
+    // --- note_off_specific only releases that note ---
+    #[test]
+    fn test_note_off_specific() {
+        let mut synth = Synth::new(48000.0);
         synth.note_on(60, 100);
         synth.note_on(64, 100);
         synth.note_on(67, 100);
-
         assert_eq!(synth.active_voice_count(), 3);
+
+        synth.note_off_specific(64);
+        assert_eq!(synth.active_voice_count(), 2);
+        assert!(!synth.active_notes.contains_key(&64));
+        assert!(synth.active_notes.contains_key(&60));
+        assert!(synth.active_notes.contains_key(&67));
     }
 
+    // --- note_off releases all ---
     #[test]
-    fn test_synth_filter() {
+    fn test_note_off_releases_all() {
         let mut synth = Synth::new(48000.0);
-        synth.set_filter_cutoff(500.0);
-        synth.set_filter_resonance(5.0);
+        synth.note_on(60, 100);
+        synth.note_on(64, 100);
+        synth.note_off();
+        assert_eq!(synth.active_voice_count(), 0);
+    }
 
-        let sample = synth.process_mono();
-        assert!(sample.is_finite());
+    // --- Master volume scales output ---
+    #[test]
+    fn test_master_volume_scales_output() {
+        let mut synth_loud = Synth::new(48000.0);
+        synth_loud.set_master_volume(1.0);
+        synth_loud.note_on(60, 100);
+        let loud_samples: Vec<(f32, f32)> = (0..4800).map(|_| synth_loud.process_stereo()).collect();
+        let loud_rms = rms(&loud_samples.iter().map(|(l, _)| *l).collect::<Vec<_>>());
+
+        let mut synth_quiet = Synth::new(48000.0);
+        synth_quiet.set_master_volume(0.25);
+        synth_quiet.note_on(60, 100);
+        let quiet_samples: Vec<(f32, f32)> =
+            (0..4800).map(|_| synth_quiet.process_stereo()).collect();
+        let quiet_rms = rms(&quiet_samples.iter().map(|(l, _)| *l).collect::<Vec<_>>());
+
+        // Quiet should be roughly 1/4 of loud
+        let ratio = quiet_rms / loud_rms;
+        assert!(
+            (ratio - 0.25).abs() < 0.05,
+            "Volume 0.25 should be ~1/4 of 1.0, ratio={}",
+            ratio
+        );
+    }
+
+    // --- Stereo output is equal for mono source ---
+    #[test]
+    fn test_stereo_equal_for_mono() {
+        let mut synth = Synth::new(48000.0);
+        synth.note_on(60, 100);
+
+        for _ in 0..480 {
+            let (left, right) = synth.process_stereo();
+            assert!(
+                (left - right).abs() < 1e-6,
+                "Stereo should be equal: L={}, R={}",
+                left,
+                right
+            );
+        }
+    }
+
+    // --- Reset clears everything ---
+    #[test]
+    fn test_reset_clears_state() {
+        let mut synth = Synth::new(48000.0);
+        synth.note_on(60, 100);
+        synth.note_on(64, 100);
+        process_n(&mut synth, 480);
+
+        synth.reset();
+        assert_eq!(synth.active_voice_count(), 0);
+
+        // Should produce silence after reset
+        let samples = process_n(&mut synth, 480);
+        let level = rms(&samples);
+        assert!(level < 0.001, "After reset, should be silent, RMS={}", level);
+    }
+
+    // --- process_block_mono matches individual ---
+    #[test]
+    fn test_process_block_mono_matches() {
+        let mut synth1 = Synth::new(48000.0);
+        synth1.note_on(60, 100);
+        let individual: Vec<f32> = (0..256).map(|_| synth1.process_mono()).collect();
+
+        let mut synth2 = Synth::new(48000.0);
+        synth2.note_on(60, 100);
+        let block = synth2.process_block_mono(256);
+
+        for (i, (a, b)) in individual.iter().zip(block.iter()).enumerate() {
+            assert!(
+                (a - b).abs() < 1e-6,
+                "Mismatch at {}: {} vs {}",
+                i,
+                a,
+                b
+            );
+        }
+    }
+
+    // --- Voices finish after release completes ---
+    #[test]
+    fn test_voices_finish_after_release() {
+        let mut synth = Synth::new(48000.0);
+        synth.note_on(60, 100);
+        synth.note_off_specific(60);
+
+        // Process enough samples for release to complete (default release = 0.3s = 14400 samples)
+        process_n(&mut synth, 20000);
+
+        // Voice should have been cleaned up
+        let samples = process_n(&mut synth, 480);
+        let level = rms(&samples);
+        assert!(
+            level < 0.001,
+            "After release completes, should be silent, RMS={}",
+            level
+        );
     }
 }

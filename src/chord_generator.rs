@@ -887,4 +887,156 @@ mod tests {
         let progression = generator.generate_custom(8, true, ChordStyle::Pop);
         assert_eq!(progression.len(), 8);
     }
+
+    #[test]
+    fn test_chord_roots_in_key() {
+        let key = Key {
+            root: 60,
+            scale: Scale::Major,
+        };
+        let mut generator = ChordGenerator::new(key, 120.0);
+        let progression = generator.generate_preset(ChordStyle::Pop);
+
+        // C major scale degrees: C(0), D(2), E(4), F(5), G(7), A(9), B(11)
+        let major_intervals: Vec<u8> = vec![0, 2, 4, 5, 7, 9, 11];
+        for chord in &progression {
+            let interval = (chord.root % 12 + 12 - key.root % 12) % 12;
+            assert!(
+                major_intervals.contains(&interval),
+                "Chord root {} (interval {}) not in C major scale",
+                chord.root,
+                interval
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_styles_generate_valid_chords() {
+        let styles = [
+            ChordStyle::Pop,
+            ChordStyle::Jazz,
+            ChordStyle::LoFi,
+            ChordStyle::EDM,
+            ChordStyle::Ambient,
+            ChordStyle::Classical,
+            ChordStyle::Rock,
+            ChordStyle::Rnb,
+        ];
+
+        for style in styles {
+            let key = Key {
+                root: 60,
+                scale: Scale::Major,
+            };
+            let mut gen = ChordGenerator::new(key, 120.0);
+            let prog = gen.generate_preset(style);
+            assert!(!prog.is_empty(), "Style {:?} produced empty progression", style);
+            for chord in &prog {
+                assert!(chord.root <= 127, "Chord root out of MIDI range");
+                assert!(chord.duration > 0.0, "Chord duration must be positive");
+            }
+        }
+    }
+
+    #[test]
+    fn test_all_progression_patterns_produce_chords() {
+        let patterns = [
+            ProgressionPattern::PopPillar,
+            ProgressionPattern::StandardPop,
+            ProgressionPattern::TwoFiveOne,
+            ProgressionPattern::Circle,
+            ProgressionPattern::RnBFlow,
+            ProgressionPattern::NeoSoul,
+            ProgressionPattern::MinorDescent,
+            ProgressionPattern::RockDriver,
+            ProgressionPattern::PopMinor,
+            ProgressionPattern::JazzMinor,
+        ];
+
+        let key = Key {
+            root: 60,
+            scale: Scale::Major,
+        };
+        let mut gen = ChordGenerator::new(key, 120.0);
+
+        for pattern in patterns {
+            let prog = gen.generate_from_pattern(pattern.clone());
+            assert!(
+                !prog.is_empty(),
+                "Pattern {:?} produced empty progression",
+                pattern
+            );
+            assert!(
+                prog.len() >= 3,
+                "Pattern {:?} produced fewer than 3 chords",
+                pattern
+            );
+        }
+    }
+
+    #[test]
+    fn test_custom_with_7ths_produces_7th_chords() {
+        let key = Key {
+            root: 60,
+            scale: Scale::Major,
+        };
+        let mut gen = ChordGenerator::new(key, 120.0);
+        let prog = gen.generate_custom(8, true, ChordStyle::Jazz);
+
+        let has_7th = prog.iter().any(|c| {
+            matches!(
+                c.chord_type,
+                ChordType::Major7 | ChordType::Minor7 | ChordType::Dominant7 | ChordType::Diminished7
+            )
+        });
+        assert!(has_7th, "Custom progression with include_7ths should contain 7th chords");
+    }
+
+    #[test]
+    fn test_chord_display_all_types() {
+        let types_and_suffixes = [
+            (ChordType::Major, "C4"),
+            (ChordType::Minor, "C4m"),
+            (ChordType::Major7, "C4maj7"),
+            (ChordType::Minor7, "C4m7"),
+            (ChordType::Dominant7, "C47"),
+            (ChordType::Diminished, "C4dim"),
+            (ChordType::Augmented, "C4aug"),
+            (ChordType::Sus2, "C4sus2"),
+            (ChordType::Sus4, "C4sus4"),
+        ];
+
+        for (chord_type, expected) in types_and_suffixes {
+            let chord = Chord {
+                root: 60,
+                chord_type,
+                extensions: vec![],
+                duration: 4.0,
+            };
+            assert_eq!(
+                format!("{}", chord),
+                expected,
+                "Display for {:?} should be {}",
+                chord_type,
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn test_different_roots_produce_different_progressions() {
+        let key_c = Key { root: 60, scale: Scale::Major };
+        let key_g = Key { root: 67, scale: Scale::Major };
+
+        let mut gen_c = ChordGenerator::new(key_c, 120.0);
+        let mut gen_g = ChordGenerator::new(key_g, 120.0);
+
+        let prog_c = gen_c.generate_from_pattern(ProgressionPattern::PopPillar);
+        let prog_g = gen_g.generate_from_pattern(ProgressionPattern::PopPillar);
+
+        // Same pattern in different keys should have different root notes
+        let roots_c: Vec<u8> = prog_c.iter().map(|c| c.root % 12).collect();
+        let roots_g: Vec<u8> = prog_g.iter().map(|c| c.root % 12).collect();
+        assert_ne!(roots_c, roots_g, "Same pattern in C and G should differ");
+    }
 }
