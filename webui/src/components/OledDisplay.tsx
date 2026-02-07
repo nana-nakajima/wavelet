@@ -1,15 +1,105 @@
-import React from 'react';
-import { useTonverkStore, PAGE_LABELS } from '../tonverkStore';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTonverkStore } from '../tonverkStore';
+import { useAudio } from '../context/AudioContext';
 
 export const OledDisplay: React.FC = () => {
   const tracks = useTonverkStore(state => state.tracks);
   const selectedTrackId = useTonverkStore(state => state.selectedTrackId);
   const transport = useTonverkStore(state => state.transport);
+  const { getWaveform, isReady } = useAudio();
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>(0);
 
   const track = tracks.find(t => t.id === selectedTrackId) || tracks[0];
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const drawWaveform = () => {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Clear canvas
+      ctx.fillStyle = '#0a0a0c';
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw grid
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 16) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += 16) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      if (isReady) {
+        const waveform = getWaveform();
+        if (waveform && waveform.length > 0) {
+          ctx.strokeStyle = '#00ff88';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+
+          const sliceWidth = width / Math.min(waveform.length, 1024);
+          let x = 0;
+
+          for (let i = 0; i < Math.min(waveform.length, 1024); i++) {
+            const v = (waveform[i] + 1) / 2;
+            const y = v * height;
+
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+            x += sliceWidth;
+          }
+
+          ctx.stroke();
+        }
+      } else {
+        // Draw placeholder waveform
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, height / 2);
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      animationRef.current = requestAnimationFrame(drawWaveform);
+    };
+
+    drawWaveform();
+
+    return () => {
+      cancelAnimationFrame(animationRef.current);
+    };
+  }, [isReady, getWaveform]);
+
   const formatPageName = () => {
-    return PAGE_LABELS[track.currentPage];
+    const labels: Record<string, string> = {
+      trig: 'TRIG',
+      src: 'SRC',
+      fltr: 'FLTR',
+      amp: 'AMP',
+      fx: 'FX',
+      mod: 'MOD',
+    };
+    return labels[track.currentPage] || 'TRIG';
   };
 
   return (
@@ -30,7 +120,7 @@ export const OledDisplay: React.FC = () => {
                 </div>
                 <div className="oled-param">
                   <span className="oled-label">MODE</span>
-                  <span className="oled-value">{['FWD', 'REV', 'FLOD', 'RLOD'][track.srcParams.playMode || 0] || 'FWD'}</span>
+                  <span className="oled-value">{(['FWD', 'REV', 'FLOD', 'RLOD'])[track.srcParams.playMode || 0] || 'FWD'}</span>
                 </div>
               </>
             )}
@@ -96,16 +186,12 @@ export const OledDisplay: React.FC = () => {
             )}
           </div>
 
-          <div className="oled-waveform">
-            <svg viewBox="0 0 128 32" className="waveform-svg">
-              <polyline
-                points="0,16 16,16 32,16 48,16 64,16 80,16 96,16 112,16 128,16"
-                fill="none"
-                stroke="#00ff88"
-                strokeWidth="1"
-              />
-            </svg>
-          </div>
+          <canvas
+            ref={canvasRef}
+            width={360}
+            height={40}
+            className="oled-waveform-canvas"
+          />
 
           <div className="oled-footer">
             <span className="oled-tempo">{Math.round(transport.tempo)} BPM</span>
