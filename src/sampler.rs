@@ -1017,6 +1017,30 @@ mod tests {
         assert_eq!(instrument.zones[1].low_note, 49);
         assert_eq!(instrument.zones[2].low_note, 73);
     }
+
+    #[test]
+    fn test_recorder_config() {
+        let config = RecorderConfig::default();
+        assert!(!config.armed);
+        assert!(!config.recording);
+        assert_eq!(config.threshold, 0.1);
+        assert_eq!(config.source, RecordSource::Inputs);
+    }
+
+    #[test]
+    fn test_record_length_samples() {
+        assert!(RecordLength::OneSixteenth.to_samples(44100) > 0);
+        assert!(RecordLength::Max.to_samples(44100) > RecordLength::One.to_samples(44100));
+    }
+
+    #[test]
+    fn test_auto_sampler_config() {
+        let config = AutoSamplerConfig::default();
+        assert!(!config.enabled);
+        assert_eq!(config.start_note, 21);
+        assert_eq!(config.end_note, 108);
+        assert_eq!(config.velocity_layers, 1);
+    }
 }
 
 // ============================================================================
@@ -1334,5 +1358,409 @@ impl MultiSampler {
     /// 设置最大复音数
     pub fn set_max_polyphony(&mut self, max: u8) {
         self.max_polyphony = max.clamp(1, 64);
+    }
+}
+
+// ============================================================================
+// Tonverk-aligned Recorder (ARM, REC, RLEN, THR, SRC, MON)
+// ============================================================================
+
+pub const MAX_SAMPLE_MEMORY: usize = 4 * 1024 * 1024 * 1024;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecordSource {
+    Inputs,
+    Main,
+    Tracks,
+    Buses,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecordLength {
+    OneSixteenth,
+    OneEighth,
+    OneFourth,
+    OneHalf,
+    One,
+    Two,
+    Four,
+    Max,
+}
+
+impl RecordLength {
+    pub fn to_samples(&self, sample_rate: u32) -> usize {
+        let max_duration = 6.0 * 60.0 + 6.0 + 6.0 / 60.0;
+        match self {
+            RecordLength::OneSixteenth => (max_duration / 16.0 * sample_rate as f64) as usize,
+            RecordLength::OneEighth => (max_duration / 8.0 * sample_rate as f64) as usize,
+            RecordLength::OneFourth => (max_duration / 4.0 * sample_rate as f64) as usize,
+            RecordLength::OneHalf => (max_duration / 2.0 * sample_rate as f64) as usize,
+            RecordLength::One => (1.0 * sample_rate as f64) as usize,
+            RecordLength::Two => (2.0 * sample_rate as f64) as usize,
+            RecordLength::Four => (4.0 * sample_rate as f64) as usize,
+            RecordLength::Max => (max_duration * sample_rate as f64) as usize,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RecordState {
+    Idle,
+    Armed,
+    Recording,
+    Stopping,
+}
+
+#[derive(Debug, Clone)]
+pub struct RecorderConfig {
+    pub armed: bool,
+    pub recording: bool,
+    pub record_length: RecordLength,
+    pub threshold: f32,
+    pub source: RecordSource,
+    pub monitor: bool,
+    pub pre_record_time: f32,
+}
+
+impl Default for RecorderConfig {
+    fn default() -> Self {
+        Self {
+            armed: false,
+            recording: false,
+            record_length: RecordLength::One,
+            threshold: 0.1,
+            source: RecordSource::Inputs,
+            monitor: false,
+            pre_record_time: 0.01,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Recorder {
+    config: RecorderConfig,
+    state: RecordState,
+    sample_rate: u32,
+    buffer: Vec<f32>,
+    buffer_stereo: Option<Vec<f32>>,
+    record_start_position: usize,
+    record_end_position: usize,
+    sample_counter: usize,
+    pre_record_samples: usize,
+    triggered: bool,
+    peak_level: f32,
+}
+
+impl Recorder {
+    pub fn new(sample_rate: u32) -> Self {
+        Self {
+            config: RecorderConfig::default(),
+            state: RecordState::Idle,
+            sample_rate,
+            buffer: Vec::new(),
+            buffer_stereo: None,
+            record_start_position: 0,
+            record_end_position: 0,
+            sample_counter: 0,
+            pre_record_samples: (0.01 * sample_rate as f64) as usize,
+            triggered: false,
+            peak_level: 0.0,
+        }
+    }
+
+    pub fn config(&self) -> &RecorderConfig {
+        &self.config
+    }
+
+    pub fn set_armed(&mut self, armed: bool) {
+        self.config.armed = armed;
+        if armed {
+            self.state = RecordState::Armed;
+        } else if self.state == RecordState::Armed {
+            self.state = RecordState::Idle;
+        }
+    }
+
+    pub fn set_recording(&mut self, recording: bool) {
+        self.config.recording = recording;
+        if recording {
+            self.start_recording();
+        } else {
+            self.stop_recording();
+        }
+    }
+
+    pub fn set_record_length(&mut self, length: RecordLength) {
+        self.config.record_length = length;
+    }
+
+    pub fn set_threshold(&mut self, threshold: f32) {
+        self.config.threshold = threshold.clamp(0.0, 1.0);
+    }
+
+    pub fn set_source(&mut self, source: RecordSource) {
+        self.config.source = source;
+    }
+
+    pub fn set_monitor(&mut self, monitor: bool) {
+        self.config.monitor = monitor;
+    }
+
+    fn start_recording(&mut self) {
+        self.state = RecordState::Recording;
+        self.buffer.clear();
+        self.buffer_stereo = if self.config.source == RecordSource::Inputs {
+            Some(Vec::with_capacity(
+                self.config.record_length.to_samples(self.sample_rate),
+            ))
+        } else {
+            None
+        };
+        self.record_start_position = 0;
+        self.sample_counter = 0;
+        self.triggered = false;
+        self.peak_level = 0.0;
+    }
+
+    fn stop_recording(&mut self) {
+        self.state = RecordState::Stopping;
+        self.record_end_position = self.sample_counter;
+    }
+
+    pub fn process(&mut self, left: &[f32], right: &[f32]) -> (Vec<f32>, Option<Vec<f32>>) {
+        self.peak_level = 0.0;
+
+        for &sample in left.iter() {
+            let abs_sample = sample.abs();
+            if abs_sample > self.peak_level {
+                self.peak_level = abs_sample;
+            }
+        }
+
+        match self.state {
+            RecordState::Armed => {
+                if self.config.threshold > 0.0 && self.peak_level >= self.config.threshold {
+                    self.start_recording();
+                }
+            }
+            RecordState::Recording => {
+                self.buffer.extend_from_slice(left);
+                if let Some(ref mut stereo) = self.buffer_stereo {
+                    stereo.extend_from_slice(right);
+                }
+                self.sample_counter += left.len();
+
+                let max_samples = self.config.record_length.to_samples(self.sample_rate);
+                if self.sample_counter >= max_samples {
+                    self.stop_recording();
+                }
+            }
+            RecordState::Stopping => {
+                self.state = RecordState::Idle;
+            }
+            RecordState::Idle => {}
+        }
+
+        if self.state == RecordState::Recording && self.config.monitor {
+            return (left.to_vec(), Some(right.to_vec()));
+        }
+
+        (Vec::new(), None)
+    }
+
+    pub fn get_recorded_sample(&mut self) -> Option<Sample> {
+        if self.record_end_position == 0 || self.buffer.is_empty() {
+            return None;
+        }
+
+        let sample = Sample::new(
+            &format!("Rec {}", chrono::Utc::now().format("%Y%m%d_%H%M%S")),
+            self.buffer.clone(),
+            self.sample_rate,
+        );
+
+        self.buffer.clear();
+        self.buffer_stereo = None;
+        self.record_end_position = 0;
+        self.record_start_position = 0;
+
+        Some(sample)
+    }
+
+    pub fn state(&self) -> &RecordState {
+        &self.state
+    }
+
+    pub fn peak_level(&self) -> f32 {
+        self.peak_level
+    }
+
+    pub fn elapsed_samples(&self) -> usize {
+        self.sample_counter
+    }
+
+    pub fn remaining_samples(&self) -> usize {
+        let max = self.config.record_length.to_samples(self.sample_rate);
+        max.saturating_sub(self.sample_counter)
+    }
+}
+
+// ============================================================================
+// Tonverk-aligned Auto Sampler (START/END note, VELOCITY LAYERS, NOTE DURATION)
+// ============================================================================
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct AutoSamplerConfig {
+    pub enabled: bool,
+    pub start_note: u8,
+    pub end_note: u8,
+    pub sample_interval: u8,
+    pub velocity_layers: u8,
+    pub note_duration: f32,
+    pub release_time: f32,
+    pub latency_compensation: f32,
+}
+
+impl Default for AutoSamplerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            start_note: 21,
+            end_note: 108,
+            sample_interval: 12,
+            velocity_layers: 1,
+            note_duration: 0.5,
+            release_time: 0.2,
+            latency_compensation: 0.005,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AutoSamplerState {
+    Idle,
+    Sampling,
+    Processing,
+    Complete,
+    Error,
+}
+
+#[derive(Debug, Clone)]
+pub struct AutoSampler {
+    config: AutoSamplerConfig,
+    state: AutoSamplerState,
+    current_note: u8,
+    current_layer: u8,
+    sample_rate: u32,
+    notes_sampled: u8,
+    total_notes: u8,
+    progress: f32,
+    instrument: Option<MultiSampleInstrument>,
+}
+
+impl AutoSampler {
+    pub fn new(sample_rate: u32) -> Self {
+        Self {
+            config: AutoSamplerConfig::default(),
+            state: AutoSamplerState::Idle,
+            current_note: 0,
+            current_layer: 0,
+            sample_rate,
+            notes_sampled: 0,
+            total_notes: 0,
+            progress: 0.0,
+            instrument: None,
+        }
+    }
+
+    pub fn config(&self) -> &AutoSamplerConfig {
+        &self.config
+    }
+
+    pub fn mut_config(&mut self) -> &mut AutoSamplerConfig {
+        &mut self.config
+    }
+
+    pub fn state(&self) -> &AutoSamplerState {
+        &self.state
+    }
+
+    pub fn progress(&self) -> f32 {
+        self.progress
+    }
+
+    pub fn current_note(&self) -> u8 {
+        self.current_note
+    }
+
+    pub fn start(&mut self, name: &str) {
+        self.config.enabled = true;
+        self.state = AutoSamplerState::Sampling;
+        self.current_note = self.config.start_note;
+        self.current_layer = 0;
+        self.notes_sampled = 0;
+        self.total_notes = ((self.config.end_note - self.config.start_note)
+            / self.config.sample_interval
+            + 1) as u8;
+        self.progress = 0.0;
+        self.instrument = Some(MultiSampleInstrument::new(name));
+    }
+
+    pub fn stop(&mut self) {
+        self.config.enabled = false;
+        self.state = AutoSamplerState::Idle;
+    }
+
+    pub fn complete_note(&mut self, sample: Sample) {
+        if let Some(ref mut instrument) = self.instrument {
+            let low = self.current_note;
+            let high = (self.current_note + self.config.sample_interval).min(127);
+            let root = self.current_note;
+
+            let zone = KeyZone::new(sample, low, high, root);
+            instrument.add_zone(zone);
+        }
+
+        self.current_note += self.config.sample_interval;
+        self.notes_sampled += 1;
+        self.current_layer = 0;
+        self.progress = self.notes_sampled as f32 / self.total_notes as f32;
+
+        if self.current_note > self.config.end_note {
+            self.state = AutoSamplerState::Complete;
+        }
+    }
+
+    pub fn complete_layer(&mut self) {
+        self.current_layer += 1;
+        if self.current_layer >= self.config.velocity_layers {
+            self.current_layer = 0;
+        }
+    }
+
+    pub fn get_instrument(&self) -> Option<&MultiSampleInstrument> {
+        self.instrument.as_ref()
+    }
+
+    pub fn take_instrument(&mut self) -> Option<MultiSampleInstrument> {
+        self.state = AutoSamplerState::Idle;
+        self.progress = 0.0;
+        self.instrument.take()
+    }
+
+    pub fn format_status(&self) -> String {
+        match self.state {
+            AutoSamplerState::Idle => "Ready".to_string(),
+            AutoSamplerState::Sampling => format!("Sampling note {}...", self.current_note),
+            AutoSamplerState::Processing => "Processing...".to_string(),
+            AutoSamplerState::Complete => {
+                if let Some(ref instr) = self.instrument {
+                    format!("Complete - {} zones", instr.zone_count())
+                } else {
+                    "Complete".to_string()
+                }
+            }
+            AutoSamplerState::Error => "Error".to_string(),
+        }
     }
 }

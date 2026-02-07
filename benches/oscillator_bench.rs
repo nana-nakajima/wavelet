@@ -180,9 +180,12 @@ fn bench_frequency_change(c: &mut Criterion) {
 
     c.bench_function("oscillator_frequency_change", |b| {
         b.iter(|| {
-            osc.set_frequency(black_box(220.0 + _ as f32 % 1000.0));
-            for _ in 0..10 {
-                black_box(osc.next_sample());
+            for i in 0..100 {
+                let freq = black_box(220.0 + i as f32);
+                osc.set_frequency(freq);
+                for _ in 0..10 {
+                    black_box(osc.next_sample());
+                }
             }
         })
     });
