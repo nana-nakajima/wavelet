@@ -17,6 +17,7 @@ interface AudioContextType {
   stop: () => void;
   setTempo: (bpm: number) => void;
   setMasterVolume: (volume: number) => void;
+  setTrackParam: (track: number, param: string, value: number) => void;
   setTrackVolume: (track: number, volume: number) => void;
   setTrackMute: (track: number, muted: boolean) => void;
   setTrackSolo: (track: number, solo: boolean) => void;
@@ -124,6 +125,11 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     audioEngine.setMasterVolume(volume);
   }, []);
 
+  const setTrackParam = useCallback((track: number, param: string, value: number) => {
+    audioEngine.setTrackParam(track, param, value);
+    updateTrackParam(track, param, value);
+  }, [updateTrackParam]);
+
   const setTrackVolume = useCallback((track: number, volume: number) => {
     audioEngine.setTrackVolume(track, volume / 127);
   }, []);
@@ -161,6 +167,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       stop,
       setTempo,
       setMasterVolume,
+      setTrackParam,
       setTrackVolume,
       setTrackMute,
       setTrackSolo,

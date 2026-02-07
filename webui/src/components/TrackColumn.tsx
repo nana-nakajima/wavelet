@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useEffect } from 'react';
-import { useTonverkStore } from '../tonverkStore';
+import { useTonverkStore, TRACK_TYPE_CONFIG } from '../tonverkStore';
 import type { TrackType } from '../tonverkStore';
-import { useWebSocket } from '../context/WebSocketContext';
+import { useAudio } from '../context/AudioContext';
 
 interface TrackColumnProps {
   trackId: number;
@@ -13,7 +13,7 @@ export const TrackColumn: React.FC<TrackColumnProps> = ({ trackId }) => {
   const setSelectedTrack = useTonverkStore(state => state.setSelectedTrack);
   const toggleMuteStore = useTonverkStore(state => state.toggleMute);
   const toggleSoloStore = useTonverkStore(state => state.toggleSolo);
-  const { setTrackMute, setTrackSolo } = useWebSocket();
+  const { setTrackMute, setTrackSolo } = useAudio();
 
   const isSelected = selectedTrackId === trackId;
   const config = TRACK_TYPE_CONFIG[track.type as TrackType];
@@ -108,7 +108,7 @@ export const TransportBar: React.FC = () => {
   const transport = useTonverkStore(state => state.transport);
   const setTransport = useTonverkStore(state => state.setTransport);
   const nextStep = useTonverkStore(state => state.nextStep);
-  const { play, stop, setTempo } = useWebSocket();
+  const { play, stop, setTempo } = useAudio();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;

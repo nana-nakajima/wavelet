@@ -48,32 +48,15 @@ export class WaveletAudioEngine {
     this.compressor.connect(this.analyser);
     this.analyser.connect(this.audioContext.destination);
 
-    // Load WASM module
-    try {
-      await this.loadWasmModule();
-    } catch (e) {
-      console.warn('WASM not available, using JavaScript fallback');
-    }
-
-    // Start worklet if WASM loaded
-    if (this.wasmModule && this.messagePort) {
-      await this.startAudioWorklet();
-    }
-
     console.log('Audio engine initialized');
   }
 
   private async loadWasmModule(): Promise<void> {
-    try {
-      // Dynamic import of WASM module (wrap in try-catch for when WASM isn't built yet)
-      console.log('WASM module: loading from pkg/wavelet');
-    } catch (e) {
-      console.log('WASM module not yet built, using JavaScript fallback');
-    }
+    console.log('WASM module: loading from pkg/wavelet');
   }
 
   private async startAudioWorklet(): Promise<void> {
-    if (!this.audioContext || !this.wasmModule) return;
+    if (!this.audioContext) return;
 
     try {
       await this.audioContext.audioWorklet.addModule('audio-processor.js');
@@ -105,11 +88,9 @@ export class WaveletAudioEngine {
         console.log('WASM state update:', data.state);
         break;
       case 'waveform':
-        // Dispatch for visualization
         window.dispatchEvent(new CustomEvent('wavelet:waveform', { detail: data }));
         break;
       case 'spectrum':
-        // Dispatch for spectrum visualization
         window.dispatchEvent(new CustomEvent('wavelet:spectrum', { detail: data }));
         break;
       case 'error':
@@ -203,7 +184,6 @@ export class WaveletAudioEngine {
       const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
       this.audioBuffers.set(track, audioBuffer);
 
-      // Send to WASM
       const channelData = audioBuffer.getChannelData(0);
       this.sendMessage({
         type: 'LoadSample',
@@ -225,7 +205,6 @@ export class WaveletAudioEngine {
     if (this.messagePort) {
       this.messagePort.postMessage(JSON.stringify(message));
     } else if (this.wasmModule) {
-      // Direct WASM call
       this.wasmModule.handle_message(JSON.stringify(message));
     }
   }
@@ -280,6 +259,14 @@ export class WaveletAudioEngine {
   }
 
   getTempo(): number {
+    return this.tempo;
+  }
+
+  getMasterVolume(): number {
+    return this.masterVolume;
+  }
+
+  dispose(): void {
     this.stop();
     this.audioBuffers.clear();
 

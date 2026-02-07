@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { useTonverkStore, PAGE_LABELS, TRACK_TYPE_CONFIG } from '../tonverkStore';
-import { useWebSocket } from '../context/WebSocketContext';
+import { useAudio } from '../context/AudioContext';
 
 interface KnobProps {
   value: number;
@@ -86,7 +86,7 @@ export const EncoderSection: React.FC = () => {
   const selectedTrackId = useTonverkStore(state => state.selectedTrackId);
   const setTrackPage = useTonverkStore(state => state.setTrackPage);
   const updateTrackParamStore = useTonverkStore(state => state.updateTrackParam);
-  const { setTrackParam } = useWebSocket();
+  const { setTrackParam } = useAudio();
 
   const track = tracks.find(t => t.id === selectedTrackId) || tracks[0];
   const config = TRACK_TYPE_CONFIG[track.type];
