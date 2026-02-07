@@ -18,6 +18,7 @@ export interface Module {
   id: string;
   type: ModuleType;
   position: number; // Vertical position in rack (0-14 for 14HP)
+  hp: number; // Horizontal pitch units (width)
   params: Record<string, number>;
   connections: Connection[];
 }
@@ -49,7 +50,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   oscillator: {
     name: 'VCO',
     hp: 10,
-    color: '#4a9eff',
+    color: '#00d4ff', // neon-blue
     inputs: ['FM', 'Sync'],
     outputs: ['Sine', 'Saw', 'Square'],
     params: ['frequency', 'detune', 'mix'],
@@ -57,7 +58,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   filter: {
     name: 'VCF',
     hp: 8,
-    color: '#4ade80',
+    color: '#00ff88', // neon-green
     inputs: ['Audio', 'Cutoff CV'],
     outputs: ['LP', 'HP', 'BP'],
     params: ['cutoff', 'resonance', 'drive'],
@@ -65,7 +66,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   envelope: {
     name: 'ADSR',
     hp: 6,
-    color: '#f97316',
+    color: '#ff6b35', // neon-orange
     inputs: ['Gate'],
     outputs: ['Envelope'],
     params: ['attack', 'decay', 'sustain', 'release'],
@@ -73,7 +74,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   lfo: {
     name: 'LFO',
     hp: 6,
-    color: '#a855f7',
+    color: '#bf5fff', // neon-purple
     inputs: [],
     outputs: ['LFO'],
     params: ['rate', 'waveform', 'amplitude'],
@@ -81,7 +82,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   delay: {
     name: 'Delay',
     hp: 8,
-    color: '#4ade80',
+    color: '#00ff88', // neon-green
     inputs: ['Audio', 'Time', 'Feedback'],
     outputs: ['Wet', 'Dry'],
     params: ['time', 'feedback', 'mix'],
@@ -89,7 +90,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   reverb: {
     name: 'Reverb',
     hp: 10,
-    color: '#f97316',
+    color: '#ff6b35', // neon-orange
     inputs: ['Audio'],
     outputs: ['Wet', 'Dry'],
     params: ['size', 'decay', 'mix', 'damping'],
@@ -97,7 +98,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   compressor: {
     name: 'Compressor',
     hp: 6,
-    color: '#ef4444',
+    color: '#ff3366', // neon-red
     inputs: ['Audio'],
     outputs: ['Audio'],
     params: ['threshold', 'ratio', 'attack', 'release'],
@@ -105,7 +106,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   output: {
     name: 'Output',
     hp: 6,
-    color: '#eab308',
+    color: '#ffcc00', // neon-yellow
     inputs: ['Left', 'Right', 'Aux'],
     outputs: [],
     params: ['volume', 'pan'],
@@ -113,7 +114,7 @@ const MODULE_SPECS: Record<ModuleType, { name: string; hp: number; color: string
   vca: {
     name: 'VCA',
     hp: 4,
-    color: '#a855f7',
+    color: '#bf5fff', // neon-purple
     inputs: ['Audio', 'CV'],
     outputs: ['Audio'],
     params: ['gain'],
@@ -129,18 +130,27 @@ export const useStore = create<AppState>((set, get) => ({
   addModule: (type) => {
     const spec = MODULE_SPECS[type];
     const id = generateId();
-    
-    // Find next available position
-    const positions = get().modules.map(m => m.position + m.hp);
+
+    // Find next available position (avoid overlapping modules)
+    const modules = get().modules;
     let position = 0;
-    while (positions.includes(position) || positions.includes(position - 1)) {
-      position += 2;
+
+    // Sort existing modules by position
+    const sortedModules = [...modules].sort((a, b) => a.position - b.position);
+
+    // Find first gap that fits the new module
+    for (const m of sortedModules) {
+      if (position + spec.hp <= m.position) {
+        break; // Found a gap
+      }
+      position = m.position + m.hp;
     }
-    
+
     const module: Module = {
       id,
       type,
       position,
+      hp: spec.hp,
       params: Object.fromEntries(spec.params.map(p => [p, 0.5])),
       connections: [],
     };
