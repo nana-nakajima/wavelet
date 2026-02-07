@@ -1,12 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTonverkStore } from '../tonverkStore';
 import { useAudio } from '../context/AudioContext';
+import { audioEngine } from '../audio/engine';
 
 export const OledDisplay: React.FC = () => {
   const tracks = useTonverkStore(state => state.tracks);
   const selectedTrackId = useTonverkStore(state => state.selectedTrackId);
   const transport = useTonverkStore(state => state.transport);
-  const { getWaveform, isReady } = useAudio();
+  const { isReady } = useAudio();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
@@ -45,7 +46,7 @@ export const OledDisplay: React.FC = () => {
       }
 
       if (isReady) {
-        const waveform = getWaveform();
+        const waveform = audioEngine.getWaveformData();
         if (waveform && waveform.length > 0) {
           ctx.strokeStyle = '#00ff88';
           ctx.lineWidth = 1.5;
@@ -88,7 +89,7 @@ export const OledDisplay: React.FC = () => {
     return () => {
       cancelAnimationFrame(animationRef.current);
     };
-  }, [isReady, getWaveform]);
+  }, [isReady]);
 
   const formatPageName = () => {
     const labels: Record<string, string> = {
