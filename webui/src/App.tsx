@@ -28,58 +28,48 @@ const App: React.FC = () => {
         <span className="version">TONVERK</span>
       </header>
 
-      <aside className="left-panel">
-        <TrackSelector />
-      </aside>
+      <div className="main-content">
+        <aside className="left-panel">
+          <TrackSelector />
+        </aside>
 
-      <div className="center-panel">
-        <TransportBar />
-
-        <div className="oled-display-panel">
+        <div className="center-panel">
+          <TransportBar />
           <OledDisplay />
-        </div>
-
-        <div className="fx-section">
           <FxSlotPanel />
-        </div>
-
-        <div className="step-section">
           <StepGrid />
-        </div>
-
-        <div className="keyboard-section">
           <PianoKeyboard />
         </div>
+
+        <aside className="right-panel">
+          <div className="view-mode-selector">
+            <button
+              className={`view-btn ${viewMode === 'pattern' ? 'active' : ''}`}
+              onClick={() => setViewMode('pattern')}
+            >
+              PATTERN
+            </button>
+            <button
+              className={`view-btn ${viewMode === 'song' ? 'active' : ''}`}
+              onClick={() => setViewMode('song')}
+            >
+              SONG
+            </button>
+            <button
+              className={`view-btn ${performMode ? 'active' : ''}`}
+              onClick={togglePerformMode}
+            >
+              PERFORM
+            </button>
+          </div>
+
+          <div className="track-strip-selector">
+            {tracks.map((track) => (
+              <TrackColumn key={track.id} trackId={track.id} />
+            ))}
+          </div>
+        </aside>
       </div>
-
-      <aside className="right-panel">
-        <div className="view-mode-selector">
-          <button
-            className={`view-btn ${viewMode === 'pattern' ? 'active' : ''}`}
-            onClick={() => setViewMode('pattern')}
-          >
-            PATTERN
-          </button>
-          <button
-            className={`view-btn ${viewMode === 'song' ? 'active' : ''}`}
-            onClick={() => setViewMode('song')}
-          >
-            SONG
-          </button>
-          <button
-            className={`view-btn ${performMode ? 'active' : ''}`}
-            onClick={togglePerformMode}
-          >
-            PERFORM
-          </button>
-        </div>
-
-        <div className="track-strip-selector">
-          {tracks.map((track) => (
-            <TrackColumn key={track.id} trackId={track.id} />
-          ))}
-        </div>
-      </aside>
 
       <div className="encoder-section-wrapper">
         <EncoderSection />
@@ -88,7 +78,7 @@ const App: React.FC = () => {
       <footer className="app-footer">
         <div className="status-indicator">
           <span className={`status-dot ${isConnected ? '' : 'disconnected'}`} />
-          <span>{isConnected ? 'AUDIO READY' : 'INIT'}</span>
+          <span>{isConnected ? 'AUDIO READY' : 'INITIALIZING'}</span>
         </div>
         <div className="meter-display">
           <div className="meter-bar">
@@ -97,10 +87,10 @@ const App: React.FC = () => {
               style={{ width: `${Math.min(peakLevel * 100, 100)}%` }}
             />
           </div>
-          <span className="meter-label">LVL</span>
+          <span className="meter-label">LEVEL</span>
         </div>
         <div className="latency-display">
-          <span>{latency.toFixed(1)}ms</span>
+          <span>{latency.toFixed(1)} ms</span>
         </div>
       </footer>
     </div>

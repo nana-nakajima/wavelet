@@ -33,7 +33,7 @@ const Knob: React.FC<KnobProps> = ({
     const handleMouseMove = (e: MouseEvent) => {
       const delta = startY.current - e.clientY;
       const range = max - min;
-      const sensitivity = size === 'small' ? 400 : size === 'large' ? 100 : 200;
+      const sensitivity = 200;
       const newValue = Math.max(min, Math.min(max, startValue.current + (delta / sensitivity) * range));
       onChange(Math.round(newValue));
     };
@@ -45,11 +45,11 @@ const Knob: React.FC<KnobProps> = ({
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [value, min, max, onChange, size]);
+  }, [value, min, max, onChange]);
 
   const percentage = (value - min) / (max - min);
   const rotation = -135 + percentage * 270;
-  const knobSize = size === 'small' ? 32 : size === 'large' ? 48 : 40;
+  const knobSize = size === 'small' ? 36 : size === 'large' ? 52 : 44;
 
   return (
     <div className="encoder-knob-container" style={{ width: knobSize }}>
@@ -64,7 +64,6 @@ const Knob: React.FC<KnobProps> = ({
         }}
       >
         <div
-          className="encoder-knob-indicator"
           style={{
             position: 'absolute',
             width: '3px',
@@ -73,7 +72,7 @@ const Knob: React.FC<KnobProps> = ({
             transformOrigin: 'bottom center',
             transform: `rotate(${rotation}deg)`,
             backgroundColor: color,
-            boxShadow: `0 0 4px ${color}`,
+            boxShadow: `0 0 6px ${color}`,
           }}
         />
         <div className="encoder-knob-center" />
@@ -190,7 +189,7 @@ export const EncoderSection: React.FC = () => {
       </div>
 
       <div className="encoder-knobs-row">
-        {knobs.map((knob, i) => (
+        {knobs.slice(0, 8).map((knob, i) => (
           <Knob
             key={i}
             value={knob.value}
@@ -199,7 +198,7 @@ export const EncoderSection: React.FC = () => {
             label={knob.label}
             onChange={handleParamChange(knob.param)}
             color={config.color}
-            size="small"
+            size="medium"
           />
         ))}
       </div>
