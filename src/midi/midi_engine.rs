@@ -1,4 +1,4 @@
-use crate::{Machine, MachineType, MidiMachine, Track, TrackType, NUM_TRACKS, FX_SLOTS_AUDIO};
+use crate::Machine;
 
 #[derive(Debug, Clone)]
 pub struct MidiEngine {
@@ -67,74 +67,82 @@ impl MidiEngine {
         MidiEngine::default()
     }
 
-    pub fn process_midi_message(&mut self, message: MidiMessage) {
+    pub fn process_midi_message(&mut self, message: MidiMessage) -> Option<MidiEvent> {
         match message {
-            MidiMessage::NoteOn { channel, note, velocity } => {
+            MidiMessage::NoteOn {
+                channel,
+                note,
+                velocity,
+            } => {
                 if velocity > 0 {
                     self.channels[channel as usize].notes_on[note as usize] = velocity;
-                    self.handle_note_on(channel, note, velocity);
+                    Some(MidiEvent::NoteOn {
+                        channel,
+                        note,
+                        velocity,
+                    })
                 } else {
                     self.channels[channel as usize].notes_on[note as usize] = 0;
-                    self.handle_note_off(channel, note);
+                    Some(MidiEvent::NoteOff { channel, note })
                 }
             }
             MidiMessage::NoteOff { channel, note } => {
                 self.channels[channel as usize].notes_on[note as usize] = 0;
-                self.handle_note_off(channel, note);
+                Some(MidiEvent::NoteOff { channel, note })
             }
             MidiMessage::ControlChange { channel, cc, value } => {
                 self.channels[channel as usize].cc_values[cc as usize] = value;
-                self.handle_cc(channel, cc, value);
+                Some(MidiEvent::ControlChange { channel, cc, value })
             }
             MidiMessage::PitchBend { channel, value } => {
                 self.channels[channel as usize].pitch_bend = value;
+                Some(MidiEvent::PitchBend { channel, value })
             }
             MidiMessage::ProgramChange { channel, program } => {
                 self.channels[channel as usize].program = program;
+                Some(MidiEvent::ProgramChange { channel, program })
             }
-            MidiMessage::Aftertouch { channel, note: _, pressure } => {
+            MidiMessage::Aftertouch {
+                channel,
+                note: _,
+                pressure,
+            } => {
                 self.channels[channel as usize].aftertouch = pressure;
+                Some(MidiEvent::Aftertouch { channel, pressure })
             }
             MidiMessage::Clock => {
                 self.clock_divider = (self.clock_divider + 1) % 24;
+                None
             }
             MidiMessage::Start => {
                 self.sync.running = true;
+                Some(MidiEvent::Start)
             }
             MidiMessage::Stop => {
                 self.sync.running = false;
+                Some(MidiEvent::Stop)
             }
             MidiMessage::Continue => {
                 self.sync.running = true;
+                Some(MidiEvent::Continue)
             }
             MidiMessage::SongPosition { position } => {
                 self.sync.song_position = position;
+                Some(MidiEvent::SongPosition { position })
             }
-            _ => {}
+            _ => None,
         }
     }
 
-    fn handle_note_on(&self, channel: u8, note: u8, velocity: u8) {
-        let track_index = self.get_track_for_channel(channel);
-        if let Some(track) = self.get_track_mut(track_index) {
-            if let Machine::Midi(ref mut midi_machine) = track.machine {
-                midi_machine.set_cc(7, velocity as f32);
-            }
-        }
+    pub fn handle_cc(&mut self, channel: u8, cc: u8, value: u8) {
+        self.channels[channel as usize].cc_values[cc as usize] = value;
     }
 
-    fn handle_note_off(&self, _channel: u8, _note: u8) {}
-
-    fn handle_cc(&self, channel: u8, cc: u8, value: u8) {
-        let track_index = self.get_track_for_channel(channel);
-        if let Some(track) = self.get_track_mut(track_index) {
-            if let Machine::Midi(ref mut midi_machine) = track.machine {
-                midi_machine.set_cc(cc, value as f32);
-            }
-        }
+    pub fn get_cc(&self, channel: u8, cc: u8) -> u8 {
+        self.channels[channel as usize].cc_values[cc as usize]
     }
 
-    fn get_track_for_channel(&self, channel: u8) -> Option<usize> {
+    pub fn get_track_for_channel(&self, channel: u8) -> Option<usize> {
         for (i, ch) in self.channels.iter().enumerate() {
             if ch.track == Some(channel as usize) {
                 return Some(channel as usize);
@@ -143,21 +151,69 @@ impl MidiEngine {
         None
     }
 
-    fn get_track_mut(&mut self, index: Option<usize>) -> Option<&mut Track> {
-        if let Some(i) = index {
-            Some(&mut unsafe { &mut *(&mut self as *mut MidiEngine as *mut [Track; 16] }[i] })
-        } else {
-            None
-        }
-    }
-
     pub fn set_track_channel(&mut self, track: usize, channel: u8) {
         if channel > 0 && channel <= 16 {
             self.channels[channel as usize - 1].track = Some(track);
         }
     }
 
+    pub fn get_channel_volume(&self, channel: u8) -> u8 {
+        self.channels[channel as usize].volume
+    }
+
+    pub fn get_channel_pan(&self, channel: u8) -> u8 {
+        self.channels[channel as usize].pan
+    }
+
+    pub fn get_channel_pitch_bend(&self, channel: u8) -> i16 {
+        self.channels[channel as usize].pitch_bend
+    }
+
+    pub fn get_channel_aftertouch(&self, channel: u8) -> u8 {
+        self.channels[channel as usize].aftertouch
+    }
+
+    pub fn is_note_on(&self, channel: u8, note: u8) -> bool {
+        self.channels[channel as usize].notes_on[note as usize] > 0
+    }
+
+    pub fn set_tempo(&mut self, tempo: u16) {
+        self.sync.tempo = tempo.clamp(20, 300);
+    }
+
+    pub fn tempo(&self) -> u16 {
+        self.sync.tempo
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.sync.running
+    }
+
+    pub fn clock_division(&self) -> u32 {
+        self.clock_divider
+    }
+
+    pub fn song_position(&self) -> u16 {
+        self.sync.song_position
+    }
+
     pub fn send_midi_message(&self, _message: MidiMessage) {}
+
+    pub fn add_input_port(&mut self, port: MidiPort) {
+        self.input_ports.push(port);
+    }
+
+    pub fn add_output_port(&mut self, port: MidiPort) {
+        self.output_ports.push(port);
+    }
+
+    pub fn set_active_input(&mut self, index: Option<usize>) {
+        self.active_input = index;
+    }
+
+    pub fn set_active_output(&mut self, index: Option<usize>) {
+        self.active_output = index;
+    }
 }
 
 impl Default for MidiChannel {
@@ -193,6 +249,21 @@ impl Default for MidiSync {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub enum MidiEvent {
+    NoteOn { channel: u8, note: u8, velocity: u8 },
+    NoteOff { channel: u8, note: u8 },
+    ControlChange { channel: u8, cc: u8, value: u8 },
+    ProgramChange { channel: u8, program: u8 },
+    PitchBend { channel: u8, value: i16 },
+    Aftertouch { channel: u8, pressure: u8 },
+    Clock,
+    Start,
+    Stop,
+    Continue,
+    SongPosition { position: u16 },
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum MidiMessage {
     NoteOn { channel: u8, note: u8, velocity: u8 },
     NoteOff { channel: u8, note: u8 },
@@ -216,3 +287,156 @@ pub const CC_SUSTAIN: u8 = 64;
 pub const CC_REVERB: u8 = 91;
 pub const CC_CHORUS: u8 = 93;
 pub const CC_ALL_NOTES_OFF: u8 = 123;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_midi_engine_creation() {
+        let engine = MidiEngine::new();
+        assert_eq!(engine.sync.tempo, 120);
+        assert!(!engine.sync.running);
+    }
+
+    #[test]
+    fn test_midi_note_on_event() {
+        let mut engine = MidiEngine::new();
+        let event = engine.process_midi_message(MidiMessage::NoteOn {
+            channel: 0,
+            note: 60,
+            velocity: 100,
+        });
+        assert!(matches!(
+            event,
+            Some(MidiEvent::NoteOn {
+                channel: 0,
+                note: 60,
+                velocity: 100
+            })
+        ));
+        assert!(engine.is_note_on(0, 60));
+    }
+
+    #[test]
+    fn test_midi_note_off_event() {
+        let mut engine = MidiEngine::new();
+        engine.process_midi_message(MidiMessage::NoteOn {
+            channel: 0,
+            note: 60,
+            velocity: 100,
+        });
+        let event = engine.process_midi_message(MidiMessage::NoteOff {
+            channel: 0,
+            note: 60,
+        });
+        assert!(matches!(
+            event,
+            Some(MidiEvent::NoteOff {
+                channel: 0,
+                note: 60
+            })
+        ));
+        assert!(!engine.is_note_on(0, 60));
+    }
+
+    #[test]
+    fn test_midi_cc_event() {
+        let mut engine = MidiEngine::new();
+        let event = engine.process_midi_message(MidiMessage::ControlChange {
+            channel: 0,
+            cc: 7,
+            value: 127,
+        });
+        assert!(matches!(
+            event,
+            Some(MidiEvent::ControlChange {
+                channel: 0,
+                cc: 7,
+                value: 127
+            })
+        ));
+        assert_eq!(engine.get_cc(0, 7), 127);
+    }
+
+    #[test]
+    fn test_midi_clock() {
+        let mut engine = MidiEngine::new();
+        for _ in 0..24 {
+            engine.process_midi_message(MidiMessage::Clock);
+        }
+        assert_eq!(engine.clock_division(), 0);
+    }
+
+    #[test]
+    fn test_midi_start_stop() {
+        let mut engine = MidiEngine::new();
+        assert!(!engine.is_running());
+        engine.process_midi_message(MidiMessage::Start);
+        assert!(engine.is_running());
+        engine.process_midi_message(MidiMessage::Stop);
+        assert!(!engine.is_running());
+    }
+
+    #[test]
+    fn test_midi_tempo() {
+        let mut engine = MidiEngine::new();
+        engine.set_tempo(140);
+        assert_eq!(engine.tempo(), 140);
+        engine.set_tempo(400); // should clamp
+        assert_eq!(engine.tempo(), 300);
+    }
+
+    #[test]
+    fn test_track_channel_assignment() {
+        let mut engine = MidiEngine::new();
+        engine.set_track_channel(5, 3);
+        assert_eq!(engine.get_track_for_channel(3), Some(3));
+        assert_eq!(engine.get_track_for_channel(1), None);
+    }
+
+    #[test]
+    fn test_velocity_zero_is_note_off() {
+        let mut engine = MidiEngine::new();
+        let event = engine.process_midi_message(MidiMessage::NoteOn {
+            channel: 0,
+            note: 60,
+            velocity: 0,
+        });
+        assert!(matches!(
+            event,
+            Some(MidiEvent::NoteOff {
+                channel: 0,
+                note: 60
+            })
+        ));
+        assert!(!engine.is_note_on(0, 60));
+    }
+
+    #[test]
+    fn test_channel_volume() {
+        let mut engine = MidiEngine::new();
+        assert_eq!(engine.get_channel_volume(0), 100);
+        engine.handle_cc(0, CC_VOLUME, 80);
+        assert_eq!(engine.get_channel_volume(0), 80);
+    }
+
+    #[test]
+    fn test_channel_pan() {
+        let mut engine = MidiEngine::new();
+        assert_eq!(engine.get_channel_pan(0), 64);
+        engine.handle_cc(0, CC_PAN, 32);
+        assert_eq!(engine.get_channel_pan(0), 32);
+    }
+
+    #[test]
+    fn test_pitch_bend() {
+        let mut engine = MidiEngine::new();
+        assert_eq!(engine.get_channel_pitch_bend(0), 8192);
+        engine.process_midi_message(MidiMessage::PitchBend {
+            channel: 0,
+            value: 16383,
+        });
+        assert_eq!(engine.get_channel_pitch_bend(0), 16383);
+    }
+}
