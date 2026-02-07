@@ -443,7 +443,12 @@ mod tests {
         let sample_rate = 1000.0;
         let num_samples = 500;
 
-        let waveforms = [Waveform::Sine, Waveform::Square, Waveform::Sawtooth, Waveform::Triangle];
+        let waveforms = [
+            Waveform::Sine,
+            Waveform::Square,
+            Waveform::Sawtooth,
+            Waveform::Triangle,
+        ];
         let mut outputs: Vec<Vec<f32>> = Vec::new();
 
         for wf in &waveforms {
@@ -524,13 +529,7 @@ mod tests {
         let block = lfo2.process_block(200);
 
         for (i, (a, b)) in individual.iter().zip(block.iter()).enumerate() {
-            assert!(
-                (a - b).abs() < 1e-6,
-                "Mismatch at {}: {} vs {}",
-                i,
-                a,
-                b
-            );
+            assert!((a - b).abs() < 1e-6, "Mismatch at {}: {} vs {}", i, a, b);
         }
     }
 

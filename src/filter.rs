@@ -766,12 +766,18 @@ mod tests {
 
         // Signal well below cutoff should pass through
         let low_signal = generate_sine(100.0, sample_rate, 4096);
-        let low_output: Vec<f32> = low_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        let low_output: Vec<f32> = low_signal
+            .iter()
+            .map(|&s| filter.process_sample(s))
+            .collect();
         filter.reset();
 
         // Signal well above cutoff should be attenuated
         let high_signal = generate_sine(5000.0, sample_rate, 4096);
-        let high_output: Vec<f32> = high_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        let high_output: Vec<f32> = high_signal
+            .iter()
+            .map(|&s| filter.process_sample(s))
+            .collect();
 
         // Skip transient (first 512 samples), measure steady-state
         let low_rms = rms(&low_output[512..]);
@@ -802,11 +808,17 @@ mod tests {
         });
 
         let low_signal = generate_sine(100.0, sample_rate, 4096);
-        let low_output: Vec<f32> = low_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        let low_output: Vec<f32> = low_signal
+            .iter()
+            .map(|&s| filter.process_sample(s))
+            .collect();
         filter.reset();
 
         let high_signal = generate_sine(15000.0, sample_rate, 4096);
-        let high_output: Vec<f32> = high_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        let high_output: Vec<f32> = high_signal
+            .iter()
+            .map(|&s| filter.process_sample(s))
+            .collect();
 
         let low_rms = rms(&low_output[512..]);
         let high_rms = rms(&high_output[512..]);
@@ -834,11 +846,17 @@ mod tests {
         });
 
         let center_signal = generate_sine(center, sample_rate, 4096);
-        let center_out: Vec<f32> = center_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        let center_out: Vec<f32> = center_signal
+            .iter()
+            .map(|&s| filter.process_sample(s))
+            .collect();
         filter.reset();
 
         let far_signal = generate_sine(100.0, sample_rate, 4096);
-        let far_out: Vec<f32> = far_signal.iter().map(|&s| filter.process_sample(s)).collect();
+        let far_out: Vec<f32> = far_signal
+            .iter()
+            .map(|&s| filter.process_sample(s))
+            .collect();
 
         let center_rms = rms(&center_out[512..]);
         let far_rms = rms(&far_out[512..]);
@@ -907,7 +925,10 @@ mod tests {
         filter.reset();
         // After reset, processing silence should produce silence
         let output = filter.process_sample(0.0);
-        assert_eq!(output, 0.0, "After reset, silence in should give silence out");
+        assert_eq!(
+            output, 0.0,
+            "After reset, silence in should give silence out"
+        );
     }
 
     // --- Biquad: process_buffer matches sample-by-sample ---

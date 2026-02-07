@@ -1,53 +1,52 @@
 import React from 'react';
-import { Rack } from './components/Rack';
-import { ModuleBrowser } from './components/ModuleBrowser';
-import { Header } from './components/Header';
-import { useStore } from './store';
+import { TrackColumn, TransportBar, TrackSelector } from './components/TrackColumn';
+import { useTonverkStore } from './tonverkStore';
 
-export function App() {
-  const { modules, selectedModuleId } = useStore();
-  const selectedModule = modules.find(m => m.id === selectedModuleId);
+const App: React.FC = () => {
+  const tracks = useTonverkStore(state => state.tracks);
+  const selectedTrackId = useTonverkStore(state => state.selectedTrackId);
+  const showBrowser = useTonverkStore(state => state.showBrowser);
+  const setSelectedTrack = useTonverkStore(state => state.setSelectedTrack);
 
   return (
-    <div className="h-screen flex flex-col bg-[#0a0a0c] text-[#b8b8b8] overflow-hidden">
-      {/* Header */}
-      <Header />
+    <div className="wavelet-app">
+      <header className="app-header">
+        <h1>WAVELET</h1>
+        <span className="version">Tonverk Edition</span>
+      </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Module Browser */}
-        <ModuleBrowser />
+      <TransportBar />
 
-        {/* Center: Rack */}
-        <Rack />
+      <div className="main-content">
+        <TrackSelector />
 
-        {/* Right: Parameters Panel */}
-        <div className="w-80 bg-[#0f1014] border-l-2 border-[#252530] p-4 relative">
-          {/* Decorative corner */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#bf5fff] via-transparent to-transparent opacity-30" />
-
-          <h2 className="pixel-text text-sm font-bold mb-4 text-[#bf5fff]">
-            Parameters
-          </h2>
-
-          {selectedModule ? (
-            <div className="space-y-4">
-              <div className="text-xs text-[#686878]">
-                Selected: <span className="text-[#00ff88]">{selectedModule.type.toUpperCase()}</span>
-              </div>
-              <div className="text-xs text-[#484858]">
-                Module ID: {selectedModule.id}
-              </div>
-            </div>
-          ) : (
-            <p className="text-[#484858] text-sm">
-              Select a module to edit its parameters
-            </p>
-          )}
-
-          {/* Decorative bottom element */}
-          <div className="absolute bottom-4 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[#3a3a4a] to-transparent" />
+        <div className="track-display">
+          <div className="tracks-container">
+            {tracks.map((track) => (
+              <TrackColumn key={track.id} trackId={track.id} />
+            ))}
+          </div>
         </div>
+
+        {showBrowser && (
+          <div className="browser-panel">
+            <h3>Sample Browser</h3>
+            <p>Select a track to browse samples</p>
+          </div>
+        )}
       </div>
+
+      <footer className="app-footer">
+        <div className="status-indicator">
+          <span className="status-dot" />
+          <span>Connected</span>
+        </div>
+        <div className="cpu-meter">
+          <span>CPU: 23%</span>
+        </div>
+      </footer>
     </div>
   );
-}
+};
+
+export default App;

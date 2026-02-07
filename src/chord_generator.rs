@@ -930,7 +930,11 @@ mod tests {
             };
             let mut gen = ChordGenerator::new(key, 120.0);
             let prog = gen.generate_preset(style);
-            assert!(!prog.is_empty(), "Style {:?} produced empty progression", style);
+            assert!(
+                !prog.is_empty(),
+                "Style {:?} produced empty progression",
+                style
+            );
             for chord in &prog {
                 assert!(chord.root <= 127, "Chord root out of MIDI range");
                 assert!(chord.duration > 0.0, "Chord duration must be positive");
@@ -986,10 +990,16 @@ mod tests {
         let has_7th = prog.iter().any(|c| {
             matches!(
                 c.chord_type,
-                ChordType::Major7 | ChordType::Minor7 | ChordType::Dominant7 | ChordType::Diminished7
+                ChordType::Major7
+                    | ChordType::Minor7
+                    | ChordType::Dominant7
+                    | ChordType::Diminished7
             )
         });
-        assert!(has_7th, "Custom progression with include_7ths should contain 7th chords");
+        assert!(
+            has_7th,
+            "Custom progression with include_7ths should contain 7th chords"
+        );
     }
 
     #[test]
@@ -1025,8 +1035,14 @@ mod tests {
 
     #[test]
     fn test_different_roots_produce_different_progressions() {
-        let key_c = Key { root: 60, scale: Scale::Major };
-        let key_g = Key { root: 67, scale: Scale::Major };
+        let key_c = Key {
+            root: 60,
+            scale: Scale::Major,
+        };
+        let key_g = Key {
+            root: 67,
+            scale: Scale::Major,
+        };
 
         let mut gen_c = ChordGenerator::new(key_c, 120.0);
         let mut gen_g = ChordGenerator::new(key_g, 120.0);

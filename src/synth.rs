@@ -337,8 +337,12 @@ impl Synth {
 
         // Find available voice (oldest first for voice stealing)
         let voice_idx = if self.voices.len() < MAX_VOICES {
-            self.voices
-                .push(Voice::new(note, velocity, self.sample_rate, self.voice_age_counter));
+            self.voices.push(Voice::new(
+                note,
+                velocity,
+                self.sample_rate,
+                self.voice_age_counter,
+            ));
             self.voices.len() - 1
         } else {
             // Voice stealing: find the oldest voice by age
@@ -354,7 +358,8 @@ impl Synth {
                 self.active_notes.remove(&old_note);
 
                 // Reinitialize voice with new age
-                self.voices[voice_idx] = Voice::new(note, velocity, self.sample_rate, self.voice_age_counter);
+                self.voices[voice_idx] =
+                    Voice::new(note, velocity, self.sample_rate, self.voice_age_counter);
                 voice_idx
             } else {
                 return;
@@ -794,7 +799,8 @@ mod tests {
         let mut synth_loud = Synth::new(48000.0);
         synth_loud.set_master_volume(1.0);
         synth_loud.note_on(60, 100);
-        let loud_samples: Vec<(f32, f32)> = (0..4800).map(|_| synth_loud.process_stereo()).collect();
+        let loud_samples: Vec<(f32, f32)> =
+            (0..4800).map(|_| synth_loud.process_stereo()).collect();
         let loud_rms = rms(&loud_samples.iter().map(|(l, _)| *l).collect::<Vec<_>>());
 
         let mut synth_quiet = Synth::new(48000.0);
@@ -844,7 +850,11 @@ mod tests {
         // Should produce silence after reset
         let samples = process_n(&mut synth, 480);
         let level = rms(&samples);
-        assert!(level < 0.001, "After reset, should be silent, RMS={}", level);
+        assert!(
+            level < 0.001,
+            "After reset, should be silent, RMS={}",
+            level
+        );
     }
 
     // --- process_block_mono matches individual ---
@@ -859,13 +869,7 @@ mod tests {
         let block = synth2.process_block_mono(256);
 
         for (i, (a, b)) in individual.iter().zip(block.iter()).enumerate() {
-            assert!(
-                (a - b).abs() < 1e-6,
-                "Mismatch at {}: {} vs {}",
-                i,
-                a,
-                b
-            );
+            assert!((a - b).abs() < 1e-6, "Mismatch at {}: {} vs {}", i, a, b);
         }
     }
 

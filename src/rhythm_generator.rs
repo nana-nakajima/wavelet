@@ -1110,7 +1110,10 @@ mod tests {
     fn test_short_pattern() {
         let pattern = RhythmGenerator::new(120.0, 1).generate();
         // A 1-measure pattern should have a reasonable number of notes
-        assert!(pattern.notes.len() <= 64, "1-measure pattern should not be excessively long");
+        assert!(
+            pattern.notes.len() <= 64,
+            "1-measure pattern should not be excessively long"
+        );
         // All notes should have valid timing
         for note in &pattern.notes {
             assert!(note.start_beat >= 0.0, "Note start should be non-negative");

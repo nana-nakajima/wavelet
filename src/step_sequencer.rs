@@ -779,14 +779,8 @@ mod tests {
         }
 
         // Should have triggered step 0 and step 1 at minimum
-        assert!(
-            triggered_steps.contains(&0),
-            "Step 0 should have triggered"
-        );
-        assert!(
-            triggered_steps.contains(&1),
-            "Step 1 should have triggered"
-        );
+        assert!(triggered_steps.contains(&0), "Step 0 should have triggered");
+        assert!(triggered_steps.contains(&1), "Step 1 should have triggered");
     }
 
     #[test]
@@ -954,6 +948,9 @@ mod tests {
         // Don't call play()
 
         let triggers = seq.process(44100.0);
-        assert!(triggers.is_empty(), "Stopped sequencer should produce no triggers");
+        assert!(
+            triggers.is_empty(),
+            "Stopped sequencer should produce no triggers"
+        );
     }
 }

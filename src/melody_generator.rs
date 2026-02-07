@@ -1019,7 +1019,10 @@ mod tests {
 
         // A 1-measure melody should produce at least some notes
         // (the generator may produce 0 notes for very short lengths, which is acceptable)
-        assert!(melody.notes.len() <= 32, "1-measure melody should not be excessively long");
+        assert!(
+            melody.notes.len() <= 32,
+            "1-measure melody should not be excessively long"
+        );
         // Verify structure is valid
         assert_eq!(melody.notes.len(), melody.durations.len());
     }

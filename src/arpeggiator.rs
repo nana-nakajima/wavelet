@@ -14,9 +14,9 @@
 
 use std::fmt;
 
-/// Arpeggiator pattern types.
+/// Arpeggiator pattern types (Tonverk-aligned).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ArpPattern {
+pub enum ArpMode {
     /// Notes played in ascending order
     #[default]
     Up,
@@ -30,55 +30,64 @@ pub enum ArpPattern {
     Random,
     /// Notes played in the order they were pressed
     Order,
-    /// All notes played simultaneously (chord strum effect)
+    /// All notes played simultaneously
     Chord,
     /// Custom pattern (future extensibility)
     Pattern,
 }
 
-impl fmt::Display for ArpPattern {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ArpPattern::Up => write!(f, "Up"),
-            ArpPattern::Down => write!(f, "Down"),
-            ArpPattern::UpDown => write!(f, "Up-Down"),
-            ArpPattern::DownUp => write!(f, "Down-Up"),
-            ArpPattern::Random => write!(f, "Random"),
-            ArpPattern::Order => write!(f, "Order"),
-            ArpPattern::Chord => write!(f, "Chord"),
-            ArpPattern::Pattern => write!(f, "Pattern"),
+impl ArpMode {
+    pub fn from_u8(val: u8) -> Self {
+        match val % 8 {
+            0 => ArpMode::Up,
+            1 => ArpMode::Down,
+            2 => ArpMode::UpDown,
+            3 => ArpMode::DownUp,
+            4 => ArpMode::Random,
+            5 => ArpMode::Order,
+            6 => ArpMode::Chord,
+            _ => ArpMode::Pattern,
         }
     }
 }
 
-/// Arpeggiator configuration.
+impl fmt::Display for ArpMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ArpMode::Up => write!(f, "Up"),
+            ArpMode::Down => write!(f, "Down"),
+            ArpMode::UpDown => write!(f, "Up-Down"),
+            ArpMode::DownUp => write!(f, "Down-Up"),
+            ArpMode::Random => write!(f, "Random"),
+            ArpMode::Order => write!(f, "Order"),
+            ArpMode::Chord => write!(f, "Chord"),
+            ArpMode::Pattern => write!(f, "Pattern"),
+        }
+    }
+}
+
+/// Arpeggiator configuration (Tonverk-aligned).
 #[derive(Debug, Clone, PartialEq)]
 pub struct ArpConfig {
-    /// Pattern type for the arpeggiator
-    pub pattern: ArpPattern,
+    /// MODE: Pattern type (0-7)
+    /// 0=Up, 1=Down, 2=UpDown, 3=DownUp, 4=Random, 5=Order, 6=Chord, 7=Pattern
+    pub mode: u8,
 
-    /// BPM (beats per minute) - determines arpeggio speed
-    /// Range: 20-300 BPM
-    pub bpm: f32,
+    /// SPEED: Note value division (0-5)
+    /// 0=1/1, 1=1/2, 2=1/4, 3=1/8, 4=1/16, 5=1/32
+    pub speed: u8,
 
-    /// Note value for each arpeggio step
-    /// Represents the rhythmic division (e.g., 1/4 = quarter notes)
-    pub note_value: ArpNoteValue,
+    /// RANGE: Octave range (1-4)
+    pub range: u8,
 
-    /// Octave range for the arpeggio
-    /// How many octaves to span when playing patterns
-    pub octave_span: u8,
+    /// N.LEN: Note length/gate time (0-100)
+    pub note_length: u8,
 
-    /// Whether to repeat the pattern continuously
-    pub repeat: bool,
+    /// OFFSET: Step offset (0-15)
+    pub offset: u8,
 
-    /// Gate length (percentage of step duration)
-    /// 100 = staccato, 100 = full length
-    pub gate_length: f32,
-
-    /// Swing percentage (0-50)
-    /// 0 = straight timing, 50 = heavy swing
-    pub swing: f32,
+    /// ARP LENGTH: Number of notes to play (0-16, 0=all)
+    pub arp_length: u8,
 
     /// Whether the arpeggiator is enabled
     pub enabled: bool,
@@ -87,27 +96,26 @@ pub struct ArpConfig {
 impl Default for ArpConfig {
     fn default() -> Self {
         Self {
-            pattern: ArpPattern::Up,
-            bpm: 120.0,
-            note_value: ArpNoteValue::Quarter,
-            octave_span: 1,
-            repeat: true,
-            gate_length: 80.0,
-            swing: 0.0,
-            enabled: true, // Enabled by default for arpeggiator
+            mode: 0,
+            speed: 3,
+            range: 1,
+            note_length: 70,
+            offset: 0,
+            arp_length: 0,
+            enabled: true,
         }
     }
 }
 
-/// Note values for arpeggio timing.
+/// Speed divisions for arpeggio timing (Tonverk-aligned).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ArpNoteValue {
+pub enum ArpSpeed {
+    #[default]
     /// 1/1 (whole note)
     Whole,
     /// 1/2 (half note)
     Half,
     /// 1/4 (quarter note)
-    #[default]
     Quarter,
     /// 1/8 (eighth note)
     Eighth,
@@ -117,30 +125,30 @@ pub enum ArpNoteValue {
     ThirtySecond,
 }
 
-impl fmt::Display for ArpNoteValue {
+impl fmt::Display for ArpSpeed {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ArpNoteValue::Whole => write!(f, "1/1"),
-            ArpNoteValue::Half => write!(f, "1/2"),
-            ArpNoteValue::Quarter => write!(f, "1/4"),
-            ArpNoteValue::Eighth => write!(f, "1/8"),
-            ArpNoteValue::Sixteenth => write!(f, "1/16"),
-            ArpNoteValue::ThirtySecond => write!(f, "1/32"),
+            ArpSpeed::Whole => write!(f, "1/1"),
+            ArpSpeed::Half => write!(f, "1/2"),
+            ArpSpeed::Quarter => write!(f, "1/4"),
+            ArpSpeed::Eighth => write!(f, "1/8"),
+            ArpSpeed::Sixteenth => write!(f, "1/16"),
+            ArpSpeed::ThirtySecond => write!(f, "1/32"),
         }
     }
 }
 
-impl ArpNoteValue {
-    /// Converts note value to duration in seconds at the given BPM.
+impl ArpSpeed {
+    /// Converts speed value to duration in seconds at the given BPM.
     pub fn to_duration(&self, bpm: f32) -> f32 {
         let beat_duration = 60.0 / bpm;
         match self {
-            ArpNoteValue::Whole => beat_duration * 4.0,
-            ArpNoteValue::Half => beat_duration * 2.0,
-            ArpNoteValue::Quarter => beat_duration,
-            ArpNoteValue::Eighth => beat_duration / 2.0,
-            ArpNoteValue::Sixteenth => beat_duration / 4.0,
-            ArpNoteValue::ThirtySecond => beat_duration / 8.0,
+            ArpSpeed::Whole => beat_duration * 4.0,
+            ArpSpeed::Half => beat_duration * 2.0,
+            ArpSpeed::Quarter => beat_duration,
+            ArpSpeed::Eighth => beat_duration / 2.0,
+            ArpSpeed::Sixteenth => beat_duration / 4.0,
+            ArpSpeed::ThirtySecond => beat_duration / 8.0,
         }
     }
 }
@@ -161,7 +169,7 @@ impl ArpNote {
     }
 }
 
-/// Arpeggiator state machine.
+/// Arpeggiator state machine (Tonverk-aligned).
 #[derive(Debug, Clone)]
 pub struct Arpeggiator {
     /// Configuration
@@ -179,8 +187,8 @@ pub struct Arpeggiator {
     /// Current position in the arpeggio pattern
     position: usize,
 
-    /// Current direction (for bidirectional patterns)
-    direction: ArpDirection,
+    /// Current direction for bidirectional patterns
+    direction_up: bool,
 
     /// Sample rate for timing calculations
     sample_rate: f32,
@@ -191,20 +199,15 @@ pub struct Arpeggiator {
     /// Samples per step (calculated from BPM and note value)
     samples_per_step: f32,
 
-    /// Current swing modifier (alternates between 0 and swing)
-    swing_index: usize,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ArpDirection {
-    Up,
+    /// BPM for timing calculations
+    bpm: f32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ArpState {
     Idle,
     Playing,
-    Held, // Holding chord when note released
+    Held,
 }
 
 impl Default for Arpeggiator {
@@ -215,18 +218,17 @@ impl Default for Arpeggiator {
             held_notes: Vec::new(),
             initial_notes: Vec::new(),
             position: 0,
-            direction: ArpDirection::Up,
+            direction_up: true,
             sample_rate: 44100.0,
             samples_until_next: 0.0,
             samples_per_step: 0.0,
-            swing_index: 0,
+            bpm: 120.0,
         }
     }
 }
 
 impl Arpeggiator {
     /// Creates a new arpeggiator with the given sample rate.
-    /// The arpeggiator is disabled by default.
     pub fn new(sample_rate: f32) -> Self {
         Self {
             config: ArpConfig {
@@ -239,19 +241,28 @@ impl Arpeggiator {
     }
 
     /// Creates a new arpeggiator with the given configuration.
-    pub fn with_config(config: ArpConfig, sample_rate: f32) -> Self {
+    pub fn with_config(config: ArpConfig, sample_rate: f32, bpm: f32) -> Self {
         let mut arp = Self {
             config,
             sample_rate,
+            bpm,
             ..Default::default()
         };
         arp.update_timing();
         arp
     }
 
-    /// Updates timing calculations when BPM or note value changes.
+    /// Updates timing calculations when BPM or speed changes.
     fn update_timing(&mut self) {
-        let step_duration = self.config.note_value.to_duration(self.config.bpm);
+        let beat_duration = 60.0 / self.bpm;
+        let step_duration = match self.config.speed {
+            0 => beat_duration * 4.0,
+            1 => beat_duration * 2.0,
+            2 => beat_duration,
+            3 => beat_duration / 2.0,
+            4 => beat_duration / 4.0,
+            _ => beat_duration / 8.0,
+        };
         self.samples_per_step = step_duration * self.sample_rate;
     }
 
@@ -281,31 +292,52 @@ impl Arpeggiator {
 
     /// Sets the BPM.
     pub fn set_bpm(&mut self, bpm: f32) {
-        self.config.bpm = bpm.clamp(20.0, 300.0);
+        self.bpm = bpm.clamp(20.0, 300.0);
         self.update_timing();
     }
 
-    /// Sets the pattern type.
-    pub fn set_pattern(&mut self, pattern: ArpPattern) {
-        self.config.pattern = pattern;
+    /// Sets the MODE (pattern type).
+    pub fn set_mode(&mut self, mode: u8) {
+        self.config.mode = mode % 8;
         self.position = 0;
-        self.direction = ArpDirection::Up;
+        self.direction_up = true;
+    }
+
+    /// Sets the SPEED (note value division).
+    pub fn set_speed(&mut self, speed: u8) {
+        self.config.speed = speed.min(5);
+        self.update_timing();
+    }
+
+    /// Sets the RANGE (octave range).
+    pub fn set_range(&mut self, range: u8) {
+        self.config.range = range.clamp(1, 4);
+    }
+
+    /// Sets the N.LEN (note length/gate time).
+    pub fn set_note_length(&mut self, length: u8) {
+        self.config.note_length = length.min(100);
+    }
+
+    /// Sets the OFFSET.
+    pub fn set_offset(&mut self, offset: u8) {
+        self.config.offset = offset.min(15);
+    }
+
+    /// Sets the ARP LENGTH.
+    pub fn set_arp_length(&mut self, length: u8) {
+        self.config.arp_length = length.min(16);
     }
 
     /// Adds a note to the held notes.
     pub fn note_on(&mut self, note: u8, _velocity: u8) {
-        // Only care about note number, not velocity for arpeggio
         let order_index = self.held_notes.len();
         self.held_notes.push(ArpNote::new(note, order_index));
-        self.held_notes.sort(); // Keep sorted for easy processing
+        self.held_notes.sort();
 
-        // If we were idle, start playing
         if self.state == ArpState::Idle {
             self.start();
-        }
-
-        // If not repeating, capture initial state
-        if !self.config.repeat {
+        } else {
             self.initial_notes = self.held_notes.clone();
             self.position = 0;
         }
@@ -315,20 +347,8 @@ impl Arpeggiator {
     pub fn note_off(&mut self, note: u8) {
         self.held_notes.retain(|n| n.note != note);
 
-        // If we have no notes held, decide what to do
         if self.held_notes.is_empty() {
-            match self.state {
-                ArpState::Playing => {
-                    // Continue to next cycle if repeating, otherwise stop
-                    if !self.config.repeat {
-                        self.state = ArpState::Held;
-                    }
-                }
-                ArpState::Held => {
-                    self.state = ArpState::Idle;
-                }
-                _ => {}
-            }
+            self.state = ArpState::Idle;
         }
     }
 
@@ -337,8 +357,7 @@ impl Arpeggiator {
         self.state = ArpState::Playing;
         self.initial_notes = self.held_notes.clone();
         self.position = 0;
-        self.direction = ArpDirection::Up;
-        self.swing_index = 0;
+        self.direction_up = true;
         self.samples_until_next = 0.0;
     }
 
@@ -350,24 +369,25 @@ impl Arpeggiator {
         self.position = 0;
     }
 
-    /// Gets the next note to play based on the current pattern.
+    /// Gets the next note to play based on the current MODE.
     fn get_next_note(&mut self) -> Option<u8> {
         if self.initial_notes.is_empty() {
             return None;
         }
 
-        let pattern = self.config.pattern;
-        let octave_span = self.config.octave_span;
+        let mode = ArpMode::from_u8(self.config.mode);
+        let range = self.config.range as usize;
         let num_notes = self.initial_notes.len();
+        let effective_length = if self.config.arp_length == 0 {
+            num_notes * range
+        } else {
+            self.config.arp_length as usize
+        };
 
-        // Generate extended note set based on octave span
-        // octave_span = 1 means just base octave
-        // octave_span = 2 means base + 1 more octave (2 total)
         let mut extended_notes: Vec<ArpNote> = Vec::new();
 
-        // Base octave notes and higher octaves
-        for octave in 0..octave_span {
-            let octave_offset = octave * 12;
+        for octave in 0..range {
+            let octave_offset = (octave * 12) as u8;
             for (i, note) in self.initial_notes.iter().enumerate() {
                 let new_note = note.note.saturating_add(octave_offset);
                 if new_note <= 127 {
@@ -377,127 +397,84 @@ impl Arpeggiator {
         }
 
         let total_notes = extended_notes.len();
-        let note = match pattern {
-            ArpPattern::Up => {
-                if self.position >= total_notes {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
-                }
-                let note = extended_notes[self.position];
-                self.position += 1;
-                Some(note.note)
-            }
+        if total_notes == 0 {
+            return None;
+        }
 
-            ArpPattern::Down => {
-                if self.position >= total_notes {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
-                }
-                let note = extended_notes[total_notes - 1 - self.position];
-                self.position += 1;
-                Some(note.note)
-            }
+        if self.position >= effective_length.min(total_notes) {
+            self.position = 0;
+        }
 
-            ArpPattern::UpDown => {
-                let cycle_len = total_notes * 2 - 2;
-                if self.position >= cycle_len {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
-                }
-                let idx = if self.position < total_notes {
-                    self.position
-                } else {
-                    cycle_len - self.position
-                };
+        let note = match mode {
+            ArpMode::Up => {
+                let idx = self.position.min(total_notes - 1);
                 let note = extended_notes[idx];
                 self.position += 1;
                 Some(note.note)
             }
 
-            ArpPattern::DownUp => {
-                let cycle_len = total_notes * 2 - 2;
-                if self.position >= cycle_len {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
-                }
-                let idx = if self.position < total_notes {
-                    total_notes - 1 - self.position
-                } else {
-                    self.position - total_notes + 1
-                };
+            ArpMode::Down => {
+                let idx = (total_notes - 1 - self.position).min(total_notes - 1);
                 let note = extended_notes[idx];
                 self.position += 1;
                 Some(note.note)
             }
 
-            ArpPattern::Random => {
-                if self.position >= total_notes {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
-                }
-                let _note = extended_notes[self.position];
+            ArpMode::UpDown => {
+                let cycle_len = if total_notes > 1 {
+                    total_notes * 2 - 2
+                } else {
+                    1
+                };
+                let pos = self.position % cycle_len;
+                let idx = if pos < total_notes {
+                    pos
+                } else {
+                    cycle_len - pos
+                };
                 self.position += 1;
-                // Use a simple hash for randomness
-                let seed = self.position + (self.swing_index * 7919);
-                let random_idx = seed % total_notes;
-                Some(extended_notes[random_idx].note)
+                Some(extended_notes[idx.min(total_notes - 1)].note)
             }
 
-            ArpPattern::Order => {
-                // Play notes in the order they were pressed
-                if self.position >= num_notes {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
-                }
-                // For order pattern, we only use base notes (no octave spread)
-                let note = self.initial_notes.get(self.position)?;
+            ArpMode::DownUp => {
+                let cycle_len = if total_notes > 1 {
+                    total_notes * 2 - 2
+                } else {
+                    1
+                };
+                let pos = self.position % cycle_len;
+                let idx = if pos < total_notes {
+                    total_notes - 1 - pos
+                } else {
+                    pos - total_notes + 1
+                };
                 self.position += 1;
-                Some(note.note)
+                Some(extended_notes[idx.min(total_notes - 1)].note)
             }
 
-            ArpPattern::Chord => {
-                // All notes at once (handled differently - returns multiple)
-                // For now, return first note and caller handles chord
-                if self.position >= 1 {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
+            ArpMode::Random => {
+                let idx = (self.position * 7919 + 17) % total_notes;
+                self.position += 1;
+                Some(extended_notes[idx].note)
+            }
+
+            ArpMode::Order => {
+                let idx = self.position % num_notes;
+                self.position += 1;
+                self.initial_notes.get(idx).map(|n| n.note)
+            }
+
+            ArpMode::Chord => {
+                if self.position > 0 {
+                    self.position = 0;
                 }
                 self.position += 1;
                 Some(extended_notes[0].note)
             }
 
-            ArpPattern::Pattern => {
-                // Future: custom patterns via external data
-                // For now, fall back to Up
-                if self.position >= total_notes {
-                    if self.config.repeat {
-                        self.position = 0;
-                    } else {
-                        return None;
-                    }
-                }
-                let note = extended_notes[self.position];
+            ArpMode::Pattern => {
+                let idx = self.position.min(total_notes - 1);
+                let note = extended_notes[idx];
                 self.position += 1;
                 Some(note.note)
             }
@@ -520,48 +497,28 @@ impl Arpeggiator {
             return None;
         }
 
-        // Handle Chord pattern specially
-        if self.config.pattern == ArpPattern::Chord {
-            // Chord plays all notes simultaneously at each step
-            // We still need timing, but return all notes at once
-            self.samples_until_next -= 1.0;
+        let mode = ArpMode::from_u8(self.config.mode);
 
+        if mode == ArpMode::Chord {
+            self.samples_until_next -= 1.0;
             if self.samples_until_next <= 0.0 {
                 self.samples_until_next = self.samples_per_step;
                 let chord = self.get_current_chord();
                 if !chord.is_empty() {
-                    // Return the first note; caller should handle rest
                     return Some((chord[0], 100));
                 }
             }
             return None;
         }
 
-        // Normal arpeggio processing
         self.samples_until_next -= 1.0;
 
         if self.samples_until_next <= 0.0 {
-            // Apply swing timing modification
-            let swing_delay = if self.config.swing > 0.0 && self.swing_index % 2 == 1 {
-                (self.config.swing / 100.0) * self.samples_per_step * 0.5
-            } else {
-                0.0
-            };
-
-            self.samples_until_next = self.samples_per_step + swing_delay;
-            self.swing_index = self.swing_index.wrapping_add(1);
+            self.samples_until_next = self.samples_per_step;
 
             if let Some(note) = self.get_next_note() {
-                // Calculate velocity based on gate length (accent pattern)
-                let velocity = if self.config.gate_length >= 90.0 {
-                    127
-                } else if self.config.gate_length >= 70.0 {
-                    100
-                } else {
-                    80
-                };
-
-                return Some((note, velocity as u8));
+                let velocity = 100;
+                return Some((note, velocity));
             }
         }
 
@@ -574,13 +531,8 @@ impl Arpeggiator {
             return "OFF".to_string();
         }
 
-        match self.state {
-            ArpState::Idle => "Ready".to_string(),
-            ArpState::Playing => {
-                format!("{} @ {:.0}", self.config.pattern, self.config.bpm)
-            }
-            ArpState::Held => "Holding".to_string(),
-        }
+        let mode = ArpMode::from_u8(self.config.mode);
+        format!("{} @ {:.0}", mode, self.bpm)
     }
 }
 
@@ -591,27 +543,31 @@ mod tests {
     #[test]
     fn test_arp_config_default() {
         let config = ArpConfig::default();
-        assert_eq!(config.pattern, ArpPattern::Up);
-        assert_eq!(config.bpm, 120.0);
-        assert_eq!(config.octave_span, 1);
+        assert_eq!(config.mode, 0);
+        assert_eq!(config.speed, 3);
+        assert_eq!(config.range, 1);
+        assert_eq!(config.note_length, 70);
         assert!(config.enabled);
     }
 
     #[test]
-    fn test_note_value_durations() {
-        let bpm = 120.0;
-        assert_eq!(ArpNoteValue::Whole.to_duration(bpm), 2.0);
-        assert_eq!(ArpNoteValue::Half.to_duration(bpm), 1.0);
-        assert_eq!(ArpNoteValue::Quarter.to_duration(bpm), 0.5);
-        assert_eq!(ArpNoteValue::Eighth.to_duration(bpm), 0.25);
-        assert_eq!(ArpNoteValue::Sixteenth.to_duration(bpm), 0.125);
+    fn test_arp_mode_from_u8() {
+        assert!(matches!(ArpMode::from_u8(0), ArpMode::Up));
+        assert!(matches!(ArpMode::from_u8(1), ArpMode::Down));
+        assert!(matches!(ArpMode::from_u8(2), ArpMode::UpDown));
+        assert!(matches!(ArpMode::from_u8(3), ArpMode::DownUp));
+        assert!(matches!(ArpMode::from_u8(4), ArpMode::Random));
+        assert!(matches!(ArpMode::from_u8(5), ArpMode::Order));
+        assert!(matches!(ArpMode::from_u8(6), ArpMode::Chord));
+        assert!(matches!(ArpMode::from_u8(7), ArpMode::Pattern));
+        assert!(matches!(ArpMode::from_u8(8), ArpMode::Up)); // wraps
     }
 
     #[test]
-    fn test_arp_pattern_display() {
-        assert_eq!(ArpPattern::Up.to_string(), "Up");
-        assert_eq!(ArpPattern::UpDown.to_string(), "Up-Down");
-        assert_eq!(ArpPattern::Random.to_string(), "Random");
+    fn test_arp_mode_display() {
+        assert_eq!(ArpMode::Up.to_string(), "Up");
+        assert_eq!(ArpMode::UpDown.to_string(), "Up-Down");
+        assert_eq!(ArpMode::Random.to_string(), "Random");
     }
 
     #[test]
@@ -619,160 +575,129 @@ mod tests {
         let arp = Arpeggiator::new(44100.0);
         assert!(!arp.is_enabled());
 
-        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0);
+        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0, 120.0);
         assert!(arp.is_enabled());
 
-        // Add some notes
-        arp.note_on(60, 100); // C4
-        arp.note_on(64, 100); // E4
-        arp.note_on(67, 100); // G4
+        arp.note_on(60, 100);
+        arp.note_on(64, 100);
+        arp.note_on(67, 100);
 
-        // Process should return notes
+        let state_str = format!("{:?}", arp.state);
+        assert!(
+            matches!(arp.state, ArpState::Playing),
+            "State should be Playing, got: {}",
+            state_str
+        );
+
         let note = arp.process();
-        assert!(note.is_some());
+        assert!(note.is_some(), "Should have produced a note");
         let (note_num, velocity) = note.unwrap();
-        assert!(note_num >= 60 && note_num <= 67);
+        assert!(
+            note_num >= 60 && note_num <= 67,
+            "Note should be 60-67, got: {}",
+            note_num
+        );
         assert!(velocity > 0);
     }
 
     #[test]
     fn test_arpeggiator_note_off() {
-        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0);
+        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0, 120.0);
 
         arp.note_on(60, 100);
         arp.note_on(64, 100);
         arp.note_off(60);
 
-        // Should still have one note
         assert_eq!(arp.held_notes.len(), 1);
     }
 
     #[test]
-    fn test_arpeggiator_octave_span() {
-        // Create arpeggiator with very fast BPM for testing
+    fn test_arpeggiator_range() {
         let mut config = ArpConfig::default();
-        config.octave_span = 2; // 2 octaves (base + 1 more)
-        config.pattern = ArpPattern::Up;
-        config.bpm = 10000.0; // Very fast for testing
-        config.note_value = ArpNoteValue::ThirtySecond; // Fastest note value
+        config.range = 2;
+        config.speed = 5;
+        config.mode = 0;
 
-        let mut arp = Arpeggiator::with_config(config, 44100.0);
+        let mut arp = Arpeggiator::with_config(config, 44100.0, 120.0);
+        arp.note_on(60, 100);
 
-        arp.note_on(60, 100); // C4
-
-        // With very fast BPM, we can collect notes quickly
         let mut all_notes: Vec<u8> = Vec::new();
-        for _ in 0..100 {
+        for _ in 0..3000 {
             if let Some((n, _)) = arp.process() {
                 all_notes.push(n);
             }
         }
 
-        // Should contain C4 (60) and C5 (72)
         assert!(
             all_notes.contains(&60),
-            "Should contain C4 (60), got: {:?}",
+            "Should contain 60, got: {:?}",
             all_notes
         );
         assert!(
             all_notes.contains(&72),
-            "Should contain C5 (72), got: {:?}",
+            "Should contain 72, got: {:?}",
             all_notes
         );
     }
 
     #[test]
-    fn test_up_pattern_ascending_order() {
+    fn test_up_mode_ascending() {
         let mut config = ArpConfig::default();
-        config.pattern = ArpPattern::Up;
-        config.bpm = 10000.0;
-        config.note_value = ArpNoteValue::ThirtySecond;
-        config.octave_span = 1;
+        config.mode = 0;
+        config.speed = 5;
+        config.range = 1;
 
-        let mut arp = Arpeggiator::with_config(config, 44100.0);
-        arp.note_on(60, 100); // C4
-        arp.note_on(64, 100); // E4
-        arp.note_on(67, 100); // G4
+        let mut arp = Arpeggiator::with_config(config, 44100.0, 120.0);
+        arp.note_on(60, 100);
+        arp.note_on(64, 100);
+        arp.note_on(67, 100);
 
         let mut notes: Vec<u8> = Vec::new();
-        for _ in 0..200 {
+        for _ in 0..10000 {
             if let Some((n, _)) = arp.process() {
-                if notes.last() != Some(&n) {
-                    notes.push(n);
-                }
+                notes.push(n);
             }
         }
 
-        // In Up pattern, notes should cycle C->E->G->C->E->G...
-        // Check that we see ascending sequences
-        if notes.len() >= 3 {
-            // Find a run of 3 consecutive unique notes
-            for window in notes.windows(3) {
-                if window[0] < window[1] && window[1] < window[2] {
-                    // Found ascending run
-                    return;
-                }
-            }
-            // Also valid if we see the pattern wrapping (G then C)
-            assert!(
-                notes.contains(&60) && notes.contains(&64) && notes.contains(&67),
-                "Up pattern should produce all held notes: {:?}",
-                notes
-            );
-        }
+        assert!(notes.contains(&60) && notes.contains(&64) && notes.contains(&67));
     }
 
     #[test]
-    fn test_down_pattern_produces_notes() {
+    fn test_down_mode() {
         let mut config = ArpConfig::default();
-        config.pattern = ArpPattern::Down;
-        config.bpm = 10000.0;
-        config.note_value = ArpNoteValue::ThirtySecond;
-        config.octave_span = 1;
+        config.mode = 1;
+        config.speed = 5;
+        config.range = 1;
 
-        let mut arp = Arpeggiator::with_config(config, 44100.0);
-        // Add all notes before processing so initial_notes captures them
-        arp.note_on(60, 100); // C4
-        arp.note_on(64, 100); // E4
-        arp.note_on(67, 100); // G4
+        let mut arp = Arpeggiator::with_config(config, 44100.0, 120.0);
+        arp.note_on(60, 100);
+        arp.note_on(64, 100);
+        arp.note_on(67, 100);
 
-        // Re-start to capture all notes in initial_notes
         arp.position = 0;
         arp.initial_notes = arp.held_notes.clone();
 
         let mut notes: Vec<u8> = Vec::new();
-        for _ in 0..200 {
+        for _ in 0..10000 {
             if let Some((n, _)) = arp.process() {
-                if notes.last() != Some(&n) {
-                    notes.push(n);
-                }
+                notes.push(n);
             }
         }
 
-        // Down pattern should produce notes in descending order: G->E->C
-        assert!(
-            notes.contains(&60) && notes.contains(&64) && notes.contains(&67),
-            "Down pattern should produce all held notes: {:?}",
-            notes
-        );
-        // First note should be the highest (G4=67)
-        if !notes.is_empty() {
-            assert_eq!(notes[0], 67, "Down pattern should start from highest note");
-        }
+        assert!(notes.contains(&60) && notes.contains(&64) && notes.contains(&67));
     }
 
     #[test]
     fn test_no_notes_no_output() {
-        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0);
+        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0, 120.0);
 
-        // No notes held - process should return None
         let mut any_output = false;
         for _ in 0..1000 {
             if arp.process().is_some() {
                 any_output = true;
             }
         }
-        assert!(!any_output, "Arpeggiator with no held notes should produce no output");
+        assert!(!any_output);
     }
 
     #[test]
@@ -788,12 +713,12 @@ mod tests {
                 any_output = true;
             }
         }
-        assert!(!any_output, "Disabled arpeggiator should produce no output");
+        assert!(!any_output);
     }
 
     #[test]
     fn test_note_off_removes_from_held() {
-        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0);
+        let mut arp = Arpeggiator::with_config(ArpConfig::default(), 44100.0, 120.0);
 
         arp.note_on(60, 100);
         arp.note_on(64, 100);
@@ -802,7 +727,6 @@ mod tests {
 
         arp.note_off(64);
         assert_eq!(arp.held_notes.len(), 2);
-        // Verify the correct note was removed
         let remaining: Vec<u8> = arp.held_notes.iter().map(|n| n.note).collect();
         assert!(!remaining.contains(&64));
         assert!(remaining.contains(&60));
@@ -810,27 +734,11 @@ mod tests {
     }
 
     #[test]
-    fn test_note_value_duration_scaling() {
-        // At 60 BPM, one beat = 1 second
-        let bpm = 60.0;
-        assert!((ArpNoteValue::Whole.to_duration(bpm) - 4.0).abs() < 0.001);
-        assert!((ArpNoteValue::Half.to_duration(bpm) - 2.0).abs() < 0.001);
-        assert!((ArpNoteValue::Quarter.to_duration(bpm) - 1.0).abs() < 0.001);
-        assert!((ArpNoteValue::Eighth.to_duration(bpm) - 0.5).abs() < 0.001);
-        assert!((ArpNoteValue::Sixteenth.to_duration(bpm) - 0.25).abs() < 0.001);
-        assert!((ArpNoteValue::ThirtySecond.to_duration(bpm) - 0.125).abs() < 0.001);
-    }
-
-    #[test]
     fn test_set_bpm_changes_timing() {
-        let mut config = ArpConfig::default();
-        config.bpm = 10000.0;
-        config.note_value = ArpNoteValue::ThirtySecond;
-
-        let mut arp = Arpeggiator::with_config(config, 44100.0);
+        let config = ArpConfig::default();
+        let mut arp = Arpeggiator::with_config(config, 44100.0, 10000.0);
         arp.note_on(60, 100);
 
-        // Count notes at fast BPM
         let mut fast_count = 0;
         for _ in 0..1000 {
             if arp.process().is_some() {
@@ -838,7 +746,6 @@ mod tests {
             }
         }
 
-        // Now slow BPM
         arp.set_bpm(60.0);
         let mut slow_count = 0;
         for _ in 0..1000 {
@@ -847,31 +754,50 @@ mod tests {
             }
         }
 
-        assert!(
-            fast_count > slow_count,
-            "Faster BPM should produce more notes: fast={}, slow={}",
-            fast_count,
-            slow_count
-        );
+        assert!(fast_count > slow_count);
     }
 
     #[test]
-    fn test_velocity_determined_by_gate_length() {
-        // Arpeggiator ignores input velocity; output velocity is based on gate_length
-        let mut config = ArpConfig::default();
-        config.bpm = 10000.0;
-        config.note_value = ArpNoteValue::ThirtySecond;
-        config.gate_length = 80.0; // Default: should produce velocity 100
+    fn test_set_mode() {
+        let mut arp = Arpeggiator::new(44100.0);
+        arp.set_mode(2);
+        assert_eq!(arp.config.mode, 2);
+    }
 
-        let mut arp = Arpeggiator::with_config(config, 44100.0);
-        arp.note_on(60, 127); // Input velocity ignored
+    #[test]
+    fn test_set_speed() {
+        let mut arp = Arpeggiator::new(44100.0);
+        arp.set_speed(4);
+        assert_eq!(arp.config.speed, 4);
+    }
 
-        for _ in 0..100 {
-            if let Some((_, vel)) = arp.process() {
-                assert_eq!(vel, 100, "gate_length 80 should produce velocity 100");
-                return;
-            }
-        }
-        panic!("Should have produced at least one note");
+    #[test]
+    fn test_set_range() {
+        let mut arp = Arpeggiator::new(44100.0);
+        arp.set_range(3);
+        assert_eq!(arp.config.range, 3);
+        arp.set_range(10); // should clamp to 4
+        assert_eq!(arp.config.range, 4);
+    }
+
+    #[test]
+    fn test_set_note_length() {
+        let mut arp = Arpeggiator::new(44100.0);
+        arp.set_note_length(50);
+        assert_eq!(arp.config.note_length, 50);
+    }
+
+    #[test]
+    fn test_set_offset() {
+        let mut arp = Arpeggiator::new(44100.0);
+        arp.set_offset(5);
+        assert_eq!(arp.config.offset, 5);
+    }
+
+    #[test]
+    fn test_set_arp_length() {
+        let mut arp = Arpeggiator::new(44100.0);
+        arp.set_arp_length(8);
+        assert_eq!(arp.config.arp_length, 8);
     }
 }

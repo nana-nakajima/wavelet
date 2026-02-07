@@ -125,8 +125,8 @@ interface TonverkState {
   updateTrackParam: (trackId: number, param: string, value: number) => void;
   toggleMute: (trackId: number) => void;
   toggleSolo: (trackId: number) => void;
-  setStepValue: (trackId: number, pageId: number, stepId: number, field: string, value: number | null);
-  setStepTrigType: (trackId: number, pageId: number, stepId: number, type: TrigType) => void;
+  setStepValue: (trackId: number, pageId: number, stepId: number, field: string, value: number | null) => void;
+  setStepTrigType: (trackId: number, pageId: number, stepId: number, trigType: TrigType) => void;
   setStepNote: (trackId: number, pageId: number, stepId: number, note: number | null) => void;
   addParamLock: (trackId: number, pageId: number, stepId: number, param: string, value: number) => void;
   removeParamLock: (trackId: number, pageId: number, stepId: number, param: string) => void;
@@ -364,10 +364,7 @@ export const useTonverkStore = create<TonverkState>((set, get) => ({
                         ? {
                             ...s,
                             trigType: type,
-                            // If switching to note trig, set default note
-                            note: type === 'note' ? 60 : s.note,
-                            // If switching to none, clear note
-                            note: type === 'none' ? null : s.note,
+                            note: type === 'note' ? 60 : (type === 'none' ? null : s.note),
                           }
                         : s
                     ),

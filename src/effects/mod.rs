@@ -20,49 +20,76 @@ use std::f32::consts::PI;
 // Re-export saturation module
 pub mod saturation;
 
-// Re-export chorus module
 pub mod chorus;
 
-// Re-export phaser module
 pub mod phaser;
 
-// Re-export flanger module
 pub mod flanger;
 
-// Re-export ring modulator module
 pub mod ring_modulator;
 
-// Re-export bit crusher module
 pub mod bit_crusher;
 
-// Re-export filter bank module
 pub mod filter_bank;
 
-// Re-export freeze module
 pub mod freeze;
 
-// Re-export tremolo module
-pub mod tremolo;
-
-// Re-export simple EQ module
 pub mod simple_eq;
 
-// Re-export warp module
 pub mod warp;
+
+pub mod tremolo;
+
+pub mod chrono_pitch;
+
+pub mod comb_filter;
+
+pub mod degrader;
+
+pub mod dirtshaper;
+
+pub mod infinite_flanger;
+
+pub mod panoramic_chorus;
+
+pub mod phase_98;
+
+pub mod saturator_delay;
+
+pub mod filterbank;
+
+pub mod frequency_warper;
+
+pub mod supervoid_reverb;
+
+pub mod warble;
+
+pub mod daisy_delay;
+
+pub mod rumsklang_reverb;
 
 // Track effects module is temporarily disabled for compilation
 // pub mod track_effects;
 
 pub use bit_crusher::{BitCrusher, BitCrusherConfig, DecimationMode, StereoBitCrusher};
 pub use chorus::Chorus;
+pub use chrono_pitch::ChronoPitch;
+pub use comb_filter::CombFilter;
+pub use degrader::Degrader;
+pub use dirtshaper::Dirtshaper;
 pub use filter_bank::{FilterBandConfig, FilterBank, FilterBankConfig, FilterBankType};
+pub use filterbank::Filterbank;
 pub use flanger::{Flanger, FlangerConfig, StereoFlanger};
 pub use freeze::{Freeze, FreezeConfig, FreezeType};
+pub use infinite_flanger::InfiniteFlanger;
+pub use panoramic_chorus::PanoramicChorus;
+pub use phase_98::Phase98;
 pub use phaser::{Phaser, PhaserConfig, StereoPhaser};
 pub use ring_modulator::{
     RingModulator, RingModulatorConfig, RingModulatorMode, RingModulatorWave, StereoRingModulator,
 };
 pub use saturation::{saturate, Saturation, SaturationConfig};
+pub use saturator_delay::SaturatorDelay;
 pub use simple_eq::SimpleEq;
 pub use tremolo::{Tremolo, TremoloConfig, TremoloWaveform};
 pub use warp::{StereoWarp, Warp, WarpConfig, WarpMode};
@@ -83,6 +110,9 @@ pub use crate::filter::{BiquadFilter, FilterConfig, FilterType};
 /// Enumeration of supported effect types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EffectType {
+    /// Bypass - no effect
+    Bypass,
+
     /// Room reverb simulation
     Reverb,
 
@@ -112,6 +142,48 @@ pub enum EffectType {
 
     /// Biquad filter
     Filter,
+
+    /// Chrono Pitch - granular pitch shifter
+    ChronoPitch,
+
+    /// Comb filter
+    CombFilter,
+
+    /// Degrader - lo-fi bit crusher
+    Degrader,
+
+    /// Dirtshaper - distortion
+    Dirtshaper,
+
+    /// Infinite Flanger
+    InfiniteFlanger,
+
+    /// Panoramic Chorus
+    PanoramicChorus,
+
+    /// Phase 98 phaser
+    Phase98,
+
+    /// Saturator Delay
+    SaturatorDelay,
+
+    /// Filterbank EQ
+    Filterbank,
+
+    /// Frequency Warper
+    FrequencyWarper,
+
+    /// Supervoid Reverb
+    SupervoidReverb,
+
+    /// Warble tape effect
+    Warble,
+
+    /// Daisy Delay
+    DaisyDelay,
+
+    /// Rumsklang Reverb
+    RumsklangReverb,
 }
 
 /// Configuration structure for effect parameters.
@@ -992,7 +1064,11 @@ mod tests {
         // Second echo (should be quieter due to feedback < 1)
         let second_echo = delay.process(0.0).abs();
 
-        assert!(first_echo > 0.01, "First echo should be audible: {}", first_echo);
+        assert!(
+            first_echo > 0.01,
+            "First echo should be audible: {}",
+            first_echo
+        );
         assert!(
             second_echo < first_echo,
             "Second echo should be quieter: {} vs {}",

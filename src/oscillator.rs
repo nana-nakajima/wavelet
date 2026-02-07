@@ -663,7 +663,11 @@ mod tests {
         let mean: f32 = samples.iter().sum::<f32>() / samples.len() as f32;
         let variance: f32 =
             samples.iter().map(|s| (s - mean).powi(2)).sum::<f32>() / samples.len() as f32;
-        assert!(variance > 0.01, "Noise should have variance, got {}", variance);
+        assert!(
+            variance > 0.01,
+            "Noise should have variance, got {}",
+            variance
+        );
     }
 
     // --- set_frequency changes pitch ---
@@ -753,7 +757,7 @@ mod tests {
         assert!((midi_to_frequency(60) - 261.63).abs() < 0.1); // C4
         assert!((midi_to_frequency(57) - 220.0).abs() < 0.1); // A3
         assert!((midi_to_frequency(81) - 880.0).abs() < 0.1); // A5
-        // Octave relationship
+                                                              // Octave relationship
         let ratio = midi_to_frequency(72) / midi_to_frequency(60);
         assert!((ratio - 2.0).abs() < 0.001, "Octave should be 2:1 ratio");
     }
@@ -791,13 +795,7 @@ mod tests {
         let batch = osc2.next_samples(256);
 
         for (i, (a, b)) in individual.iter().zip(batch.iter()).enumerate() {
-            assert!(
-                (a - b).abs() < 1e-6,
-                "Mismatch at {}: {} vs {}",
-                i,
-                a,
-                b
-            );
+            assert!((a - b).abs() < 1e-6, "Mismatch at {}: {} vs {}", i, a, b);
         }
     }
 }

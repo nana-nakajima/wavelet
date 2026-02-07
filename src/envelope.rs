@@ -465,7 +465,11 @@ mod tests {
             env.process();
         }
         let level = env.process();
-        assert!(level > 0.3, "Re-trigger should start new attack, got {}", level);
+        assert!(
+            level > 0.3,
+            "Re-trigger should start new attack, got {}",
+            level
+        );
     }
 
     // --- Delay phase ---
@@ -530,13 +534,7 @@ mod tests {
         let batch = env2.process_samples(100);
 
         for (i, (a, b)) in individual.iter().zip(batch.iter()).enumerate() {
-            assert!(
-                (a - b).abs() < 1e-6,
-                "Mismatch at {}: {} vs {}",
-                i,
-                a,
-                b
-            );
+            assert!((a - b).abs() < 1e-6, "Mismatch at {}: {} vs {}", i, a, b);
         }
     }
 

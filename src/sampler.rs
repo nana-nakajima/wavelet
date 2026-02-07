@@ -1023,7 +1023,6 @@ mod tests {
 // 多采样乐器 (Multi-Sampling) - 参考 Tonverk 功能
 // ============================================================================
 
-
 /// 键区定义 - 将采样映射到特定音高范围
 #[derive(Debug, Clone, PartialEq)]
 pub struct KeyZone {
@@ -1277,7 +1276,10 @@ impl MultiSampler {
 
         // 计算音高偏移以匹配目标音符
         let note_offset = zone.note_offset(note);
-        sampler.set_speed(2.0f32.powi(note_offset as i32) / 2.0f32.powi((zone.root_note as i8 - note as i8) as i32));
+        sampler.set_speed(
+            2.0f32.powi(note_offset as i32)
+                / 2.0f32.powi((zone.root_note as i8 - note as i8) as i32),
+        );
 
         // 开始播放
         sampler.play();
@@ -1334,4 +1336,3 @@ impl MultiSampler {
         self.max_polyphony = max.clamp(1, 64);
     }
 }
-

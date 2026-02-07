@@ -52,8 +52,9 @@ pub mod song;
 pub mod step_sequencer;
 pub mod synth;
 pub mod time_stretch;
+pub mod tracks;
 
-pub use arpeggiator::{ArpConfig, ArpNoteValue, ArpPattern, Arpeggiator};
+pub use arpeggiator::{ArpConfig, ArpMode, ArpSpeed, Arpeggiator};
 pub use audio_analysis::{
     measure_cross_correlation, measure_peak, measure_peak_db, measure_rms, measure_rms_db,
     measure_stereo_correlation, AudioAssertions, HarmonicDistortionAnalyzer, LatencyMeasurer,
@@ -100,19 +101,27 @@ pub use sampler::{
     SampleFormat, SampleInfo, SampleLibrary, Sampler, SlicePoint, SlicingMode,
 };
 pub use send_fx::{
-    PrePost, SendConnection, SendEffectSlot, SendFxError, SendFxManager, SendTrack,
-    NUM_SEND_TRACKS, SEND_EFFECT_SLOTS,
+    PrePost, SendConnection, SendEffectSlot, SendFxError, SendFxManager,
+    NUM_SEND_TRACKS as SEND_FX_NUM_SEND_TRACKS, SEND_EFFECT_SLOTS,
 };
 pub use song::{
     PatternChain, Song, SongError, SongLine, SongManager, SongPlaybackState, MAX_SONGS,
     MAX_SONG_LINES,
 };
 pub use step_sequencer::{
-    DrumStyle, ParamLocks, Scale as SeqScale, Step, StepSequencer, Track, TrigCondition, NUM_STEPS,
-    NUM_TRACKS,
+    DrumStyle, ParamLocks, Scale as SeqScale, Step, StepSequencer, Track, NUM_STEPS,
+    NUM_TRACKS as SEQ_NUM_TRACKS,
 };
 pub use synth::Synth;
 pub use time_stretch::{StretchAlgorithm, StretchAnalysis, TimeStretch, TimeStretchConfig};
+pub use tracks::{
+    AudioTrack, BaseWidthFilter, BusTrack, EffectSlot, FxLfo, LfoMode, LfoWaveform, Machine,
+    MachineType, MixTrack, ModDestination, ModEnvelope, ModEnvelopeStage, ModMatrix,
+    MultimodeFilter, PlayMode, RetrigRate, Routing, SendTrack as WaveletSendTrack, SinglePlayer,
+    TrackBehavior, TrackSequencer, TrackType, TrigCondition, TrigType, VoiceLfo, MAX_STEPS,
+    MAX_VOICES, NUM_AUDIO_TRACKS, NUM_BUS_TRACKS, NUM_SEND_TRACKS, NUM_TRACKS, PAGES,
+    STEPS_PER_PAGE,
+};
 
 // Re-export commonly used types for convenience
 pub use crate::envelope::AdsrEnvelope;
