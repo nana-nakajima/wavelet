@@ -53,6 +53,8 @@ pub mod step_sequencer;
 pub mod synth;
 pub mod time_stretch;
 pub mod tracks;
+#[cfg(target_arch = "wasm32")]
+pub mod wasm;
 
 pub use arpeggiator::{ArpConfig, ArpMode, ArpSpeed, Arpeggiator};
 pub use audio_analysis::{

@@ -1,192 +1,316 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working on the WAVELET project.
 
 ## Project Overview
 
-WAVELET is a sampling workstation inspired by the Elektron Tonverk, combining a Rust audio DSP engine with a React web UI and an Actix-web backend. The goal is to replicate the Tonverk's full feature set as a software instrument.
+**WAVELET** is a professional-grade sampling workstation and synthesizer designed for musicians who want classic electronic sound without DAW complexity.
 
-**Reference document:** Always consult `docs/tonverk/Tonverk-User-Manual.md` (with images in `docs/tonverk/images/`) before implementing or modifying any feature. The Tonverk manual is the source of truth for behavior, parameter names, signal flow, and UI layout.
+### Target Audience
+- Professional musicians who need great sounds quickly
+- Workflow-oriented, not menu-diving
+- Professional audio quality, easy user experience
 
-## Development Priorities
+### Design Philosophy
+1. **Web-first**: Runs in browser, works offline (PWA)
+2. **Local-first**: No account required, projects stay on your machine
+3. **Professional sound**: Signature Wavelet character - punchy, musical, characterful
+4. **Instant workflow**: Preset-first, intuitive controls, minimal setup
+5. **AI-ready**: Architecture supports ML integration later
 
-1. **Web UI first.** All new features should have their UI built in `webui/` before or alongside Rust core work.
-2. **Audio performance testing required.** After any Rust DSP implementation or modification, run `cargo test --lib` and `cargo bench` to verify correctness and performance. Never merge DSP changes without passing tests and benchmarks.
-3. **Tonverk parity.** Every feature should match the Tonverk's behavior as documented in the manual. Use the same parameter names, ranges, and signal flow where possible.
+### Reference
+Consult `docs/tonverk/Tonverk-User-Manual.md` for signal flow, parameter behavior, and UX patterns. Wavelet takes inspiration but develops its own identity.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      WAVELET ARCHITECTURE                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  WebUI (React)                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Components: EncoderSection, OledDisplay, StepGrid,       │  │
+│  │            FxSlotPanel, PianoKeyboard, TransportBar       │  │
+│  │  State: Zustand (tonverkStore.ts)                       │  │
+│  │  Audio: WebSocketContext → WASM bridge                   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│              ┌───────────────┴───────────────┐                  │
+│              ▼                               ▼                  │
+│  ┌─────────────────────┐     ┌─────────────────────────────┐   │
+│  │ WASM Audio Engine   │     │ IndexedDB (Local Storage)   │   │
+│  │ (Rust DSP compiled) │     │ - Projects                  │   │
+│  │ - Oscillator        │     │ - Samples                   │   │
+│  │ - Filters (ZDF)     │     │ - Presets                   │   │
+│  │ - Envelopes (ADSR)  │     │ - User settings             │   │
+│  │ - Effects (22)      │     └─────────────────────────────┘   │
+│  │ - Sampler           │                                      │
+│  │ - Modulation        │                                      │
+│  └─────────────────────┘                                      │
+│              │                                               │
+│              ▼                                               │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ Web Audio API (AudioWorkletProcessor)                   │   │
+│  │ - Low latency (< 10ms)                                 │   │
+│  │ - Real-time DSP processing                             │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ## Build Commands
-
-### Rust Audio Engine (root)
-```bash
-cargo build --release
-cargo build --release --features gdext  # With Godot bindings
-cargo test --lib                        # Run all tests (must pass before any DSP merge)
-cargo test <module> --lib               # Test specific module
-cargo clippy                            # Lint
-cargo fmt                               # Format
-cargo bench                             # Run benchmarks (must run after any DSP change)
-```
-
-### Backend API (backend/)
-```bash
-cd backend
-cargo build --release
-cargo run                               # Runs on port 8080
-cargo test
-```
 
 ### Web UI (webui/)
 ```bash
 cd webui
 npm install
-npm run dev                             # Development server
-npm run build                           # Production build (tsc && vite build)
+npm run dev           # Development server (port 5173)
+npm run build         # Production build
 ```
 
-### Godot UI
-Open `godot/project.godot` in Godot 4.6+. Copy built library (`target/release/libwavelet.*`) to `godot/` before running.
-
-## Target Architecture (Tonverk-aligned)
-
-### Track Structure (16 tracks)
-- **Tracks 1-8:** Audio tracks, 8-voice polyphony each
-- **Tracks 9-12:** Bus tracks (insert FX processing, also usable as MIDI tracks)
-- **Tracks 13-15:** Send FX tracks
-- **Track 16:** Mix track (master bus)
-
-### Signal Flow (per audio track)
+### Rust Audio Engine (root)
+```bash
+cargo build --release                    # Native build
+wasm-pack build --target web ./wasm     # WASM for web (when wasm/ exists)
+cargo test --lib                        # Run all tests (must pass)
+cargo clippy                            # Lint
+cargo fmt                               # Format
 ```
-Machine (SRC) → Overdrive → Base-width Filter → Multimode Filter → Amp (ADSR) → Insert FX (2 slots) → Routing
+
+---
+
+## MVP Scope (Ship in 4-6 weeks)
+
+### Must-Haves
+- [ ] Low-latency Web Audio (under 10ms)
+- [ ] 50+ professionally designed presets
+- [ ] Solid, intuitive UI (from current Tonverk layout)
+- [ ] MIDI input support
+- [ ] Project save/load (IndexedDB)
+- [ ] WAV audio export
+
+### Nice-to-Haves (Post-MVP)
+- AI melody generation
+- Cloud preset sharing
+- Mobile support
+- Collaboration
+
+---
+
+## Track Structure
+
+| Tracks | Type | Purpose |
+|--------|------|---------|
+| 1-8 | Audio | Sample playback, 8-voice polyphony each |
+| 9-12 | Bus | Insert FX + MIDI control |
+| 13-15 | Send | Send FX processing |
+| 16 | Mix | Master bus |
+
+### Signal Flow (Audio Track)
 ```
-Filters and overdrive can be reordered. Each track routes to: MIX AB, OUT CD, OUT EF, or BUS 1-4.
+SRC (Sample) → Overdrive → Base-Width Filter → Multimode Filter → AMP (ADSR) → Insert FX (2) → Output
+```
 
-### Machine Types (SRC)
-- **Single Player:** Mono/stereo sample playback, 8-voice poly. Params: TUNE (±5 oct), PLAY MODE (Fwd/Rev/FwdLoop/RevLoop), LOOP CROSSFADE, SAMPLE SLOT, STRT, END, LSTR, LEND.
-- **Multi Player:** Polyphonic multi-sampled instruments. Params: TUNE, VIBR, SPD, FADE.
-- **Subtracks:** 8 samples in separate subtracks with independent SRC/FLTR/AMP/MOD per subtrack, plus a shared "supertrack" for FX.
-- **MIDI Machine:** External MIDI control on tracks 1-12. Params: CHAN, BANK, SBNK, PROG, PB, AT, MW, BC, 16 assignable CCs.
+---
 
-### Filter System
-- **Multimode Filter (FLTR Page 1):** Morphing LP→BP→HP. Params: ATK, DEC, SUS, REL, FREQ, RESO, TYPE, ENV (bipolar depth).
-- **Base-width Filter (FLTR Page 2):** HP+LP in series. Params: BASE, WIDTH, DEL, SPRD (stereo), KEY.T (keytrack), RSET.
+## Development Priorities (ASAP)
 
-### Effects
+### Phase 1: Audio Foundation (Week 1-2)
+1. **WASM compilation** - Rust DSP to WebAssembly
+2. **Web Audio bridge** - AudioWorkletProcessor for real-time
+3. **Parameter smoothing** - Prevent clicks/pops
+4. **Polyphony** - 16 voices with stealing
+5. **Sample loading** - IndexedDB + decode
 
-**Insert FX (Tracks 1-8, 2 slots each):**
-- Chrono Pitch (granular pitch shifter): TUNE, WIN, FDBK, DEP, HPF, LPF, SPD, MIX
-- Comb ± Filter: SPD, DEP, SPH, DTUN, FREQ, FDBK, LPF, MIX
-- Compressor: THR, ATK, REL, MUP, RAT (1.50-20.00), SCS, SCF, MIX
-- Degrader (lo-fi): BR (16-1 bit), OVER, SRR, DROP, RATE, DEP, FREZ, F.TIM
-- Dirtshaper (distortion): DRV, RECT, HPF, LPF, NOIS, N.FRQ, N.RES, MIX
-- Filterbank (8-band fixed): Gain A-H (90Hz LP to 4kHz HP)
-- Infinite Flanger (barber-pole): SPD, DEP, TUNE, FDBK, LPF
-- Low-pass Filter (4-pole 24dB/oct): SPD, DEP, SPH, LAG, FREQ, RESO, SPRD
-- Panoramic Chorus: DEP, SPD, HPF, WDTH, MIX
-- Phase 98 (4/6-stage phaser): SPD, DEP, SHP, LAG, FREQ, FDBK, STG, MIX
-- Saturator Delay: TIME (1/128 to 1 bar), X (ping-pong), WID, FDBK, HPF, LPF, MIX
+### Phase 2: UI Polish (Week 2-3)
+1. **FX parameter editing** - Connect real effect params
+2. **MIDI input** - Device selector, automatic reconnection
+3. **MIDI Learn** - Map MIDI controls to parameters
+4. **Project persistence** - Save/load from IndexedDB
+5. **Audio export** - WAV render offline
 
-**Bus FX (Tracks 9-12, 2 slots each):**
-All Insert FX plus: Frequency Warper, Supervoid Reverb, Warble.
+### Phase 3: Presets & Samples (Week 3-4)
+1. **50 professional presets** - Leads, pads, bass, keys, drums, FX, arps
+2. **Sample pack** - Starter drums, one-shots
+3. **Preset browser UI** - Categories, favorites, search
 
-**Send FX (Tracks 13-15, 1 slot each):**
-- Compressor, Daisy Delay, Panoramic Chorus, Rumsklang Reverb, Saturator Delay, Supervoid Reverb.
+### Phase 4: Polish & Ship (Week 4-6)
+1. **Performance** - Latency, FPS, memory optimization
+2. **PWA features** - Service Worker, offline
+3. **Documentation** - Quick start guide
+4. **Marketing assets** - Screenshots, demo video
 
-**Mix FX (Track 16, 1 slot):**
-All Bus FX plus: Multimode Filter.
+---
 
-**Key effect details:**
-- Daisy Delay: DRV, TIME (division), FDBK, WIDH, MOD, SKEW, FILT
-- Rumsklang Reverb: PRE, EARLY, DAMP, SIZE, LOWC, HIGHC
-- Supervoid Reverb: PRE, DEC, FREQ, GAIN, HPF, LPF, MIX
-- Frequency Warper: SPD, DEP, SPH, LAG, SHFT, SPRD, SBND, MIX
-- Warble (tape): SPEED, DEPTH, BASE, WIDTH, N.LEV, N.HPF, STEREO, MIX
+## Preset Categories (50 Total)
 
-### Modulation System
-- **Voice LFO 1 & 2:** Per-voice, modulate SRC/FLTR/AMP params.
-- **FX LFO 1 & 2:** Modulate insert FX params.
-- **Mod Envelope:** ADSR for modulation routing.
-- **LFO Params:** SPD, MULT (1-2K), FADE (bipolar), DEST, WAVE (Tri/Sine/Sq/Saw/Random/Exp/Ramp), SPH, MODE (FREE/TRIG/HOLD/ONE/HALF), DEP (bipolar).
-- **Mod Destinations:** All SRC params, FLTR (Type/Freq/Reso/Spread/EnvDepth/ATK/DEC/SUS/REL/Base/Width), AMP (ATK/Hold/DEC/SUS/REL/Overdrive/Pan/Volume), FX (16 knobs across 2 slots), Routing (Output/Send 1-3 amounts).
+| Category | Count | Description |
+|----------|-------|-------------|
+| Leads | 10 | Aggressive, synth-y, character |
+| Pads | 8 | Atmospheric, evolving, lush |
+| Basses | 8 | Fat, gritty, sub-heavy |
+| Keys | 6 | Electric, piano, organ |
+| Drums | 8 | Kicks, snares, hats (sample-based) |
+| FX | 6 | Transitions, textural |
+| Arps | 4 | Ready-to-use patterns |
 
-### Sequencer
-- **256 steps max** (16 pages × 16 steps per track)
-- **Grid recording:** Place trigs on step grid. Trig types: Note (red), Lock (yellow), Combined (blinking red).
-- **Live recording:** Real-time with keyboard/pads, quantized or free.
-- **Parameter locks:** Lock any parameter to a per-step value.
-- **Trig conditions:** FILL/FILL̄, PRE/PRĒ, NEI/NEĪ, 1ST/1ST̄, LST/LST̄, A:B/A:B̄.
-- **Micro timing:** Per-step timing offset ahead/behind beat.
-- **Retrigs:** RTRG on/off, RTIM (1/128 to 1/1 incl. triplets), RVEL (velocity curve).
-- **Page setup:** LENGTH (1-16), SCALE (1/8 to 2×), CHANGE, RESET.
+### Wavelet Signature Sound
+- **Filters**: Custom ZDF with saturation character
+- **Envelopes**: Punchy, fast attack options
+- **FX**: Space/reverb with character
+- **Overall**: "Modern classic" - reminiscent of Elektron, uniquely Wavelet
 
-### Arpeggiator
-- MODE, SPEED, RANGE (octaves), N.LEN (note length), OFFSET, ARP LENGTH.
+---
 
-### Song Mode
-- Up to 16 songs per project, 99 rows per song.
-- Per-row: LABEL (Verse/Chorus/Bridge/etc.), PTN, PLAY COUNT, LENGTH (2-1024 steps), TEMPO, END (LOOP/STOP).
+## Core DSP Modules (Already Implemented)
 
-### Perform Mode
-- Temporary parameter tweaks not saved to pattern. Revert on exit.
+Located in `src/`:
+- `synth.rs` - Main synthesizer engine
+- `oscillator.rs` - Waveforms: sine, square, sawtooth, triangle, noise, PM
+- `filter.rs` - Biquad + ZDF (Zero-Delay Feedback) Moog-style ladder
+- `envelope.rs` - ADSR envelope generators
+- `lfo.rs` - Low-frequency oscillators with sync modes
+- `sampler.rs` - Sample playback, multi-sampling, recording, auto-sampling
+- `effects/` - 22 effect types (reverb, delay, distortion, etc.)
+- `tracks/` - AudioTrack, BusTrack, SendTrack, MixTrack
 
-### Sampling
-- Record up to 6:06:06. Params: REC, ARM, RLEN (1/16 to MAX), THR, SRC (inputs/main/tracks/buses), MON.
-- Auto Sampler for multi-sampled instruments: START/END note range, SAMPLE EVERY, VELOCITY LAYERS, NOTE DURATION, LTNCY, RELEASE TIME.
-- Formats: WAV/AIFF, 16/24/32-bit, 48kHz native. Up to 4GB in project RAM, 1023 sample slots.
+---
 
-### MIDI
-- Sync: Clock/transport receive/send, program change receive/send.
-- Port config: Receive notes/CC, input from MIDI/USB/MIDI+USB.
-- Channels: AUTO CHANNEL, per-track MIDI channels (1-16).
-- MIDI tracks: CHAN, BANK, SBNK, PROG, PB, AT, MW, BC, 16 assignable CCs.
+## Web UI Components
 
-## Current Architecture
+Located in `webui/src/`:
+- `components/EncoderSection.tsx` - Shared 8 rotary encoders
+- `components/OledDisplay.tsx` - Central OLED-style display
+- `components/StepGrid.tsx` - Global 16-step LED grid
+- `components/FxSlotPanel.tsx` - FX slot visualization
+- `components/PianoKeyboard.tsx` - 2-octave playable keyboard
+- `components/TransportBar.tsx` - Transport controls
+- `components/TrackColumn.tsx` - Track strip view
+- `components/TrackSelector.tsx` - Track selection sidebar
+- `context/WebSocketContext.tsx` - Audio engine connection
+- `tonverkStore.ts` - Zustand state management
 
-### Core Components (src/)
-- **synth.rs**: Main synthesizer with 16-voice polyphony
-- **oscillator.rs**: Waveform generators (sine, square, sawtooth, triangle)
-- **filter.rs**: Biquad and ZDF filters including Moog-style ladder
-- **envelope.rs**: ADSR envelope generators
-- **lfo.rs**: Low-frequency oscillators for modulation
-- **modulation/mod_matrix.rs**: Modulation routing matrix
-- **modulation/midi_cc.rs**: MIDI CC mapping (requires `midi_cc` feature)
+---
 
-### Effects System (src/effects/)
-15 effects: reverb, delay, distortion, chorus, compressor, saturation, phaser, flanger, ring_modulator, tremolo, warp, freeze, filter_bank, eq, bit_crusher. Per-track chains in track_effects.rs.
+## Current Status
 
-### Generators (src/)
-- **melody_generator.rs**: AI melody generation (14 scales, 6 styles)
-- **chord_generator.rs**: Chord progressions (8 styles)
-- **rhythm_generator.rs**: Drum patterns (12 genres)
+### Working
+- Tonverk-aligned UI layout (shared encoders, OLED, step grid)
+- WebSocket connection to backend
+- 476 passing Rust tests
+- DSP modules (oscillator, filter, envelope, LFO, effects)
+- Sample playback engine (single + multi)
 
-### Sequencing (src/)
-- **step_sequencer.rs**: 16-track step sequencer
-- **piano_roll.rs**: Piano roll editor
-- **arpeggiator.rs**: Arpeggiator patterns
+### In Progress
+- WASM compilation target
+- Web Audio API integration
+- FX parameter binding
+- Project persistence
 
-### Godot Integration
-- **gdextension.rs**: GDExtension bindings
-- **godot/scripts/main.gd**: Main controller
-- **godot/presets/wavelet_presets.json**: 50 preset definitions
+### Missing (Priority)
+- Real-time audio output
+- MIDI device input
+- WAV export
+- Preset library
+- Sample pack
 
-### Web UI (webui/src/)
-React + TypeScript + Zustand. Elektron Tonverk-inspired interface. Components: Rack.tsx, ModulePanel.tsx, ModuleBrowser.tsx, Knob.tsx, Port.tsx, Header.tsx, Icons.tsx.
+---
 
-### Backend (backend/src/)
-Actix-web REST API with JWT auth. PostgreSQL via sqlx.
+## Testing Requirements
+
+After any Rust DSP changes:
+```bash
+cargo test --lib        # All tests must pass
+cargo clippy            # No warnings
+cargo bench             # Verify performance
+```
+
+---
+
+## Design Guidelines
+
+### Visual Style
+- Dark, professional aesthetic (#0a0a0c background)
+- Track-based layout (16 strips on right)
+- Shared encoder section (bottom)
+- OLED display (center)
+- Minimal colors: white text, track-type accents (green/audio, blue/bus, purple/send, yellow/mix)
+
+### UX Principles
+1. **Preset-first**: Browse sounds immediately
+2. **Fast editing**: Encoders change sound in real-time
+3. **No menu diving**: All parameters accessible via pages
+4. **Visual feedback**: LEDs, waveforms, meters
+5. **Professional polish**: Latency meter, CPU usage, VU
+
+---
+
+## File Structure
+
+```
+wavelet/
+├── src/                    # Rust DSP core
+│   ├── synth.rs
+│   ├── oscillator.rs
+│   ├── filter.rs
+│   ├── envelope.rs
+│   ├── lfo.rs
+│   ├── sampler.rs
+│   ├── effects/
+│   ├── tracks/
+│   └── wasm/              # WASM bridge (create this)
+├── webui/                  # React web interface
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   └── tonverkStore.ts
+│   └── package.json
+├── backend/                # Actix-web (optional for MVP)
+├── docs/tonverk/           # Reference documentation
+├── presets/                # Preset definitions (create this)
+└── samples/                # Sample pack (create this)
+```
+
+---
+
+## Key Technical Decisions
+
+### 1. Audio Transport: Web Audio API
+- Native browser support, low latency, cross-platform
+- Requires user gesture (acceptable)
+
+### 2. State: Rust ↔ UI
+```
+WASM Memory → serialize → Float32Array → postMessage → UI
+UI → postMessage → deserialize → WASM Memory
+```
+
+### 3. Sample Storage: IndexedDB
+- lz4 compression for sample blobs
+- Streaming decode (not all at once)
+- LRU cache for frequently used
+
+### 4. MIDI: Web MIDI API
+- Device selector + auto-reconnection
+- Per-track channel assignment
+- MIDI Learn for custom control
+
+---
 
 ## Feature Flags
-- `gdext`: Enable Godot GDExtension bindings
+- `wasm`: Enable WebAssembly compilation (future)
 - `midi_cc`: Enable MIDI CC mapping
 
-## Web UI Design Direction
+---
 
-The web UI should follow the Elektron Tonverk's interface style:
-- **Dark, minimal aesthetic.** Black/dark gray backgrounds (#0a0a0c, #0f1014), high-contrast text.
-- **Track-based layout.** 16 tracks displayed as selectable columns/buttons, not a modular rack.
-- **Parameter pages.** Each track has tabbed pages: TRIG, SRC, FLTR, AMP, FX, MOD — matching the Tonverk's page structure.
-- **Rotary encoders as knobs.** 8 knobs per page mapping to 8 parameters, with labels below.
-- **Step sequencer grid.** 16 step buttons with LED-style indicators (red=note, yellow=lock, blinking=combined).
-- **OLED-style display area.** Central screen showing current page, parameter values, waveform/envelope visualizations.
-- **Transport bar.** Play/Stop/Record, BPM, pattern select, song position.
-- **Mute/Solo buttons** per track.
-- **Accent colors:** Minimal — white/gray text, subtle colored indicators for track state.
+## Resources
+
+- Tonverk Manual: `docs/tonverk/Tonverk-User-Manual.md`
+- Web Audio API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+- wasm-bindgen: https://rustwasm.github.io/wasm-bindgen/

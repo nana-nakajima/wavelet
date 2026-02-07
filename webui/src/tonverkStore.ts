@@ -118,6 +118,7 @@ interface TonverkState {
   selectedPatternId: number;
   viewMode: 'pattern' | 'song' | 'perform';
   showBrowser: boolean;
+  performMode: boolean;
 
   // Actions
   setSelectedTrack: (id: number | null) => void;
@@ -132,6 +133,7 @@ interface TonverkState {
   removeParamLock: (trackId: number, pageId: number, stepId: number, param: string) => void;
   setTransport: (transport: Partial<TransportState>) => void;
   nextStep: () => void;
+  setTracks: (tracks: Partial<Track>[]) => void;
 }
 
 const createDefaultStep = (): Step => ({
@@ -277,10 +279,11 @@ export const useTonverkStore = create<TonverkState>((set, get) => ({
     songPosition: 0,
     playMode: 'pattern',
   },
-  selectedTrackId: null,
+  selectedTrackId: 1,
   selectedPatternId: 0,
   viewMode: 'pattern',
   showBrowser: false,
+  performMode: false,
 
   setSelectedTrack: (id) => set({ selectedTrackId: id }),
 
@@ -462,9 +465,8 @@ export const useTonverkStore = create<TonverkState>((set, get) => ({
       let nextStep = transport.currentStep + 1;
       let nextPage = transport.currentPage;
 
-      // Calculate total steps based on longest track length
       const maxLength = Math.max(...tracks.map((t) => t.sequencer.length));
-      const totalSteps = maxLength * 16; // 16 pages
+      const totalSteps = maxLength * 16;
 
       if (nextStep >= totalSteps) {
         nextStep = 0;
@@ -481,6 +483,21 @@ export const useTonverkStore = create<TonverkState>((set, get) => ({
         },
       };
     }),
+
+  setViewMode: (mode) => set({ viewMode: mode }),
+
+  togglePerformMode: () => set((state) => ({ performMode: !state.performMode })),
+
+  setTracks: (tracks) =>
+    set((state) => ({
+      tracks: state.tracks.map((t) => {
+        const update = tracks.find((u) => u.id === t.id);
+        if (update) {
+          return { ...t, ...update };
+        }
+        return t;
+      }),
+    })),
 }));
 
 // Helper functions
