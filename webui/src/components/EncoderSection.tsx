@@ -26,6 +26,7 @@ const Knob: React.FC<KnobProps> = ({
   const startValue = useRef<number>(0);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     startY.current = e.clientY;
     startValue.current = value;
 
@@ -48,7 +49,7 @@ const Knob: React.FC<KnobProps> = ({
 
   const percentage = (value - min) / (max - min);
   const rotation = -135 + percentage * 270;
-  const knobSize = size === 'small' ? 28 : size === 'large' ? 56 : 40;
+  const knobSize = size === 'small' ? 32 : size === 'large' ? 48 : 40;
 
   return (
     <div className="encoder-knob-container" style={{ width: knobSize }}>
@@ -65,18 +66,20 @@ const Knob: React.FC<KnobProps> = ({
         <div
           className="encoder-knob-indicator"
           style={{
+            position: 'absolute',
+            width: '3px',
+            height: size === 'small' ? '35%' : '50%',
+            top: 0,
+            transformOrigin: 'bottom center',
             transform: `rotate(${rotation}deg)`,
             backgroundColor: color,
-            height: size === 'small' ? '35%' : '50%',
+            boxShadow: `0 0 4px ${color}`,
           }}
         />
-        <div className="encoder-knob-center" style={{
-          width: size === 'small' ? 6 : size === 'large' ? 12 : 8,
-          height: size === 'small' ? 6 : size === 'large' ? 12 : 8,
-        }} />
+        <div className="encoder-knob-center" />
       </div>
-      <span className="encoder-knob-label" style={{ fontSize: size === 'small' ? '7px' : '8px' }}>{label}</span>
-      <span className="encoder-knob-value" style={{ fontSize: size === 'small' ? '9px' : '10px' }}>{value}</span>
+      <span className="encoder-knob-label">{label}</span>
+      <span className="encoder-knob-value">{value}</span>
     </div>
   );
 };
@@ -178,7 +181,7 @@ export const EncoderSection: React.FC = () => {
           <button
             key={key}
             className={`encoder-page-tab ${track.currentPage === key ? 'active' : ''}`}
-            style={track.currentPage === key ? { color: config.color } : {}}
+            style={track.currentPage === key ? { backgroundColor: config.color, color: '#0a0a0c' } : {}}
             onClick={() => setTrackPage(track.id, key as any)}
           >
             {label}
@@ -196,7 +199,7 @@ export const EncoderSection: React.FC = () => {
             label={knob.label}
             onChange={handleParamChange(knob.param)}
             color={config.color}
-            size="medium"
+            size="small"
           />
         ))}
       </div>
