@@ -16,8 +16,9 @@ export function Encoder({ label, value, displayValue, onChange, fine = false, pL
     fine,
   });
 
-  // Knob rotation: -135° to +135° (270° range)
-  const angle = -135 + value * 270;
+  // Knob rotation: 135° to 45° sweeping clockwise through top (270° range)
+  // 0 = 7:30 (lower-left), 0.5 = 12:00 (top), 1 = 4:30 (lower-right)
+  const angle = 135 + value * 270;
 
   return (
     <div className="flex flex-col items-center gap-1 select-none">
@@ -50,7 +51,7 @@ export function Encoder({ label, value, displayValue, onChange, fine = false, pL
         />
         {/* Tick marks */}
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-          const a = ((-135 + t * 270) * Math.PI) / 180;
+          const a = ((135 + t * 270) * Math.PI) / 180;
           const x1 = 22 + Math.cos(a) * 14;
           const y1 = 22 + Math.sin(a) * 14;
           const x2 = 22 + Math.cos(a) * 17;
