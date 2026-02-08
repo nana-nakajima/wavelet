@@ -565,6 +565,131 @@ impl ActiveVoice {
     }
 }
 
+// ==========================================================================
+// SharedArrayBuffer Parameter Block
+//
+// Layout (all f32, 4 bytes each):
+//   [0]       transport_flags  (bitfield: bit0=playing, bit1=recording)
+//   [1]       tempo            (BPM, 20.0–300.0)
+//   [2]       current_step     (0–255)
+//   [3]       master_volume    (0.0–1.0)
+//   [4..19]   track_volumes    (16 × f32)
+//   [20..35]  track_pans       (16 × f32)
+//   [36..51]  track_mutes      (16 × f32, 0.0 or 1.0)
+//   [52..67]  track_solos      (16 × f32, 0.0 or 1.0)
+//   [68..195] track_params     (16 tracks × 8 params = 128 × f32)
+//   [196..259] waveform_out    (64 × f32, oscilloscope ring for active track)
+//   [260]     active_track     (0–15)
+//   [261]     peak_l           (0.0–1.0)
+//   [262]     peak_r           (0.0–1.0)
+//   [263]     cpu_load         (0.0–1.0)
+//
+// Total: 264 × f32 = 1056 bytes
+// ==========================================================================
+
+pub const SAB_TRANSPORT_FLAGS: usize = 0;
+pub const SAB_TEMPO: usize = 1;
+pub const SAB_CURRENT_STEP: usize = 2;
+pub const SAB_MASTER_VOLUME: usize = 3;
+pub const SAB_TRACK_VOLUMES: usize = 4;   // 16 slots
+pub const SAB_TRACK_PANS: usize = 20;     // 16 slots
+pub const SAB_TRACK_MUTES: usize = 36;    // 16 slots
+pub const SAB_TRACK_SOLOS: usize = 52;    // 16 slots
+pub const SAB_TRACK_PARAMS: usize = 68;   // 128 slots (16×8)
+pub const SAB_WAVEFORM: usize = 196;      // 64 slots
+pub const SAB_ACTIVE_TRACK: usize = 260;
+pub const SAB_PEAK_L: usize = 261;
+pub const SAB_PEAK_R: usize = 262;
+pub const SAB_CPU_LOAD: usize = 263;
+pub const SAB_TOTAL_FLOATS: usize = 264;
+pub const SAB_BYTE_LENGTH: usize = SAB_TOTAL_FLOATS * 4;
+
+/// Params-per-track in the SharedArrayBuffer block
+pub const PARAMS_PER_TRACK: usize = 8;
+
+/// Read parameters from a SharedArrayBuffer-backed f32 slice.
+/// Called once per process() quantum to pull UI-written values into the engine.
+impl WasmAudioHost {
+    pub fn read_shared_params(&mut self, sab: &[f32]) {
+        if sab.len() < SAB_TOTAL_FLOATS {
+            return;
+        }
+
+        // Transport
+        let flags = sab[SAB_TRANSPORT_FLAGS] as u32;
+        self.playing = (flags & 1) != 0;
+        self.recording = (flags & 2) != 0;
+
+        // Tempo
+        let new_tempo = sab[SAB_TEMPO];
+        if new_tempo >= 20.0 && new_tempo <= 300.0 {
+            self.tempo = new_tempo;
+        }
+
+        // Master volume
+        let mv = sab[SAB_MASTER_VOLUME];
+        if (mv - self.master_volume).abs() > 0.0001 {
+            self.master_volume = mv.clamp(0.0, 1.0);
+            self.smoother.set_target(self.master_volume);
+        }
+
+        // Per-track state
+        for i in 0..16usize {
+            if let Some(track) = self.tracks.get_mut(i) {
+                track.volume = sab[SAB_TRACK_VOLUMES + i].clamp(0.0, 1.0);
+                track.pan = sab[SAB_TRACK_PANS + i].clamp(-1.0, 1.0);
+                track.muted = sab[SAB_TRACK_MUTES + i] > 0.5;
+                track.solo = sab[SAB_TRACK_SOLOS + i] > 0.5;
+            }
+        }
+    }
+
+    /// Write engine-computed values back to the SharedArrayBuffer so the UI
+    /// can read them without postMessage overhead.
+    pub fn write_shared_state(&self, sab: &mut [f32]) {
+        if sab.len() < SAB_TOTAL_FLOATS {
+            return;
+        }
+
+        let mut flags: u32 = 0;
+        if self.playing {
+            flags |= 1;
+        }
+        if self.recording {
+            flags |= 2;
+        }
+        sab[SAB_TRANSPORT_FLAGS] = flags as f32;
+        sab[SAB_TEMPO] = self.tempo;
+        sab[SAB_CURRENT_STEP] = self.current_step as f32;
+        sab[SAB_MASTER_VOLUME] = self.master_volume;
+
+        // Active track waveform (64 samples for oscilloscope)
+        let active = sab[SAB_ACTIVE_TRACK] as usize;
+        let waveform = self.get_waveform(active.min(15));
+        for j in 0..64 {
+            sab[SAB_WAVEFORM + j] = waveform.get(j).copied().unwrap_or(0.0);
+        }
+    }
+}
+
+/// Allocate a buffer in WASM linear memory and return its pointer.
+/// The AudioWorklet uses this to get a stable output buffer address.
+#[wasm_bindgen]
+pub fn alloc_f32_buffer(len: usize) -> *mut f32 {
+    let mut buf = Vec::<f32>::with_capacity(len);
+    let ptr = buf.as_mut_ptr();
+    std::mem::forget(buf);
+    ptr
+}
+
+/// Free a buffer previously allocated with alloc_f32_buffer.
+#[wasm_bindgen]
+pub fn free_f32_buffer(ptr: *mut f32, len: usize) {
+    unsafe {
+        drop(Vec::from_raw_parts(ptr, 0, len));
+    }
+}
+
 /// Memory allocation for WASM (optional with wee_alloc)
 #[cfg(feature = "wee_alloc")]
 #[wasm_bindgen]

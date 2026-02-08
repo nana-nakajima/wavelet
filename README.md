@@ -1,106 +1,120 @@
-# WAVELET - Abstract Sound Synthesizer
+# WAVELET — Sampling Workstation & Synthesizer
 
-A modular synthesizer built with Rust and Godot 4.
+A professional-grade sampling workstation and synthesizer that runs in the browser. Built with a Rust DSP engine compiled to WebAssembly and a React-based hardware-emulation UI.
 
 ## Features
 
-### Core Synthesis Engine
-- **Multiple Oscillators**: Sine, Square, Sawtooth, Triangle waveforms with oversampling
-- **16-Voice Polyphony**
+### Core Synthesis Engine (Rust)
+- **Multiple Oscillators**: Sine, Square, Sawtooth, Triangle, Noise, PM with oversampling
+- **16-Voice Polyphony** with voice stealing
 - **ADSR Envelopes**: Amplitude and filter envelope generators
-- **Dual LFOs**: Low-frequency oscillators for modulation
+- **Dual LFOs**: Low-frequency oscillators with sync modes
 - **Filters**: Biquad (LP, HP, BP, Notch, Allpass) and ZDF Moog-style ladder
+- **Sampler**: Sample playback, multi-sampling, recording, auto-sampling
 
-### Effects (15 Professional Effects)
+### Effects (22 Types)
 - **Dynamics**: Distortion, Compressor, Saturation
 - **Modulation**: Chorus, Phaser, Flanger, Tremolo, Ring Modulator
 - **Time/Space**: Reverb, Delay, Freeze, Warp (time-stretch)
 - **Filtering**: Filter Bank, 3-band EQ, Bit Crusher
 
-### AI-Powered Generation
-- **Melody Generator**: 14 scales, 6 styles
-- **Chord Progressions**: 8 styles
-- **Rhythm Patterns**: 12 genres
-
-### Presets
-50 professionally designed presets: Bass, Pad, Lead, Keys, Strings, Bell, Effect
+### Web UI
+- **Hardware-emulation interface** inspired by Elektron workflow
+- **16-track architecture**: 8 Audio, 4 Bus, 3 Send, 1 Mix
+- **OLED-style display** with dot-matrix pixel font (Canvas 2D)
+- **8 rotary encoders** with page-based parameter mapping
+- **16-step sequencer** with P-Lock parameter locks
+- **2-octave piano keyboard** with QWERTY input
+- **XY planar pad**, FX slot panel, transport controls
+- **Real-time engine sync** via SharedArrayBuffer (zero-copy)
 
 ## Quick Start
 
 ### Prerequisites
 - Rust 1.70+
-- Godot 4.6+
-- Windows 10+, macOS 12+, or Linux (Ubuntu 22.04+)
+- Node.js 18+
 
-### Build
+### Web UI (Development)
 
 ```bash
-# Build the Rust audio engine
-cargo build --release
-
-# Copy library to Godot project
-cp target/release/libwavelet.* godot/
+cd webui
+npm install
+npm run dev       # http://localhost:5173
 ```
 
-### Run in Godot
-1. Open `godot/project.godot` in Godot 4.6+
-2. Press F5 to run
+Add `?dev` to bypass engine init for UI-only testing: `http://localhost:5173/?dev`
 
-### Keyboard
-| Key | Action |
-|-----|--------|
-| `Space` | Play/Pause |
-| `Z-M` | Lower octave |
-| `Q-]` | Upper octave |
-| `1-8` | Quick preset select |
+### Rust Engine
+
+```bash
+cargo build --release    # Native build
+cargo test --lib         # Run tests (476 passing)
+cargo clippy             # Lint
+```
 
 ## Architecture
 
 ```
-Oscillators (3x) -> Mixer -> Filter -> Amplifier (ADSR) -> Effects -> Output
-```
-
-## API Usage
-
-### Rust
-```rust
-use wavelet::Synth;
-
-let mut synth = Synth::new(48000.0);
-synth.note_on(60, 100);  // Play C4
-synth.note_off(60);
-```
-
-### GDScript
-```gdscript
-extends WaveletSynth
-
-func _ready():
-    note_on(60, 127)
-    await get_tree().create_timer(0.5).timeout
-    note_off(60)
-```
-
-## Testing
-
-```bash
-cargo test --lib                    # Run all tests
-cargo test <module> --lib           # Test specific module
+┌─────────────────────────────────────────────────────────────┐
+│  WebUI (Remix + React + Zustand)                            │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ Components: Workstation, OledScreen, EncoderSection,   │ │
+│  │   StepGrid, PianoKeyboard, TrackStrips, TransportBar   │ │
+│  │ State: Zustand store ↔ SharedArrayBuffer (zero-copy)   │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                          │                                   │
+│              ┌───────────┴───────────┐                      │
+│              ▼                       ▼                      │
+│  ┌──────────────────┐   ┌─────────────────────┐            │
+│  │ WASM Audio Engine │   │ IndexedDB Storage   │            │
+│  │ (Rust DSP)        │   │ Projects, Samples   │            │
+│  └──────────────────┘   └─────────────────────┘            │
+│              │                                               │
+│              ▼                                               │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ Web Audio API (AudioWorkletProcessor, <10ms latency)    ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Structure
 
 ```
 wavelet/
-├── src/                  # Rust audio engine
-│   ├── synth.rs          # Main synthesizer
-│   ├── oscillator.rs     # Waveform generators
-│   ├── filter.rs         # Biquad & ZDF filters
-│   ├── effects/          # 15 effects
-│   └── modulation/       # Mod matrix, MIDI CC
-├── godot/                # Godot 4 UI
-├── webui/                # React web interface
-└── backend/              # Actix-web REST API
+├── src/                    # Rust DSP core
+│   ├── synth.rs            # Main synthesizer engine
+│   ├── oscillator.rs       # Waveform generators
+│   ├── filter.rs           # Biquad & ZDF filters
+│   ├── envelope.rs         # ADSR envelopes
+│   ├── lfo.rs              # Low-frequency oscillators
+│   ├── sampler.rs          # Sample playback engine
+│   ├── effects/            # 22 effect types
+│   ├── tracks/             # Audio/Bus/Send/Mix tracks
+│   └── wasm/               # WASM bridge + SAB layout
+├── webui/                  # React web interface (Remix SPA)
+│   ├── app/components/     # 17 UI components
+│   ├── app/engine/         # WASM + AudioWorklet bridge
+│   ├── app/store/          # Zustand state management
+│   ├── app/hooks/          # Encoder drag, long-press, keyboard
+│   └── app/lib/            # OLED renderer, formatting, colors
+├── docs/tonverk/           # Reference documentation
+└── CLAUDE.md               # AI assistant instructions
+```
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Space` | Play/Stop |
+| `Shift` (hold) | FUNC modifier (fine encoder, lock trigs) |
+| `A-P` | Piano keys (C3–D#4, QWERTY layout) |
+
+## Testing
+
+```bash
+cargo test --lib         # All Rust tests
+cd webui && npx tsc --noEmit   # TypeScript check
+cd webui && npm run build      # Production build
 ```
 
 ## License

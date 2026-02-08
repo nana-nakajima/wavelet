@@ -16,8 +16,14 @@ Cargo.lock
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Generated
 *.so
 *.dylib
 *.dll
+
+# Node / WebUI
+node_modules/
+webui/build/
+webui/.cache/
